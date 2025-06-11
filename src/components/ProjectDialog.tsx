@@ -73,7 +73,7 @@ const ProjectDialog = ({ onProjectCreate }: ProjectDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-smart-orange hover:bg-smart-orange-light">
           <Plus className="h-4 w-4 mr-2" />
           New Project
         </Button>
@@ -169,7 +169,7 @@ const ProjectDialog = ({ onProjectCreate }: ProjectDialogProps) => {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="bg-smart-orange hover:bg-smart-orange-light">
               Create Project
             </Button>
           </DialogFooter>

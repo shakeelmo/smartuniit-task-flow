@@ -47,7 +47,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }: SidebarProp
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <img 
-              src="/lovable-uploads/ad43ee59-d76a-4152-a727-1c6fae6e647b.png" 
+              src="/lovable-uploads/555c7b9e-8ad0-49a2-bc05-010dd1f53c9b.png" 
               alt="Smart Universe Logo" 
               className="w-8 h-8"
             />
@@ -82,8 +82,8 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }: SidebarProp
                     className={`
                       w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors
                       ${activeTab === item.id 
-                        ? 'bg-blue-50 text-blue-600 border border-blue-200' 
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-smart-orange text-white' 
+                        : 'text-gray-700 hover:bg-smart-orange-light hover:text-white'
                       }
                     `}
                   >
@@ -99,7 +99,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }: SidebarProp
         <div className="absolute bottom-4 left-4 right-4">
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-center space-x-2 mb-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-smart-blue rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">JD</span>
               </div>
               <div>

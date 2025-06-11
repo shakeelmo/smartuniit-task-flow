@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,12 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Smart Universe brand colors
+				'smart-orange': 'hsl(var(--smart-orange))',
+				'smart-blue': 'hsl(var(--smart-blue))',
+				'smart-orange-light': 'hsl(var(--smart-orange-light))',
+				'smart-blue-light': 'hsl(var(--smart-blue-light))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

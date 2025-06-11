@@ -71,7 +71,7 @@ const Index = () => {
                 <p className="text-sm font-medium text-gray-900">John Doe</p>
                 <p className="text-xs text-gray-500">Administrator</p>
               </div>
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-smart-blue rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">JD</span>
               </div>
             </div>
