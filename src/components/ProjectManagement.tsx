@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { 
-  Plus, 
   Search, 
   MoreVertical, 
   FolderOpen,
@@ -13,11 +12,11 @@ import {
   User,
   FileText
 } from 'lucide-react';
+import ProjectDialog from '@/components/ProjectDialog';
 
 const ProjectManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const projects = [
+  const [projects, setProjects] = useState([
     {
       id: 1,
       name: 'Website Redesign',
@@ -70,7 +69,11 @@ const ProjectManagement = () => {
       tasksCount: 15,
       completedTasks: 1
     }
-  ];
+  ]);
+
+  const handleProjectCreate = (newProject: any) => {
+    setProjects(prevProjects => [...prevProjects, newProject]);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -104,10 +107,7 @@ const ProjectManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
           <p className="text-gray-600">Manage and track your projects</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Button>
+        <ProjectDialog onProjectCreate={handleProjectCreate} />
       </div>
 
       {/* Search and Filters */}
