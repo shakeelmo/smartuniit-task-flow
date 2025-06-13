@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -49,6 +48,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
   const [notes, setNotes] = useState('');
   const [validUntil, setValidUntil] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   const VAT_RATE = 0.15; // 15% VAT rate for Saudi Arabia
 
@@ -106,10 +106,25 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   };
 
   const handleExportPDF = async () => {
+    console.log('Export PDF button clicked');
+    
+    // Validate required fields
+    if (!customer.companyName.trim()) {
+      alert('Please enter a company name before exporting PDF');
+      return;
+    }
+
+    if (lineItems.length === 0 || lineItems.every(item => !item.service.trim())) {
+      alert('Please add at least one service item before exporting PDF');
+      return;
+    }
+
+    setIsExporting(true);
+    
     const quotationData = {
       number: generateQuoteNumber(),
       date: new Date().toISOString(),
-      validUntil: validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now if not set
+      validUntil: validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       customer,
       lineItems,
       subtotal: calculateSubtotal(),
@@ -119,10 +134,15 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
     };
 
     try {
+      console.log('Calling generateQuotationPDF with data:', quotationData);
       await generateQuotationPDF(quotationData);
       console.log('PDF generated successfully');
+      alert('PDF exported successfully!');
     } catch (error) {
       console.error('Error generating PDF:', error);
+      alert('Failed to export PDF. Please check the console for details.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -219,9 +239,14 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
               <Save className="h-4 w-4 mr-2" />
               Save Quotation
             </Button>
-            <Button onClick={handleExportPDF} variant="outline" className="bg-smart-blue text-white hover:bg-smart-blue/90">
+            <Button 
+              onClick={handleExportPDF} 
+              variant="outline" 
+              className="bg-smart-blue text-white hover:bg-smart-blue/90"
+              disabled={isExporting}
+            >
               <FileText className="h-4 w-4 mr-2" />
-              Export PDF
+              {isExporting ? 'Exporting...' : 'Export PDF'}
             </Button>
           </div>
         </div>
