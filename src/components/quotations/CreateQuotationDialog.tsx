@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Minus, Save, FileText } from 'lucide-react';
 import CustomerForm from './CustomerForm';
 import LineItemsTable from './LineItemsTable';
+import { generateQuotationPDF } from '@/utils/pdfExport';
 
 interface CreateQuotationDialogProps {
   open: boolean;
@@ -86,6 +87,10 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
     ));
   };
 
+  const generateQuoteNumber = () => {
+    return `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+  };
+
   const handleSave = () => {
     // In real app, this would save to database
     console.log('Saving quotation:', {
@@ -98,6 +103,27 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       validUntil
     });
     onQuotationCreated();
+  };
+
+  const handleExportPDF = async () => {
+    const quotationData = {
+      number: generateQuoteNumber(),
+      date: new Date().toISOString(),
+      validUntil: validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now if not set
+      customer,
+      lineItems,
+      subtotal: calculateSubtotal(),
+      vat: calculateVAT(),
+      total: calculateTotal(),
+      notes
+    };
+
+    try {
+      await generateQuotationPDF(quotationData);
+      console.log('PDF generated successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
   };
 
   return (
@@ -130,7 +156,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
                 <Label htmlFor="quoteNumber">Quote Number / رقم العرض</Label>
                 <Input
                   id="quoteNumber"
-                  value={`QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`}
+                  value={generateQuoteNumber()}
                   disabled
                   className="bg-gray-100"
                 />
@@ -193,9 +219,9 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
               <Save className="h-4 w-4 mr-2" />
               Save Quotation
             </Button>
-            <Button variant="outline" className="bg-smart-blue text-white hover:bg-smart-blue/90">
+            <Button onClick={handleExportPDF} variant="outline" className="bg-smart-blue text-white hover:bg-smart-blue/90">
               <FileText className="h-4 w-4 mr-2" />
-              Save & Export PDF
+              Export PDF
             </Button>
           </div>
         </div>
