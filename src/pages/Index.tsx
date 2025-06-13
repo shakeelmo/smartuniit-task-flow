@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
@@ -7,6 +6,7 @@ import Dashboard from '@/components/Dashboard';
 import ProjectManagement from '@/components/ProjectManagement';
 import TaskManagement from '@/components/TaskManagement';
 import UserManagement from '@/components/UserManagement';
+import QuotationManagement from '@/components/QuotationManagement';
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,6 +24,8 @@ const Index = () => {
         return <ProjectManagement />;
       case 'tasks':
         return <TaskManagement />;
+      case 'quotations':
+        return <QuotationManagement />;
       case 'users':
         return <UserManagement />;
       case 'settings':

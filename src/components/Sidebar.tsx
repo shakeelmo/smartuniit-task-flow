@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   LayoutDashboard, 
@@ -7,7 +6,8 @@ import {
   Users, 
   Settings,
   Menu,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +23,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }: SidebarProp
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'projects', label: 'Projects', icon: FolderOpen },
     { id: 'tasks', label: 'Tasks', icon: CheckSquare },
+    { id: 'quotations', label: 'Quotations', icon: FileText },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
