@@ -135,12 +135,15 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
     try {
       console.log('Calling generateQuotationPDF with data:', quotationData);
-      await generateQuotationPDF(quotationData);
-      console.log('PDF generated successfully');
-      alert('PDF exported successfully!');
+      const success = await generateQuotationPDF(quotationData);
+      if (success) {
+        console.log('PDF generated successfully');
+        alert('PDF exported successfully!');
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to export PDF. Please check the console for details.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to export PDF: ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
