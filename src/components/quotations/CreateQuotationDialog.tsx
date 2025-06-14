@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Plus, Minus, Save, FileText } from 'lucide-react';
 import CustomerForm from './CustomerForm';
 import LineItemsTable from './LineItemsTable';
 import { generateQuotationPDF } from '@/utils/pdfExport';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreateQuotationDialogProps {
   open: boolean;
@@ -49,6 +51,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   const [notes, setNotes] = useState('');
   const [validUntil, setValidUntil] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
 
   const VAT_RATE = 0.15; // 15% VAT rate for Saudi Arabia
 
@@ -107,20 +110,24 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
   const handleExportPDF = async () => {
     console.log('Export PDF button clicked');
-    
-    // Validate required fields
+
     if (!customer.companyName.trim()) {
-      alert('Please enter a company name before exporting PDF');
+      toast({ title: "Missing Info", description: "Please enter a company name before exporting PDF", variant: "destructive" });
       return;
     }
 
     if (lineItems.length === 0 || lineItems.every(item => !item.service.trim())) {
-      alert('Please add at least one service item before exporting PDF');
+      toast({ title: "No Services", description: "Please add at least one service item before exporting PDF", variant: "destructive" });
+      return;
+    }
+
+    if (calculateTotal() === 0) {
+      toast({ title: "Total is zero", description: "Please enter item(s) with a quantity and unit price to calculate total before export.", variant: "destructive" });
       return;
     }
 
     setIsExporting(true);
-    
+
     const quotationData = {
       number: generateQuoteNumber(),
       date: new Date().toISOString(),
@@ -138,12 +145,14 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       const success = await generateQuotationPDF(quotationData);
       if (success) {
         console.log('PDF generated successfully');
-        alert('PDF exported successfully!');
+        toast({ title: "PDF Exported", description: "PDF exported successfully!", variant: "default" });
+      } else {
+        toast({ title: "Export Failed", description: "PDF was not generated for unknown reasons.", variant: "destructive" });
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Failed to export PDF: ${errorMessage}`);
+      toast({ title: "Failed to export PDF", description: errorMessage, variant: "destructive" });
     } finally {
       setIsExporting(false);
     }
@@ -242,11 +251,12 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
               <Save className="h-4 w-4 mr-2" />
               Save Quotation
             </Button>
-            <Button 
-              onClick={handleExportPDF} 
-              variant="outline" 
+            <Button
+              onClick={handleExportPDF}
+              variant="outline"
               className="bg-smart-blue text-white hover:bg-smart-blue/90"
               disabled={isExporting}
+              type="button"
             >
               <FileText className="h-4 w-4 mr-2" />
               {isExporting ? 'Exporting...' : 'Export PDF'}
@@ -259,3 +269,5 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 };
 
 export default CreateQuotationDialog;
+
+// This file is getting very long (262+ lines). Consider refactoring it into smaller components for maintainability.
