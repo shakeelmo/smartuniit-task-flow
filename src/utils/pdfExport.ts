@@ -28,11 +28,11 @@ interface QuotationData {
 
 // Smart Universe brand colors
 const BRAND_COLORS = {
-  primary: [255, 107, 53],    // Smart Universe Orange
-  secondary: [56, 134, 242],  // Smart Universe Blue
-  text: [44, 44, 44],         // Dark gray for body text
-  lightGray: [128, 128, 128], // Light gray for secondary text
-  background: [248, 249, 250] // Very light gray for backgrounds
+  primary: [255, 107, 53] as const,    // Smart Universe Orange
+  secondary: [56, 134, 242] as const,  // Smart Universe Blue
+  text: [44, 44, 44] as const,         // Dark gray for body text
+  lightGray: [128, 128, 128] as const, // Light gray for secondary text
+  background: [248, 249, 250] as const // Very light gray for backgrounds
 };
 
 // Optional, but provides in-module toasting for debugging status
@@ -93,26 +93,26 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     }
 
     // ---- 2. Add Company Text next to Logo with brand colors ----
-    pdf.setTextColor(...BRAND_COLORS.primary);
+    pdf.setTextColor(BRAND_COLORS.primary[0], BRAND_COLORS.primary[1], BRAND_COLORS.primary[2]);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(18);
     pdf.text('SmartUniit', margin + logoWidth + 8, yPosition + 10, { align: 'left' });
 
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(11);
-    pdf.setTextColor(...BRAND_COLORS.text);
+    pdf.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
     pdf.text('Smart Universe Communication and Information Technology', margin + logoWidth + 8, yPosition + 17, { align: 'left' });
     pdf.text('Riyadh, Saudi Arabia', margin + logoWidth + 8, yPosition + 25, { align: 'left' });
 
     yPosition += logoHeight + 8; // Padding below logo/header
 
     // ---- 3. Add Quotation Title with brand colors ----
-    pdf.setTextColor(...BRAND_COLORS.primary);
+    pdf.setTextColor(BRAND_COLORS.primary[0], BRAND_COLORS.primary[1], BRAND_COLORS.primary[2]);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(20);
     pdf.text('QUOTATION', margin, yPosition, { align: 'left' });
 
-    pdf.setTextColor(...BRAND_COLORS.text);
+    pdf.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
     pdf.text(quotationData.number, margin, yPosition + 8, { align: 'left' });
@@ -125,13 +125,13 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     let rightY = yPosition;
 
     // Left: Customer Info Block
-    pdf.setTextColor(...BRAND_COLORS.secondary);
+    pdf.setTextColor(BRAND_COLORS.secondary[0], BRAND_COLORS.secondary[1], BRAND_COLORS.secondary[2]);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(13);
     pdf.text('Bill To:', margin, leftY, { align: 'left' });
 
     leftY += 6;
-    pdf.setTextColor(...BRAND_COLORS.text);
+    pdf.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     pdf.text(quotationData.customer.companyName || 'N/A', margin, leftY, { align: 'left' });
@@ -150,13 +150,13 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
 
     // Right: Quote Details
     let rightX = margin + colSpace;
-    pdf.setTextColor(...BRAND_COLORS.secondary);
+    pdf.setTextColor(BRAND_COLORS.secondary[0], BRAND_COLORS.secondary[1], BRAND_COLORS.secondary[2]);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(13);
     pdf.text('Quote Details:', rightX, yPosition, { align: 'left' });
 
     rightY += 6;
-    pdf.setTextColor(...BRAND_COLORS.text);
+    pdf.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(12);
 
@@ -168,7 +168,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     yPosition = Math.max(leftY, yPosition + 28) + 10;
 
     // ---- 5. Services Table with brand colors ----
-    pdf.setTextColor(...BRAND_COLORS.secondary);
+    pdf.setTextColor(BRAND_COLORS.secondary[0], BRAND_COLORS.secondary[1], BRAND_COLORS.secondary[2]);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(14);
     pdf.text('Services:', margin, yPosition, { align: 'left' });
@@ -186,7 +186,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     let tableX = margin;
     
     // Draw header background with primary brand color
-    pdf.setFillColor(...BRAND_COLORS.primary);
+    pdf.setFillColor(BRAND_COLORS.primary[0], BRAND_COLORS.primary[1], BRAND_COLORS.primary[2]);
     pdf.rect(margin, tableStartY, pageWidth - 2 * margin, 8, 'F');
     
     // Write header text in white
@@ -200,7 +200,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     });
 
     // Reset to brand text color
-    pdf.setTextColor(...BRAND_COLORS.text);
+    pdf.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(9);
 
@@ -212,7 +212,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
       
       // Alternate bg color with light brand background
       if (idx % 2 === 0) {
-        pdf.setFillColor(...BRAND_COLORS.background);
+        pdf.setFillColor(BRAND_COLORS.background[0], BRAND_COLORS.background[1], BRAND_COLORS.background[2]);
         pdf.rect(margin, tableY - 6, pageWidth - 2 * margin, rowHeight, 'F');
       }
       
@@ -237,7 +237,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     let totalsY = tableY + 12;
     const totalsX = pageWidth - margin - 65;
     
-    pdf.setTextColor(...BRAND_COLORS.text);
+    pdf.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(11);
     pdf.text(`Subtotal: SAR ${quotationData.subtotal.toLocaleString()}`, totalsX, totalsY, { align: 'left' });
@@ -245,7 +245,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     pdf.text(`VAT (15%): SAR ${quotationData.vat.toLocaleString()}`, totalsX, totalsY, { align: 'left' });
 
     // Total with primary brand color
-    pdf.setTextColor(...BRAND_COLORS.primary);
+    pdf.setTextColor(BRAND_COLORS.primary[0], BRAND_COLORS.primary[1], BRAND_COLORS.primary[2]);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(13);
     totalsY += 8;
@@ -254,13 +254,13 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     // ---- 7. Notes Section with brand colors ----
     if (quotationData.notes) {
       let notesY = Math.max(totalsY, tableY + 20) + 10;
-      pdf.setTextColor(...BRAND_COLORS.secondary);
+      pdf.setTextColor(BRAND_COLORS.secondary[0], BRAND_COLORS.secondary[1], BRAND_COLORS.secondary[2]);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(13);
       pdf.text('Notes:', margin, notesY, { align: 'left' });
 
       notesY += 7;
-      pdf.setTextColor(...BRAND_COLORS.text);
+      pdf.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(11);
       const notes = quotationData.notes.replace(/[^\x00-\x7F]/g, '');
@@ -270,7 +270,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
 
     // ---- 8. Footer with brand colors ----
     let footerY = pageHeight - 30;
-    pdf.setTextColor(...BRAND_COLORS.lightGray);
+    pdf.setTextColor(BRAND_COLORS.lightGray[0], BRAND_COLORS.lightGray[1], BRAND_COLORS.lightGray[2]);
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(10);
     pdf.text('Thank you for your business!', pageWidth / 2, footerY, { align: 'center' });
