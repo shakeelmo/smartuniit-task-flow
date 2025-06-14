@@ -121,15 +121,29 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     pdf.setFillColor(0, 0, 0, 0.1);
     pdf.rect(0, STYLING.headerHeight, pageWidth, 2, 'F');
 
-    // Company Logo
+    // Company Logo with white background for professional look
     const logoUrl = '/lovable-uploads/7a5c909f-0a1b-464c-9ae5-87fb578584b4.png';
     let logoHeight = 25, logoWidth = 38;
     try {
       const logoBase64 = await fetchImageBase64(logoUrl);
+      
+      // Add white rounded background behind logo for professional appearance
+      pdf.setFillColor(...BRAND_COLORS.white);
+      drawRoundedRect(pdf, margin - 2, yPosition + 6, logoWidth + 4, logoHeight + 4, 4, 'F');
+      
+      // Add the logo on top of the white background
       pdf.addImage(logoBase64, 'PNG', margin, yPosition + 8, logoWidth, logoHeight);
-      console.log('Company logo embedded successfully');
+      console.log('Company logo embedded successfully with white background');
     } catch (err) {
       fireToast("Logo missing", "Could not embed company logo", "destructive");
+      
+      // Fallback: create a white rounded rectangle with company initial
+      pdf.setFillColor(...BRAND_COLORS.white);
+      drawRoundedRect(pdf, margin - 2, yPosition + 6, logoWidth + 4, logoHeight + 4, 4, 'F');
+      pdf.setTextColor(...BRAND_COLORS.primary);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      pdf.text('SU', margin + logoWidth/2, yPosition + logoHeight/2 + 12, { align: 'center' });
     }
 
     // Company Information with white text on orange background

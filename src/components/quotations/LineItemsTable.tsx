@@ -21,14 +21,64 @@ interface LineItemsTableProps {
 
 const LineItemsTable = ({ lineItems, updateLineItem, removeLineItem }: LineItemsTableProps) => {
   const services = [
+    // Web & Software Development
     'Web Development / تطوير المواقع',
-    'Mobile App Development / تطوير التطبيقات',
+    'E-commerce Development / تطوير المتاجر الإلكترونية',
+    'Mobile App Development (iOS/Android) / تطوير التطبيقات',
+    'Custom Software Development / تطوير البرمجيات المخصصة',
+    'API Development & Integration / تطوير وربط الواجهات البرمجية',
+    'WordPress Development / تطوير مواقع ووردبريس',
+    'React/Angular/Vue.js Development / تطوير التطبيقات الحديثة',
+    
+    // Design & UI/UX
+    'UI/UX Design / تصميم واجهات المستخدم',
+    'Graphic Design / التصميم الجرافيكي',
+    'Logo & Brand Identity Design / تصميم الشعارات والهوية البصرية',
+    'Website Redesign / إعادة تصميم المواقع',
+    'Mobile App UI Design / تصميم واجهات التطبيقات',
+    
+    // Digital Marketing & SEO
     'Digital Marketing / التسويق الرقمي',
+    'Search Engine Optimization (SEO) / تحسين محركات البحث',
+    'Social Media Marketing / التسويق عبر وسائل التواصل',
+    'Google Ads Management / إدارة إعلانات جوجل',
+    'Content Marketing / تسويق المحتوى',
+    'Email Marketing / التسويق الإلكتروني',
+    
+    // IT Infrastructure & Cloud
+    'Cloud Services Setup / إعداد الخدمات السحابية',
+    'AWS/Azure/Google Cloud Implementation / تطبيق الحلول السحابية',
+    'Network Setup & Configuration / إعداد وتكوين الشبكات',
+    'Server Management & Maintenance / إدارة وصيانة الخوادم',
+    'IT Infrastructure Consulting / استشارات البنية التحتية',
+    'Cybersecurity Solutions / حلول الأمن السيبراني',
+    
+    // Database & Analytics
+    'Database Design & Management / تصميم وإدارة قواعد البيانات',
+    'Data Analytics & Reporting / تحليل البيانات والتقارير',
+    'Business Intelligence Solutions / حلول ذكاء الأعمال',
+    'Data Migration Services / خدمات نقل البيانات',
+    
+    // Consulting & Training
     'IT Consulting / الاستشارات التقنية',
-    'Cloud Services / الخدمات السحابية',
-    'Network Setup / إعداد الشبكات',
-    'Database Management / إدارة قواعد البيانات',
-    'UI/UX Design / تصميم واجهات المستخدم'
+    'Digital Transformation Consulting / استشارات التحول الرقمي',
+    'Technology Training / التدريب التقني',
+    'Project Management / إدارة المشاريع',
+    'Technical Support & Maintenance / الدعم الفني والصيانة',
+    
+    // E-commerce & CRM
+    'CRM System Implementation / تطبيق أنظمة إدارة العملاء',
+    'ERP System Development / تطوير أنظمة تخطيط الموارد',
+    'Online Store Setup / إعداد المتاجر الإلكترونية',
+    'Payment Gateway Integration / ربط بوابات الدفع',
+    
+    // Specialized Services
+    'IoT Solutions / حلول إنترنت الأشياء',
+    'AI & Machine Learning Solutions / حلول الذكاء الاصطناعي',
+    'Blockchain Development / تطوير البلوك تشين',
+    'DevOps & CI/CD Implementation / تطبيق DevOps',
+    'Quality Assurance & Testing / ضمان الجودة والاختبار',
+    'Technical Documentation / التوثيق التقني'
   ];
 
   return (
