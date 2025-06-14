@@ -38,6 +38,28 @@ const fireToast = (msg: string, description?: string, variant: "default" | "dest
   } catch {}
 };
 
+// Helper to load image and convert to Base64
+const fetchImageBase64 = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.setAttribute('crossOrigin', 'anonymous');
+    img.onload = function () {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject('Could not get canvas context');
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    };
+    img.onerror = function (err) {
+      reject('Could not load image for PDF: ' + url);
+    };
+    img.src = url;
+  });
+};
+
 export const generateQuotationPDF = async (quotationData: QuotationData) => {
   console.log('Starting PDF generation with data:', quotationData);
   let filename: string;
@@ -49,142 +71,192 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     const margin = 20;
     let yPosition = margin;
 
-    // Helper function to add text with word wrap
-    const addText = (text: string, x: number, y: number, maxWidth?: number, fontSize = 12, isBold = false) => {
-      pdf.setFontSize(fontSize);
-      if (isBold) {
-        pdf.setFont('helvetica', 'bold');
-      } else {
-        pdf.setFont('helvetica', 'normal');
-      }
-      if (maxWidth) {
-        const lines = pdf.splitTextToSize(text, maxWidth);
-        pdf.text(lines, x, y);
-        return y + (lines.length * fontSize * 0.35);
-      } else {
-        pdf.text(text, x, y);
-        return y + (fontSize * 0.35);
-      }
-    };
-
-    // Add company header
-    pdf.setTextColor(255, 107, 53); // Orange color
-    yPosition = addText('SmartUniit', pageWidth / 2, yPosition, undefined, 24, true);
-    pdf.setTextColor(0, 0, 0);
-    yPosition = addText('Smart Universe Communication and Information Technology', pageWidth / 2, yPosition + 5, undefined, 12);
-    yPosition = addText('Riyadh, Saudi Arabia', pageWidth / 2, yPosition + 5, undefined, 12);
-    yPosition += 20;
-
-    // Add quotation title (remove Arabic for PDF compatibility)
-    pdf.setTextColor(255, 107, 53);
-    yPosition = addText('QUOTATION', pageWidth / 2, yPosition, undefined, 20, true);
-    pdf.setTextColor(0, 0, 0);
-    yPosition = addText(quotationData.number, pageWidth / 2, yPosition + 5, undefined, 14, true);
-    yPosition += 20;
-
-    // Customer information section
-    pdf.setTextColor(255, 107, 53);
-    yPosition = addText('Bill To:', margin, yPosition, undefined, 14, true);
-    pdf.setTextColor(0, 0, 0);
-    yPosition += 5;
-    yPosition = addText(quotationData.customer.companyName || 'N/A', margin, yPosition, undefined, 12, true);
-    yPosition = addText(quotationData.customer.contactName || 'N/A', margin, yPosition + 5, undefined, 12);
-    yPosition = addText(quotationData.customer.phone || 'N/A', margin, yPosition + 5, undefined, 12);
-    yPosition = addText(quotationData.customer.email || 'N/A', margin, yPosition + 5, undefined, 12);
-    yPosition = addText(`CR: ${quotationData.customer.crNumber || 'N/A'}`, margin, yPosition + 5, undefined, 12);
-    yPosition = addText(`VAT: ${quotationData.customer.vatNumber || 'N/A'}`, margin, yPosition + 5, undefined, 12);
-
-    // Quote details (right side)
-    const rightColumnX = pageWidth / 2 + 10;
-    let rightYPosition = yPosition - 40; // Align with Bill To section
-    pdf.setTextColor(255, 107, 53);
-    rightYPosition = addText('Quote Details:', rightColumnX, rightYPosition, undefined, 14, true);
-    pdf.setTextColor(0, 0, 0);
-    rightYPosition += 5;
-    rightYPosition = addText(`Date: ${new Date(quotationData.date).toLocaleDateString()}`, rightColumnX, rightYPosition + 5, undefined, 12);
-    rightYPosition = addText(`Valid Until: ${new Date(quotationData.validUntil).toLocaleDateString()}`, rightColumnX, rightYPosition + 5, undefined, 12);
-
-    yPosition += 30;
-
-    // Line items table
-    pdf.setTextColor(255, 107, 53);
-    yPosition = addText('Services:', margin, yPosition, undefined, 14, true);
-    pdf.setTextColor(0, 0, 0);
-    yPosition += 10;
-
-    // Table headers
-    const tableStartY = yPosition;
-    const colWidths = [40, 60, 20, 30, 30];
-    const colX = [margin, margin + 40, margin + 100, margin + 120, margin + 150];
-
-    pdf.setFillColor(255, 107, 53);
-    pdf.rect(margin, yPosition - 5, pageWidth - 2 * margin, 10, 'F');
-
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Service', colX[0] + 2, yPosition + 2);
-    pdf.text('Description', colX[1] + 2, yPosition + 2);
-    pdf.text('Qty', colX[2] + 2, yPosition + 2);
-    pdf.text('Unit Price', colX[3] + 2, yPosition + 2);
-    pdf.text('Total', colX[4] + 2, yPosition + 2);
-
-    yPosition += 10;
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFont('helvetica', 'normal');
-
-    // Table rows
-    quotationData.lineItems.forEach((item, index) => {
-      const rowHeight = 15;
-      // Alternate row colors
-      if (index % 2 === 0) {
-        pdf.setFillColor(245, 245, 245);
-        pdf.rect(margin, yPosition - 5, pageWidth - 2 * margin, rowHeight, 'F');
-      }
-      pdf.setFontSize(9);
-      // Service name (truncated if too long, English only)
-      const serviceName = item.service.replace(/[^\x00-\x7F]/g, '').length > 0
-        ? item.service.replace(/[^\x00-\x7F]/g, '').substring(0, 20) + (item.service.length > 20 ? '...' : '')
-        : 'N/A';
-      pdf.text(serviceName || 'N/A', colX[0] + 2, yPosition + 2);
-      // Description (truncated if too long, English only)
-      const description = item.description.replace(/[^\x00-\x7F]/g, '').length > 0
-        ? item.description.replace(/[^\x00-\x7F]/g, '').substring(0, 25) + (item.description.length > 25 ? '...' : '')
-        : 'N/A';
-      pdf.text(description || 'N/A', colX[1] + 2, yPosition + 2);
-      pdf.text(item.quantity.toString(), colX[2] + 2, yPosition + 2);
-      pdf.text(`SAR ${item.unitPrice.toLocaleString()}`, colX[3] + 2, yPosition + 2);
-      pdf.text(`SAR ${(item.quantity * item.unitPrice).toLocaleString()}`, colX[4] + 2, yPosition + 2);
-      yPosition += rowHeight;
-    });
-
-    yPosition += 20;
-
-    // Totals section
-    const totalsX = pageWidth - 80;
-    yPosition = addText(`Subtotal: SAR ${quotationData.subtotal.toLocaleString()}`, totalsX, yPosition, undefined, 12);
-    yPosition = addText(`VAT (15%): SAR ${quotationData.vat.toLocaleString()}`, totalsX, yPosition + 8, undefined, 12);
-
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(14);
-    yPosition = addText(`Total: SAR ${quotationData.total.toLocaleString()}`, totalsX, yPosition + 12, undefined, 14, true);
-
-    // Notes section
-    if (quotationData.notes) {
-      yPosition += 30;
-      pdf.setTextColor(255, 107, 53);
-      yPosition = addText('Notes:', margin, yPosition, undefined, 14, true);
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFont('helvetica', 'normal');
-      yPosition = addText(quotationData.notes.replace(/[^\x00-\x7F]/g, ''), margin, yPosition + 8, pageWidth - 2 * margin, 11);
+    // ---- 1. Embed Company Logo ----
+    const logoUrl = '/lovable-uploads/7a5c909f-0a1b-464c-9ae5-87fb578584b4.png';
+    let logoHeight = 22, logoWidth = 34;
+    try {
+      const logoBase64 = await fetchImageBase64(logoUrl);
+      pdf.addImage(logoBase64, 'PNG', margin, yPosition, logoWidth, logoHeight);
+      console.log('Logo embedded');
+    } catch (err) {
+      fireToast("Logo missing", "Could not embed company logo, continuing without it.", "destructive");
     }
 
-    // Footer
-    yPosition = pageHeight - 40;
-    pdf.setTextColor(128, 128, 128);
+    // ---- 2. Add Company Text next to Logo, LEFT-aligned ----
+    pdf.setTextColor(255, 107, 53);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(18);
+    pdf.text('SmartUniit', margin + logoWidth + 8, yPosition + 10, { align: 'left' });
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(11);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text('Smart Universe Communication and Information Technology', margin + logoWidth + 8, yPosition + 17, { align: 'left' });
+    pdf.text('Riyadh, Saudi Arabia', margin + logoWidth + 8, yPosition + 25, { align: 'left' });
+
+    yPosition += logoHeight + 8; // Padding below logo/header
+
+    // ---- 3. Add Quotation Title (left-aligned) and Number ----
+    pdf.setTextColor(255, 107, 53);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(20);
+    pdf.text('QUOTATION', margin, yPosition, { align: 'left' });
+
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(quotationData.number, margin, yPosition + 8, { align: 'left' });
+
+    yPosition += 18;
+
+    // ---- 4. LEFT (Customer) and RIGHT (Quote Details) Columns ----
+    const colSpace = 100;
+    let leftY = yPosition;
+    let rightY = yPosition;
+
+    // Left: Customer Info Block
+    pdf.setTextColor(255, 107, 53);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(13);
+    pdf.text('Bill To:', margin, leftY, { align: 'left' });
+
+    leftY += 6;
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(quotationData.customer.companyName || 'N/A', margin, leftY, { align: 'left' });
+
+    pdf.setFont('helvetica', 'normal');
+    leftY += 6;
+    pdf.text(quotationData.customer.contactName || 'N/A', margin, leftY, { align: 'left' });
+    leftY += 6;
+    pdf.text(quotationData.customer.phone || 'N/A', margin, leftY, { align: 'left' });
+    leftY += 6;
+    pdf.text(quotationData.customer.email || 'N/A', margin, leftY, { align: 'left' });
+    leftY += 6;
+    pdf.text(`CR: ${quotationData.customer.crNumber || 'N/A'}`, margin, leftY, { align: 'left' });
+    leftY += 6;
+    pdf.text(`VAT: ${quotationData.customer.vatNumber || 'N/A'}`, margin, leftY, { align: 'left' });
+
+    // Right: Quote Details
+    let rightX = margin + colSpace;
+    pdf.setTextColor(255, 107, 53);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(13);
+    pdf.text('Quote Details:', rightX, yPosition, { align: 'left' });
+
+    rightY += 6;
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(12);
+
+    rightY += 6;
+    pdf.text(`Date: ${new Date(quotationData.date).toLocaleDateString()}`, rightX, yPosition + 12, { align: 'left' });
+    pdf.text(`Valid Until: ${new Date(quotationData.validUntil).toLocaleDateString()}`, rightX, yPosition + 18, { align: 'left' });
+
+    // Advance below both columns for services table
+    yPosition = Math.max(leftY, yPosition + 28) + 10;
+
+    // ---- 5. Services Table/Header ----
+    pdf.setTextColor(255, 107, 53);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(14);
+    pdf.text('Services:', margin, yPosition, { align: 'left' });
+    yPosition += 7;
+
+    // Table Headers
+    const tableStartY = yPosition + 3;
+    const tableCols = [
+      { name: 'Service', width: 35 },
+      { name: 'Description', width: 55 },
+      { name: 'Qty', width: 15 },
+      { name: 'Unit Price', width: 30 },
+      { name: 'Total', width: 30 }
+    ];
+    let tableX = margin;
+    // Draw header background
+    pdf.setFillColor(255, 107, 53);
+    pdf.rect(margin, tableStartY, pageWidth - 2 * margin, 8, 'F');
+    // Write header text
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(10);
-    pdf.text('Thank you for your business!', pageWidth / 2, yPosition, { align: 'center' });
-    pdf.text(`This quotation is valid until ${new Date(quotationData.validUntil).toLocaleDateString()}`, pageWidth / 2, yPosition + 8, { align: 'center' });
+    tableX = margin;
+    tableCols.forEach((col, i) => {
+      pdf.text(col.name, tableX + 2, tableStartY + 6, { align: 'left' });
+      tableX += col.width;
+    });
+
+    // Reset
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+
+    // Table Rows
+    let tableY = tableStartY + 9;
+    quotationData.lineItems.forEach((item, idx) => {
+      tableX = margin;
+      const rowHeight = 10;
+      // Alternate bg color
+      if (idx % 2 === 0) {
+        pdf.setFillColor(245, 245, 245);
+        pdf.rect(margin, tableY - 6, pageWidth - 2 * margin, rowHeight, 'F');
+      }
+      // Service, Desc: English only & truncated
+      const serviceName = item.service.replace(/[^\x00-\x7F]/g, '').substring(0, 20) + (item.service.length > 20 ? '...' : '');
+      const description = item.description.replace(/[^\x00-\x7F]/g, '').substring(0, 30) + (item.description.length > 30 ? '...' : '');
+      const fields = [
+        serviceName || 'N/A',
+        description || 'N/A',
+        item.quantity.toString(),
+        `SAR ${item.unitPrice.toLocaleString()}`,
+        `SAR ${(item.quantity * item.unitPrice).toLocaleString()}`
+      ];
+      tableCols.forEach((col, cidx) => {
+        pdf.text(fields[cidx], tableX + 2, tableY, { align: 'left' });
+        tableX += col.width;
+      });
+      tableY += rowHeight;
+    });
+
+    // ---- 6. Totals (Bottom Right) ----
+    let totalsY = tableY + 12;
+    const totalsX = pageWidth - margin - 65;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(11);
+    pdf.text(`Subtotal: SAR ${quotationData.subtotal.toLocaleString()}`, totalsX, totalsY, { align: 'left' });
+    totalsY += 6;
+    pdf.text(`VAT (15%): SAR ${quotationData.vat.toLocaleString()}`, totalsX, totalsY, { align: 'left' });
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(13);
+    totalsY += 8;
+    pdf.text(`Total: SAR ${quotationData.total.toLocaleString()}`, totalsX, totalsY, { align: 'left' });
+
+    // ---- 7. Notes Section (Full width, under Totals/Table) ----
+    if (quotationData.notes) {
+      let notesY = Math.max(totalsY, tableY + 20) + 10;
+      pdf.setTextColor(255, 107, 53);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(13);
+      pdf.text('Notes:', margin, notesY, { align: 'left' });
+
+      notesY += 7;
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(11);
+      const notes = quotationData.notes.replace(/[^\x00-\x7F]/g, '');
+      pdf.text(notes, margin, notesY, { align: 'left', maxWidth: pageWidth - 2 * margin });
+      yPosition = notesY + 10;
+    }
+
+    // ---- 8. Footer (centered) ----
+    let footerY = pageHeight - 30;
+    pdf.setTextColor(128, 128, 128);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.text('Thank you for your business!', pageWidth / 2, footerY, { align: 'center' });
+    pdf.text(`This quotation is valid until ${new Date(quotationData.validUntil).toLocaleDateString()}`, pageWidth / 2, footerY + 6, { align: 'center' });
 
     filename = `quotation_${quotationData.number.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
     console.log('Preparing to save PDF as:', filename);
