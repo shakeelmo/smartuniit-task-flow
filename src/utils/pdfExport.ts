@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -76,9 +75,9 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     yPosition = addText('Riyadh, Saudi Arabia', pageWidth / 2, yPosition + 5, undefined, 12);
     yPosition += 20;
 
-    // Add quotation title
+    // Add quotation title (remove Arabic for PDF compatibility)
     pdf.setTextColor(255, 107, 53);
-    yPosition = addText('QUOTATION / عرض سعر', pageWidth / 2, yPosition, undefined, 20, true);
+    yPosition = addText('QUOTATION', pageWidth / 2, yPosition, undefined, 20, true);
     pdf.setTextColor(0, 0, 0);
     yPosition = addText(quotationData.number, pageWidth / 2, yPosition + 5, undefined, 14, true);
     yPosition += 20;
@@ -143,15 +142,19 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
         pdf.rect(margin, yPosition - 5, pageWidth - 2 * margin, rowHeight, 'F');
       }
       pdf.setFontSize(9);
-      // Service name (truncated if too long)
-      const serviceName = item.service.length > 20 ? item.service.substring(0, 20) + '...' : item.service;
+      // Service name (truncated if too long, English only)
+      const serviceName = item.service.replace(/[^\x00-\x7F]/g, '').length > 0
+        ? item.service.replace(/[^\x00-\x7F]/g, '').substring(0, 20) + (item.service.length > 20 ? '...' : '')
+        : 'N/A';
       pdf.text(serviceName || 'N/A', colX[0] + 2, yPosition + 2);
-      // Description (truncated if too long)
-      const description = item.description.length > 25 ? item.description.substring(0, 25) + '...' : item.description;
+      // Description (truncated if too long, English only)
+      const description = item.description.replace(/[^\x00-\x7F]/g, '').length > 0
+        ? item.description.replace(/[^\x00-\x7F]/g, '').substring(0, 25) + (item.description.length > 25 ? '...' : '')
+        : 'N/A';
       pdf.text(description || 'N/A', colX[1] + 2, yPosition + 2);
       pdf.text(item.quantity.toString(), colX[2] + 2, yPosition + 2);
-      pdf.text(`﷼ ${item.unitPrice.toLocaleString()}`, colX[3] + 2, yPosition + 2);
-      pdf.text(`﷼ ${(item.quantity * item.unitPrice).toLocaleString()}`, colX[4] + 2, yPosition + 2);
+      pdf.text(`SAR ${item.unitPrice.toLocaleString()}`, colX[3] + 2, yPosition + 2);
+      pdf.text(`SAR ${(item.quantity * item.unitPrice).toLocaleString()}`, colX[4] + 2, yPosition + 2);
       yPosition += rowHeight;
     });
 
@@ -159,12 +162,12 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
 
     // Totals section
     const totalsX = pageWidth - 80;
-    yPosition = addText(`Subtotal: ﷼ ${quotationData.subtotal.toLocaleString()}`, totalsX, yPosition, undefined, 12);
-    yPosition = addText(`VAT (15%): ﷼ ${quotationData.vat.toLocaleString()}`, totalsX, yPosition + 8, undefined, 12);
+    yPosition = addText(`Subtotal: SAR ${quotationData.subtotal.toLocaleString()}`, totalsX, yPosition, undefined, 12);
+    yPosition = addText(`VAT (15%): SAR ${quotationData.vat.toLocaleString()}`, totalsX, yPosition + 8, undefined, 12);
 
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(14);
-    yPosition = addText(`Total: ﷼ ${quotationData.total.toLocaleString()}`, totalsX, yPosition + 12, undefined, 14, true);
+    yPosition = addText(`Total: SAR ${quotationData.total.toLocaleString()}`, totalsX, yPosition + 12, undefined, 14, true);
 
     // Notes section
     if (quotationData.notes) {
@@ -173,14 +176,14 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
       yPosition = addText('Notes:', margin, yPosition, undefined, 14, true);
       pdf.setTextColor(0, 0, 0);
       pdf.setFont('helvetica', 'normal');
-      yPosition = addText(quotationData.notes, margin, yPosition + 8, pageWidth - 2 * margin, 11);
+      yPosition = addText(quotationData.notes.replace(/[^\x00-\x7F]/g, ''), margin, yPosition + 8, pageWidth - 2 * margin, 11);
     }
 
     // Footer
     yPosition = pageHeight - 40;
     pdf.setTextColor(128, 128, 128);
     pdf.setFontSize(10);
-    pdf.text('Thank you for your business! / شكراً لثقتكم بنا', pageWidth / 2, yPosition, { align: 'center' });
+    pdf.text('Thank you for your business!', pageWidth / 2, yPosition, { align: 'center' });
     pdf.text(`This quotation is valid until ${new Date(quotationData.validUntil).toLocaleDateString()}`, pageWidth / 2, yPosition + 8, { align: 'center' });
 
     filename = `quotation_${quotationData.number.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
