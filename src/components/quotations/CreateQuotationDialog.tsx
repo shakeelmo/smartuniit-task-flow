@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -109,20 +108,25 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   };
 
   const handleExportPDF = async () => {
-    console.log('Export PDF button clicked');
+    console.log('[Export PDF] Button clicked');
+
+    toast({ title: "Export button clicked", description: "Starting PDF generation attempt.", variant: "default" });
 
     if (!customer.companyName.trim()) {
       toast({ title: "Missing Info", description: "Please enter a company name before exporting PDF", variant: "destructive" });
+      console.log('[Export PDF] Missing company name!');
       return;
     }
 
     if (lineItems.length === 0 || lineItems.every(item => !item.service.trim())) {
       toast({ title: "No Services", description: "Please add at least one service item before exporting PDF", variant: "destructive" });
+      console.log('[Export PDF] No line items!');
       return;
     }
 
     if (calculateTotal() === 0) {
       toast({ title: "Total is zero", description: "Please enter item(s) with a quantity and unit price to calculate total before export.", variant: "destructive" });
+      console.log('[Export PDF] Total is zero!');
       return;
     }
 
@@ -140,21 +144,27 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       notes
     };
 
+    console.log('[Export PDF] Calling generateQuotationPDF', quotationData);
+
+    toast({ title: "Calling PDF exporter", description: "generateQuotationPDF will be invoked", variant: "default" });
+
     try {
-      console.log('Calling generateQuotationPDF with data:', quotationData);
       const success = await generateQuotationPDF(quotationData);
+      console.log('[Export PDF] generateQuotationPDF returned:', success);
+
       if (success) {
-        console.log('PDF generated successfully');
         toast({ title: "PDF Exported", description: "PDF exported successfully!", variant: "default" });
       } else {
         toast({ title: "Export Failed", description: "PDF was not generated for unknown reasons.", variant: "destructive" });
       }
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('[Export PDF] Error generating PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({ title: "Failed to export PDF", description: errorMessage, variant: "destructive" });
     } finally {
       setIsExporting(false);
+      toast({ title: "Export Complete", description: "Export attempt finished.", variant: "default" });
+      console.log('[Export PDF] Export process completed');
     }
   };
 
