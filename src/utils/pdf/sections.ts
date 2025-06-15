@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -262,10 +263,43 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     
     pdf.setTextColor(...COLORS.black);
     
-    // Simple discount handling - get the actual discount value from the form
-    const discountValue = Number(quotationData.discount) || 0;
+    // Debug logging to understand the discount issue
+    console.log('=== DISCOUNT DEBUG ===');
+    console.log('quotationData.discount:', quotationData.discount);
+    console.log('typeof quotationData.discount:', typeof quotationData.discount);
+    console.log('quotationData.discountType:', quotationData.discountType);
+    console.log('quotationData.subtotal:', quotationData.subtotal);
     
-    // Create discount label with the correct percentage
+    // Convert discount to proper number, handling potential string values
+    let discountValue: number;
+    if (typeof quotationData.discount === 'string') {
+      // Remove any non-numeric characters and convert
+      discountValue = parseFloat(quotationData.discount.replace(/[^\d.]/g, '')) || 0;
+    } else {
+      discountValue = Number(quotationData.discount) || 0;
+    }
+    
+    console.log('Parsed discountValue:', discountValue);
+    
+    // If it's a percentage discount and the value seems unreasonably high, 
+    // it might be stored in a different format (like basis points)
+    if (quotationData.discountType === 'percentage' && discountValue > 100) {
+      console.log('Discount value seems too high, checking for format issues...');
+      // Check if it might be in basis points (1% = 100 basis points)
+      if (discountValue >= 1000) {
+        discountValue = discountValue / 100; // Convert from basis points to percentage
+        console.log('Converted from basis points to percentage:', discountValue);
+      }
+    }
+    
+    // For percentage, ensure it's reasonable (0-100%)
+    if (quotationData.discountType === 'percentage') {
+      discountValue = Math.min(Math.max(discountValue, 0), 100);
+    }
+    
+    console.log('Final discountValue used:', discountValue);
+    
+    // Create discount label
     const discountLabel = quotationData.discountType === 'percentage' 
       ? `Discount (${discountValue}%)` 
       : 'Discount';
@@ -277,6 +311,9 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     } else {
       discountAmount = discountValue;
     }
+    
+    console.log('Calculated discountAmount:', discountAmount);
+    console.log('==================');
     
     pdf.text(discountLabel, labelStartX + 2, currentY + 6);
     
@@ -322,7 +359,7 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   // Right-align the total value
   const totalFormatted = quotationData.total.toLocaleString('en-US', { 
-    minimumFractionDigits: 2, 
+    minimizedFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
   const totalText = quotationData.currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
