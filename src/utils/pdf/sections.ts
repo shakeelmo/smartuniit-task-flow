@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -241,12 +242,12 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX + 2, currentY + 6);
   
-  // Right-align the subtotal value
+  // Right-align the subtotal value - fix currency symbol handling
   const subtotalFormatted = quotationData.subtotal.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
-  const subtotalText = `${currencyInfo.symbol} ${subtotalFormatted}`;
+  const subtotalText = quotationData.currency === 'SAR' ? `${subtotalFormatted} SR` : `$${subtotalFormatted}`;
   const subtotalWidth = pdf.getTextWidth(subtotalText);
   const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - 2;
   pdf.text(subtotalText, subtotalX, currentY + 6);
@@ -260,12 +261,12 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setTextColor(...COLORS.black);
   pdf.text('VAT 15%', labelStartX + 2, currentY + 6);
   
-  // Right-align the VAT value
+  // Right-align the VAT value - fix currency symbol handling
   const vatFormatted = quotationData.vat.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
-  const vatText = `${currencyInfo.symbol} ${vatFormatted}`;
+  const vatText = quotationData.currency === 'SAR' ? `${vatFormatted} SR` : `$${vatFormatted}`;
   const vatWidth = pdf.getTextWidth(vatText);
   const vatX = valueStartX + valueColumnWidth - vatWidth - 2;
   pdf.text(vatText, vatX, currentY + 6);
@@ -280,12 +281,12 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setFont('helvetica', 'bold');
   pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX + 2, currentY + 6);
   
-  // Right-align the total value
+  // Right-align the total value - fix currency symbol handling
   const totalFormatted = quotationData.total.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
-  const totalText = `${currencyInfo.symbol} ${totalFormatted}`;
+  const totalText = quotationData.currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = valueStartX + valueColumnWidth - totalWidth - 2;
   pdf.text(totalText, totalX, currentY + 6);
