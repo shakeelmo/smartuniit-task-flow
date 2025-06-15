@@ -326,7 +326,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
               {calculateDiscountAmount() > 0 && (
                 <div className="flex justify-between text-yellow-600">
                   <span>Discount / الخصم:</span>
-                  <span className="font-medium">- {getCurrencySymbol()} {calculateDiscountAmount().toLocaleString()}</span>
+                  <span className="font-medium">{getCurrencySymbol()} {calculateDiscountAmount().toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between">

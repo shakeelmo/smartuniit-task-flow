@@ -319,7 +319,8 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
               {calculateDiscountAmount() > 0 && (
                 <div className="flex justify-between text-yellow-600">
                   <span>Discount / الخصم:</span>
-                  <span className="font-medium">- {getCurrencySymbol()} {calculateDiscountAmount().toLocaleString()}</span>
+                  {/* Removed the negative sign here */}
+                  <span className="font-medium">{getCurrencySymbol()} {calculateDiscountAmount().toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between">
