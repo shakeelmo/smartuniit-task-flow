@@ -5,10 +5,14 @@ import { Plus, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import QuotationsList from './quotations/QuotationsList';
 import CreateQuotationDialog from './quotations/CreateQuotationDialog';
+import EditQuotationDialog from './quotations/EditQuotationDialog';
 import { useToast } from '@/hooks/use-toast';
+import { QuotationData } from '@/utils/pdfExport';
 
 const QuotationManagement = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingQuotation, setEditingQuotation] = useState<QuotationData | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const { toast } = useToast();
@@ -17,11 +21,25 @@ const QuotationManagement = () => {
     setShowCreateDialog(true);
   };
 
+  const handleEditQuotation = (quotation: QuotationData) => {
+    setEditingQuotation(quotation);
+    setShowEditDialog(true);
+  };
+
   const handleQuotationCreated = () => {
     setShowCreateDialog(false);
     toast({
       title: "Quotation Created",
       description: "New quotation has been created successfully.",
+    });
+  };
+
+  const handleQuotationUpdated = () => {
+    setShowEditDialog(false);
+    setEditingQuotation(null);
+    toast({
+      title: "Quotation Updated",
+      description: "Quotation has been updated successfully.",
     });
   };
 
@@ -68,12 +86,23 @@ const QuotationManagement = () => {
         </div>
       </div>
 
-      <QuotationsList searchTerm={searchTerm} statusFilter={statusFilter} />
+      <QuotationsList 
+        searchTerm={searchTerm} 
+        statusFilter={statusFilter} 
+        onEditQuotation={handleEditQuotation}
+      />
 
       <CreateQuotationDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onQuotationCreated={handleQuotationCreated}
+      />
+
+      <EditQuotationDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onQuotationUpdated={handleQuotationUpdated}
+        quotationData={editingQuotation}
       />
     </div>
   );

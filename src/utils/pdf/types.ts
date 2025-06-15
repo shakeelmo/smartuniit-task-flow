@@ -1,3 +1,4 @@
+
 export interface QuotationData {
   number: string;
   date: string;
@@ -18,6 +19,8 @@ export interface QuotationData {
     unitPrice: number;
   }>;
   subtotal: number;
+  discount: number;
+  discountType: 'percentage' | 'fixed';
   vat: number;
   total: number;
   currency: 'SAR' | 'USD';

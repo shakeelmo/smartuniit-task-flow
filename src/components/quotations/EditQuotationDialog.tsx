@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,14 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Minus, Save, FileText, Percent } from 'lucide-react';
 import CustomerForm from './CustomerForm';
 import LineItemsTable from './LineItemsTable';
-import { generateQuotationPDF } from '@/utils/pdfExport';
+import { generateQuotationPDF, QuotationData } from '@/utils/pdfExport';
 import { useToast } from '@/hooks/use-toast';
-
-interface CreateQuotationDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onQuotationCreated: () => void;
-}
 
 interface LineItem {
   id: string;
@@ -35,7 +30,14 @@ interface Customer {
   vatNumber: string;
 }
 
-const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: CreateQuotationDialogProps) => {
+interface EditQuotationDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onQuotationUpdated: () => void;
+  quotationData?: QuotationData | null;
+}
+
+const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotationData }: EditQuotationDialogProps) => {
   const [customer, setCustomer] = useState<Customer>({
     companyName: '',
     contactName: '',
@@ -52,17 +54,38 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   const [notes, setNotes] = useState('');
   const [validUntil, setValidUntil] = useState('');
   const [currency, setCurrency] = useState<'SAR' | 'USD'>('SAR');
+  const [discount, setDiscount] = useState(0);
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [customTerms, setCustomTerms] = useState(`• Payment: 100%
 • All prices in Saudi Riyals
 • Delivery– 1 Week after PO
 • Offers will be confirmed based on your purchase order.
 • Product availability and prices are subject to change without notice`);
-  const [discount, setDiscount] = useState(0);
-  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
-  const VAT_RATE = 0.15; // 15% VAT rate for Saudi Arabia
+  const VAT_RATE = 0.15;
+
+  // Load existing quotation data when dialog opens
+  useEffect(() => {
+    if (quotationData && open) {
+      setCustomer(quotationData.customer);
+      setLineItems(quotationData.lineItems.map(item => ({
+        id: item.id || Date.now().toString(),
+        service: item.service,
+        description: item.description,
+        partNumber: item.partNumber || '',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice
+      })));
+      setNotes(quotationData.notes);
+      setValidUntil(quotationData.validUntil.split('T')[0]); // Convert to date format
+      setCurrency(quotationData.currency);
+      setDiscount(quotationData.discount || 0);
+      setDiscountType(quotationData.discountType || 'percentage');
+      setCustomTerms(quotationData.customTerms);
+    }
+  }, [quotationData, open]);
 
   const calculateSubtotal = () => {
     return lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
@@ -92,10 +115,6 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
     return currency === 'SAR' ? '﷼' : '$';
   };
 
-  const getCurrencyName = () => {
-    return currency === 'SAR' ? 'Saudi Riyals' : 'US Dollars';
-  };
-
   const addLineItem = () => {
     const newItem: LineItem = {
       id: Date.now().toString(),
@@ -120,13 +139,8 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
     ));
   };
 
-  const generateQuoteNumber = () => {
-    return `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
-  };
-
   const handleSave = () => {
-    // In real app, this would save to database
-    console.log('Saving quotation:', {
+    console.log('Updating quotation:', {
       customer,
       lineItems,
       subtotal: calculateSubtotal(),
@@ -139,37 +153,25 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       notes,
       validUntil
     });
-    onQuotationCreated();
+    onQuotationUpdated();
   };
 
   const handleExportPDF = async () => {
-    console.log('[Export PDF] Button clicked');
-
-    toast({ title: "Export button clicked", description: "Starting PDF generation attempt.", variant: "default" });
-
     if (!customer.companyName.trim()) {
       toast({ title: "Missing Info", description: "Please enter a company name before exporting PDF", variant: "destructive" });
-      console.log('[Export PDF] Missing company name!');
       return;
     }
 
     if (lineItems.length === 0 || lineItems.every(item => !item.service.trim())) {
       toast({ title: "No Services", description: "Please add at least one service item before exporting PDF", variant: "destructive" });
-      console.log('[Export PDF] No line items!');
-      return;
-    }
-
-    if (calculateTotal() === 0) {
-      toast({ title: "Total is zero", description: "Please enter item(s) with a quantity and unit price to calculate total before export.", variant: "destructive" });
-      console.log('[Export PDF] Total is zero!');
       return;
     }
 
     setIsExporting(true);
 
-    const quotationData = {
-      number: generateQuoteNumber(),
-      date: new Date().toISOString(),
+    const quotationDataForPDF: QuotationData = {
+      number: quotationData?.number || `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
+      date: quotationData?.date || new Date().toISOString(),
       validUntil: validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       customer,
       lineItems,
@@ -183,41 +185,32 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       notes
     };
 
-    console.log('[Export PDF] Calling generateQuotationPDF', quotationData);
-
-    toast({ title: "Calling PDF exporter", description: "generateQuotationPDF will be invoked", variant: "default" });
-
     try {
-      const success = await generateQuotationPDF(quotationData);
-      console.log('[Export PDF] generateQuotationPDF returned:', success);
-
+      const success = await generateQuotationPDF(quotationDataForPDF);
       if (success) {
         toast({ title: "PDF Exported", description: "PDF exported successfully!", variant: "default" });
-      } else {
-        toast({ title: "Export Failed", description: "PDF was not generated for unknown reasons.", variant: "destructive" });
       }
     } catch (error) {
-      console.error('[Export PDF] Error generating PDF:', error);
+      console.error('Error generating PDF:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({ title: "Failed to export PDF", description: errorMessage, variant: "destructive" });
     } finally {
       setIsExporting(false);
-      toast({ title: "Export Complete", description: "Export attempt finished.", variant: "default" });
-      console.log('[Export PDF] Export process completed');
     }
   };
+
+  const isEditMode = !!quotationData;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            Create New Quotation / إنشاء عرض سعر جديد
+            {isEditMode ? 'Edit Quotation' : 'Create New Quotation'} / {isEditMode ? 'تعديل عرض السعر' : 'إنشاء عرض سعر جديد'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Customer Information */}
           <CustomerForm customer={customer} setCustomer={setCustomer} />
 
           {/* Quote Details */}
@@ -249,7 +242,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
                 <Label htmlFor="quoteNumber">Quote Number / رقم العرض</Label>
                 <Input
                   id="quoteNumber"
-                  value={generateQuoteNumber()}
+                  value={quotationData?.number || `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`}
                   disabled
                   className="bg-gray-100"
                 />
@@ -376,7 +369,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
             </Button>
             <Button onClick={handleSave} className="bg-smart-orange hover:bg-smart-orange/90">
               <Save className="h-4 w-4 mr-2" />
-              Save Quotation
+              {isEditMode ? 'Update Quotation' : 'Save Quotation'}
             </Button>
             <Button
               onClick={handleExportPDF}
@@ -395,4 +388,4 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   );
 };
 
-export default CreateQuotationDialog;
+export default EditQuotationDialog;

@@ -232,7 +232,7 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   }
   const valueColumnWidth = columnWidths[valueColumnIndex];
 
-  // Total Price row
+  // Subtotal row
   pdf.setFillColor(...COLORS.tableHeaderBlue);
   pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
   
@@ -240,7 +240,7 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
   
-  pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX + 2, currentY + 6);
+  pdf.text(`Subtotal in ${currencyInfo.name}`, labelStartX + 2, currentY + 6);
   
   // Right-align the subtotal value - fix currency symbol handling
   const subtotalFormatted = quotationData.subtotal.toLocaleString('en-US', { 
@@ -253,6 +253,30 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.text(subtotalText, subtotalX, currentY + 6);
 
   currentY += PDF_CONFIG.rowHeight;
+
+  // Discount row (if applicable)
+  if (quotationData.discount && quotationData.discount > 0) {
+    pdf.setFillColor(...COLORS.yellow);
+    pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
+    
+    pdf.setTextColor(...COLORS.black);
+    const discountLabel = quotationData.discountType === 'percentage' 
+      ? `Discount (${quotationData.discount}%)` 
+      : 'Discount';
+    pdf.text(discountLabel, labelStartX + 2, currentY + 6);
+    
+    // Right-align the discount value
+    const discountFormatted = quotationData.discount.toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+    const discountText = quotationData.currency === 'SAR' ? `-${discountFormatted} SR` : `-$${discountFormatted}`;
+    const discountWidth = pdf.getTextWidth(discountText);
+    const discountX = valueStartX + valueColumnWidth - discountWidth - 2;
+    pdf.text(discountText, discountX, currentY + 6);
+
+    currentY += PDF_CONFIG.rowHeight;
+  }
 
   // VAT 15% row
   pdf.setFillColor(...COLORS.yellow);
