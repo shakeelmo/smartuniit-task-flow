@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -262,30 +263,65 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     
     pdf.setTextColor(...COLORS.black);
     
-    // Debug logging to understand the discount values
-    console.log('Discount Debug:', {
-      discount: quotationData.discount,
-      discountType: quotationData.discountType,
-      subtotal: quotationData.subtotal
-    });
+    // Comprehensive debug logging to understand all discount values
+    console.log('=== DISCOUNT DEBUG INFO ===');
+    console.log('Raw quotationData.discount:', quotationData.discount);
+    console.log('Type of quotationData.discount:', typeof quotationData.discount);
+    console.log('quotationData.discountType:', quotationData.discountType);
+    console.log('quotationData.subtotal:', quotationData.subtotal);
+    console.log('JSON.stringify of full quotationData:', JSON.stringify(quotationData, null, 2));
+    console.log('========================');
     
-    // Ensure discount is treated as a proper number and percentage
-    const discountValue = Number(quotationData.discount) || 0;
+    // Ensure we're working with clean number values
+    const rawDiscountValue = quotationData.discount;
+    let cleanDiscountValue: number;
     
-    // Create discount label - always show the actual percentage entered
+    // Handle different possible formats of the discount value
+    if (typeof rawDiscountValue === 'string') {
+      // Remove any non-numeric characters except decimal point
+      const cleanedString = rawDiscountValue.replace(/[^\d.]/g, '');
+      cleanDiscountValue = parseFloat(cleanedString) || 0;
+    } else if (typeof rawDiscountValue === 'number') {
+      cleanDiscountValue = rawDiscountValue;
+    } else {
+      cleanDiscountValue = 0;
+    }
+    
+    console.log('Cleaned discount value:', cleanDiscountValue);
+    
+    // For percentage discounts, ensure the value makes sense (should be between 0-100)
+    if (quotationData.discountType === 'percentage') {
+      // If the value seems too large (like 200000), it might be in wrong format
+      if (cleanDiscountValue > 100) {
+        console.warn('Discount percentage seems too large:', cleanDiscountValue, 'Attempting to fix...');
+        // Try to convert from basis points or other formats
+        if (cleanDiscountValue > 10000) {
+          cleanDiscountValue = cleanDiscountValue / 10000; // Convert from basis points
+        } else if (cleanDiscountValue > 1000) {
+          cleanDiscountValue = cleanDiscountValue / 1000;
+        } else if (cleanDiscountValue > 100) {
+          cleanDiscountValue = cleanDiscountValue / 100;
+        }
+        console.log('Adjusted discount percentage:', cleanDiscountValue);
+      }
+    }
+    
+    // Create discount label - show the cleaned percentage value
     const discountLabel = quotationData.discountType === 'percentage' 
-      ? `Discount (${discountValue}%)` 
+      ? `Discount (${cleanDiscountValue}%)` 
       : 'Discount';
     
     // Calculate the actual discount amount for the value display
     let discountAmount: number;
     if (quotationData.discountType === 'percentage') {
-      // Convert percentage to decimal (e.g., 10% becomes 0.10)
-      discountAmount = quotationData.subtotal * (discountValue / 100);
+      // Convert percentage to decimal (e.g., 1% becomes 0.01)
+      discountAmount = quotationData.subtotal * (cleanDiscountValue / 100);
     } else {
       // Fixed amount discount
-      discountAmount = discountValue;
+      discountAmount = cleanDiscountValue;
     }
+    
+    console.log('Final discount amount calculated:', discountAmount);
     
     pdf.text(discountLabel, labelStartX + 2, currentY + 6);
     
