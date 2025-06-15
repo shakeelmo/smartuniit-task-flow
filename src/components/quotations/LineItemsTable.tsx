@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Minus } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 
 interface LineItem {
   id: string;
@@ -20,7 +20,11 @@ interface LineItemsTableProps {
 }
 
 const LineItemsTable = ({ lineItems, updateLineItem, removeLineItem }: LineItemsTableProps) => {
-  const services = [
+  const [customServices, setCustomServices] = useState<string[]>([]);
+  const [newServiceInput, setNewServiceInput] = useState('');
+  const [showAddService, setShowAddService] = useState<string | null>(null);
+
+  const predefinedServices = [
     // Web & Software Development
     'Web Development / تطوير المواقع',
     'E-commerce Development / تطوير المتاجر الإلكترونية',
@@ -81,6 +85,28 @@ const LineItemsTable = ({ lineItems, updateLineItem, removeLineItem }: LineItems
     'Technical Documentation / التوثيق التقني'
   ];
 
+  const allServices = [...predefinedServices, ...customServices];
+
+  const handleAddCustomService = (itemId: string) => {
+    if (newServiceInput.trim()) {
+      const newService = newServiceInput.trim();
+      if (!allServices.includes(newService)) {
+        setCustomServices(prev => [...prev, newService]);
+      }
+      updateLineItem(itemId, 'service', newService);
+      setNewServiceInput('');
+      setShowAddService(null);
+    }
+  };
+
+  const handleServiceChange = (itemId: string, value: string) => {
+    if (value === 'ADD_CUSTOM') {
+      setShowAddService(itemId);
+      return;
+    }
+    updateLineItem(itemId, 'service', value);
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full border border-gray-200 rounded-lg">
@@ -108,18 +134,57 @@ const LineItemsTable = ({ lineItems, updateLineItem, removeLineItem }: LineItems
           {lineItems.map((item, index) => (
             <tr key={item.id} className="border-b border-gray-100">
               <td className="p-3">
-                <select
-                  value={item.service}
-                  onChange={(e) => updateLineItem(item.id, 'service', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                >
-                  <option value="">Select service...</option>
-                  {services.map((service) => (
-                    <option key={service} value={service}>
-                      {service}
+                {showAddService === item.id ? (
+                  <div className="space-y-2">
+                    <Input
+                      value={newServiceInput}
+                      onChange={(e) => setNewServiceInput(e.target.value)}
+                      placeholder="Enter custom service name..."
+                      className="text-sm"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddCustomService(item.id);
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddCustomService(item.id)}
+                        className="bg-smart-orange hover:bg-smart-orange/90"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setShowAddService(null);
+                          setNewServiceInput('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <select
+                    value={item.service}
+                    onChange={(e) => handleServiceChange(item.id, e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="">Select service...</option>
+                    {allServices.map((service) => (
+                      <option key={service} value={service}>
+                        {service}
+                      </option>
+                    ))}
+                    <option value="ADD_CUSTOM" className="font-semibold text-smart-orange">
+                      + Add Custom Service
                     </option>
-                  ))}
-                </select>
+                  </select>
+                )}
               </td>
               <td className="p-3">
                 <Textarea
@@ -168,6 +233,24 @@ const LineItemsTable = ({ lineItems, updateLineItem, removeLineItem }: LineItems
           ))}
         </tbody>
       </table>
+      
+      {customServices.length > 0 && (
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <h4 className="text-sm font-semibold text-blue-800 mb-2">
+            Custom Services Added / الخدمات المخصصة المضافة:
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {customServices.map((service, index) => (
+              <span
+                key={index}
+                className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs"
+              >
+                {service}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
