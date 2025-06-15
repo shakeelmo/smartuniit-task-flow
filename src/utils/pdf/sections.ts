@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -154,10 +153,12 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     // S# column - left aligned
     pdf.text((index + 1).toString(), columnPositions[0] + 2, currentY + 6);
     
-    // Item column - left aligned with truncation
+    // Item column - left aligned with proper text handling
     const maxItemLength = hasPartNumbers ? 18 : 28;
-    const itemText = item.service.length > maxItemLength ? 
-      item.service.substring(0, maxItemLength) + '...' : item.service;
+    // Clean the service text to avoid encoding issues
+    const cleanServiceText = String(item.service || '').replace(/[^\x20-\x7E]/g, '');
+    const itemText = cleanServiceText.length > maxItemLength ? 
+      cleanServiceText.substring(0, maxItemLength) + '...' : cleanServiceText;
     pdf.text(itemText, columnPositions[1] + 2, currentY + 6);
     
     let colIndex = 2;
@@ -261,18 +262,18 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     
     pdf.setTextColor(...COLORS.black);
     
-    // Calculate the actual discount amount based on the discount type
-    let discountAmount: number;
-    let discountLabel: string;
+    // For discount display, we show the percentage as entered by the user
+    const discountDisplayValue = quotationData.discount;
+    const discountLabel = quotationData.discountType === 'percentage' 
+      ? `Discount (${discountDisplayValue}%)` 
+      : 'Discount';
     
+    // Calculate the actual discount amount for the value display
+    let discountAmount: number;
     if (quotationData.discountType === 'percentage') {
-      // For percentage discount, calculate the amount from the subtotal
       discountAmount = quotationData.subtotal * (quotationData.discount / 100);
-      discountLabel = `Discount (${quotationData.discount}%)`;
     } else {
-      // For fixed discount, use the discount value directly
       discountAmount = quotationData.discount;
-      discountLabel = 'Discount';
     }
     
     pdf.text(discountLabel, labelStartX + 2, currentY + 6);
