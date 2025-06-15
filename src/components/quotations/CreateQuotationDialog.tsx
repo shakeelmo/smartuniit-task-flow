@@ -10,6 +10,9 @@ import CustomerForm from './CustomerForm';
 import LineItemsTable from './LineItemsTable';
 import { generateQuotationPDF } from '@/utils/pdfExport';
 import { useToast } from '@/hooks/use-toast';
+import DiscountSection from './DiscountSection';
+import TotalsSummary from './TotalsSummary';
+import QuoteDetailsGrid from './QuoteDetailsGrid';
 
 interface CreateQuotationDialogProps {
   open: boolean;
@@ -221,41 +224,13 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
           <CustomerForm customer={customer} setCustomer={setCustomer} />
 
           {/* Quote Details */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4">Quote Details / تفاصيل العرض</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="currency">Currency / العملة</Label>
-                <Select value={currency} onValueChange={(value: 'SAR' | 'USD') => setCurrency(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SAR">SAR (﷼) - Saudi Riyal</SelectItem>
-                    <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="validUntil">Valid Until / صالح حتى</Label>
-                <Input
-                  id="validUntil"
-                  type="date"
-                  value={validUntil}
-                  onChange={(e) => setValidUntil(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="quoteNumber">Quote Number / رقم العرض</Label>
-                <Input
-                  id="quoteNumber"
-                  value={generateQuoteNumber()}
-                  disabled
-                  className="bg-gray-100"
-                />
-              </div>
-            </div>
-          </div>
+          <QuoteDetailsGrid
+            currency={currency}
+            setCurrency={setCurrency}
+            validUntil={validUntil}
+            setValidUntil={setValidUntil}
+            quoteNumber={generateQuoteNumber()}
+          />
 
           {/* Line Items */}
           <div>
@@ -274,75 +249,25 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
           </div>
 
           {/* Discount Section */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Percent className="h-5 w-5 mr-2" />
-              Discount / الخصم
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="discountType">Discount Type / نوع الخصم</Label>
-                <Select value={discountType} onValueChange={(value: 'percentage' | 'fixed') => setDiscountType(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage (%) / نسبة مئوية</SelectItem>
-                    <SelectItem value="fixed">Fixed Amount / مبلغ ثابت</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="discount">
-                  {discountType === 'percentage' ? 'Discount (%) / نسبة الخصم' : `Discount Amount (${currency}) / مبلغ الخصم`}
-                </Label>
-                <Input
-                  id="discount"
-                  type="number"
-                  value={discount}
-                  onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                  min="0"
-                  max={discountType === 'percentage' ? 100 : undefined}
-                  step={discountType === 'percentage' ? 0.1 : 0.01}
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex items-end">
-                <div className="text-sm text-gray-600">
-                  <div>Discount Amount: {getCurrencySymbol()} {calculateDiscountAmount().toLocaleString()}</div>
-                  <div>مبلغ الخصم</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <DiscountSection
+            discountType={discountType}
+            setDiscountType={setDiscountType}
+            discount={discount}
+            setDiscount={setDiscount}
+            currency={currency}
+            calculateDiscountAmount={calculateDiscountAmount}
+            getCurrencySymbol={getCurrencySymbol}
+          />
 
           {/* Totals */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Subtotal / المجموع الفرعي:</span>
-                <span className="font-medium">{getCurrencySymbol()} {calculateSubtotal().toLocaleString()}</span>
-              </div>
-              {calculateDiscountAmount() > 0 && (
-                <div className="flex justify-between text-yellow-600">
-                  <span>Discount / الخصم:</span>
-                  <span className="font-medium">{getCurrencySymbol()} {calculateDiscountAmount().toLocaleString()}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span>After Discount / بعد الخصم:</span>
-                <span className="font-medium">{getCurrencySymbol()} {calculateAfterDiscount().toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>VAT (15%) / ضريبة القيمة المضافة:</span>
-                <span className="font-medium">{getCurrencySymbol()} {calculateVAT().toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <span>Total / المجموع الكلي:</span>
-                <span>{getCurrencySymbol()} {calculateTotal().toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+          <TotalsSummary
+            calculateSubtotal={calculateSubtotal}
+            calculateDiscountAmount={calculateDiscountAmount}
+            calculateAfterDiscount={calculateAfterDiscount}
+            calculateVAT={calculateVAT}
+            calculateTotal={calculateTotal}
+            getCurrencySymbol={getCurrencySymbol}
+          />
 
           {/* Terms and Conditions */}
           <div>
