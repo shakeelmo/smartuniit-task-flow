@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -259,13 +260,25 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
     
     pdf.setTextColor(...COLORS.black);
-    const discountLabel = quotationData.discountType === 'percentage' 
-      ? `Discount (${quotationData.discount}%)` 
-      : 'Discount';
+    
+    // Calculate the actual discount amount based on the discount type
+    let discountAmount: number;
+    let discountLabel: string;
+    
+    if (quotationData.discountType === 'percentage') {
+      // For percentage discount, calculate the amount from the subtotal
+      discountAmount = quotationData.subtotal * (quotationData.discount / 100);
+      discountLabel = `Discount (${quotationData.discount}%)`;
+    } else {
+      // For fixed discount, use the discount value directly
+      discountAmount = quotationData.discount;
+      discountLabel = 'Discount';
+    }
+    
     pdf.text(discountLabel, labelStartX + 2, currentY + 6);
     
-    // Right-align the discount value
-    const discountFormatted = quotationData.discount.toLocaleString('en-US', { 
+    // Right-align the discount value (show as negative)
+    const discountFormatted = discountAmount.toLocaleString('en-US', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
