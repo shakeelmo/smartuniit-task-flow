@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import EditProfileDialog from '@/components/EditProfileDialog';
 import { 
   Plus, 
   Search, 
@@ -30,6 +31,8 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,6 +60,15 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditProfile = (profile: Profile) => {
+    setEditingProfile(profile);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleProfileUpdated = () => {
+    fetchProfiles(); // Refresh the profiles list
   };
 
   const filteredProfiles = profiles.filter(profile => {
@@ -154,7 +166,12 @@ const UserManagement = () => {
                 </span>
               </div>
 
-              <Button variant="outline" size="sm" className="w-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => handleEditProfile(profile)}
+              >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Profile
               </Button>
@@ -168,6 +185,16 @@ const UserManagement = () => {
           <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">No users found</p>
         </div>
+      )}
+
+      {/* Edit Profile Dialog */}
+      {editingProfile && (
+        <EditProfileDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          profile={editingProfile}
+          onProfileUpdated={handleProfileUpdated}
+        />
       )}
     </div>
   );
