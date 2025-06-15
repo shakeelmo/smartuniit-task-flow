@@ -12,6 +12,7 @@ export interface QuotationData {
     vatNumber: string;
   };
   lineItems: Array<{
+    id?: string;
     service: string;
     description: string;
     partNumber?: string;

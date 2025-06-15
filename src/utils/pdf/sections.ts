@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -102,10 +101,10 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
   // Calculate available table width with proper margins
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
   
-  // Optimized column widths to fit within A4 page width (210mm - 30mm margins = 180mm)
+  // Fixed column widths that properly align with the content
   const columnWidths = hasPartNumbers 
-    ? [10, 45, 15, 12, 38, 45] // S#, Item, Part#, Qty, Unit Price, Total - Total: 165mm
-    : [10, 62, 15, 38, 45]; // S#, Item, Qty, Unit Price, Total - Total: 170mm
+    ? [12, 48, 20, 15, 35, 40] // S#, Item, Part#, Qty, Unit Price, Total - Total: 170mm
+    : [12, 70, 18, 35, 40]; // S#, Item, Qty, Unit Price, Total - Total: 175mm
 
   // Calculate column positions
   const columnPositions: number[] = [];
@@ -155,7 +154,7 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     pdf.text((index + 1).toString(), columnPositions[0] + 2, currentY + 6);
     
     // Item column - left aligned with truncation
-    const maxItemLength = hasPartNumbers ? 16 : 22;
+    const maxItemLength = hasPartNumbers ? 18 : 28;
     const itemText = item.service.length > maxItemLength ? 
       item.service.substring(0, maxItemLength) + '...' : item.service;
     pdf.text(itemText, columnPositions[1] + 2, currentY + 6);
@@ -164,7 +163,7 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     if (hasPartNumbers) {
       // Part Number column - left aligned
       const partText = item.partNumber || '-';
-      const maxPartLength = 6;
+      const maxPartLength = 8;
       const truncatedPart = partText.length > maxPartLength ? 
         partText.substring(0, maxPartLength) + '...' : partText;
       pdf.text(truncatedPart, columnPositions[2] + 2, currentY + 6);
@@ -215,8 +214,8 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   // Use same column widths as table for consistency
   const columnWidths = hasPartNumbers 
-    ? [10, 45, 15, 12, 38, 45]
-    : [10, 62, 15, 38, 45];
+    ? [12, 48, 20, 15, 35, 40]
+    : [12, 70, 18, 35, 40];
 
   // Calculate positions for totals section - align with table columns
   let labelStartX = PDF_CONFIG.pageMargin;
@@ -242,7 +241,7 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   pdf.text(`Subtotal in ${currencyInfo.name}`, labelStartX + 2, currentY + 6);
   
-  // Right-align the subtotal value - fix currency symbol handling
+  // Right-align the subtotal value
   const subtotalFormatted = quotationData.subtotal.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
@@ -285,7 +284,7 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setTextColor(...COLORS.black);
   pdf.text('VAT 15%', labelStartX + 2, currentY + 6);
   
-  // Right-align the VAT value - fix currency symbol handling
+  // Right-align the VAT value
   const vatFormatted = quotationData.vat.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
@@ -305,7 +304,7 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setFont('helvetica', 'bold');
   pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX + 2, currentY + 6);
   
-  // Right-align the total value - fix currency symbol handling
+  // Right-align the total value
   const totalFormatted = quotationData.total.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
