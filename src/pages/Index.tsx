@@ -1,94 +1,96 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
-import Sidebar from '@/components/Sidebar';
-import Dashboard from '@/components/Dashboard';
-import ProjectManagement from '@/components/ProjectManagement';
-import TaskManagement from '@/components/TaskManagement';
-import UserManagement from '@/components/UserManagement';
-import QuotationManagement from '@/components/QuotationManagement';
-import InvoiceManagement from '@/components/InvoiceManagement';
+
+import { useState } from "react";
+import Sidebar from "@/components/Sidebar";
+import Dashboard from "@/components/Dashboard";
+import ProjectManagement from "@/components/ProjectManagement";
+import TaskManagement from "@/components/TaskManagement";
+import UserManagement from "@/components/UserManagement";
+import QuotationManagement from "@/components/QuotationManagement";
+import InvoiceManagement from "@/components/InvoiceManagement";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 const Index = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const { user, signOut } = useAuth();
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+  const handleLogout = async () => {
+    await signOut();
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to SmartUni IT</h1>
+          <p className="text-gray-600 mb-8">Please sign in to access your dashboard</p>
+          <Button 
+            onClick={() => window.location.href = '/auth'}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
+    switch (activeSection) {
+      case "dashboard":
         return <Dashboard />;
-      case 'projects':
+      case "projects":
         return <ProjectManagement />;
-      case 'tasks':
+      case "tasks":
         return <TaskManagement />;
-      case 'quotations':
-        return <QuotationManagement />;
-      case 'invoices':
-        return <InvoiceManagement />;
-      case 'users':
+      case "users":
         return <UserManagement />;
-      case 'settings':
-        return (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="text-gray-600">Application settings and configuration</p>
-          </div>
-        );
+      case "quotations":
+        return <QuotationManagement />;
+      case "invoices":
+        return <InvoiceManagement />;
       default:
         return <Dashboard />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex w-full">
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        toggleSidebar={toggleSidebar}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
-      
-      <div className="flex-1 flex flex-col lg:ml-0">
-        {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-3 lg:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleSidebar}
-                className="lg:hidden"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-              <div className="hidden lg:block">
-                <h2 className="text-lg font-semibold text-gray-900">SmartUniit Project Manager</h2>
-                <p className="text-sm text-gray-600">Smart Universe Communication and Information Technology</p>
+    <ProtectedRoute>
+      <div className="flex h-screen bg-gray-100">
+        <Sidebar 
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
+        />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-semibold text-gray-900">
+                SmartUni IT Management System
+              </h1>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600">
+                  Welcome, {user.user_metadata?.first_name || user.email}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
+                </Button>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-3">
-              <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-gray-900">John Doe</p>
-                <p className="text-xs text-gray-500">Administrator</p>
-              </div>
-              <div className="w-8 h-8 bg-smart-blue rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">JD</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          {renderContent()}
-        </main>
+          </header>
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+            {renderContent()}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 
