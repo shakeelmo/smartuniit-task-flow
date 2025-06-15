@@ -19,7 +19,7 @@ interface InvoiceCustomerFormProps {
   setCustomer: (customer: Customer) => void;
 }
 
-const InvoiceCustomerForm = ({ customer, setCustomer }: Invoice CustomerFormProps) => {
+const InvoiceCustomerForm = ({ customer, setCustomer }: InvoiceCustomerFormProps) => {
   const updateCustomer = (field: keyof Customer, value: string) => {
     setCustomer({ ...customer, [field]: value });
   };
