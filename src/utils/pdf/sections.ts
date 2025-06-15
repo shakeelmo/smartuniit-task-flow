@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -262,10 +263,9 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     
     pdf.setTextColor(...COLORS.black);
     
-    // For discount display, we show the percentage as entered by the user
-    const discountDisplayValue = quotationData.discount;
+    // Fixed discount display logic
     const discountLabel = quotationData.discountType === 'percentage' 
-      ? `Discount (${discountDisplayValue}%)` 
+      ? `Discount (${quotationData.discount}%)` 
       : 'Discount';
     
     // Calculate the actual discount amount for the value display
