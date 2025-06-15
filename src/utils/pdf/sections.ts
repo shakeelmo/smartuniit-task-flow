@@ -164,15 +164,18 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     pdf.text(item.quantity.toString(), qtyX, currentY + 6);
     currentX += adjustedColumnWidths[hasPartNumbers ? 3 : 2];
     
-    // Unit Price column - right aligned
-    const unitPriceText = item.unitPrice.toFixed(2);
-    const unitPriceX = currentX + adjustedColumnWidths[hasPartNumbers ? 4 : 3] - pdf.getTextWidth(unitPriceText) - 2;
+    // Unit Price column - right aligned with comma formatting
+    const unitPriceText = item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const unitPriceWidth = pdf.getTextWidth(unitPriceText);
+    const unitPriceX = currentX + adjustedColumnWidths[hasPartNumbers ? 4 : 3] - unitPriceWidth - 2;
     pdf.text(unitPriceText, unitPriceX, currentY + 6);
     currentX += adjustedColumnWidths[hasPartNumbers ? 4 : 3];
     
-    // Total Price column - right aligned
-    const totalText = (item.quantity * item.unitPrice).toFixed(2);
-    const totalX = currentX + adjustedColumnWidths[hasPartNumbers ? 5 : 4] - pdf.getTextWidth(totalText) - 2;
+    // Total Price column - right aligned with comma formatting
+    const totalValue = item.quantity * item.unitPrice;
+    const totalText = totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const totalWidth = pdf.getTextWidth(totalText);
+    const totalX = currentX + adjustedColumnWidths[hasPartNumbers ? 5 : 4] - totalWidth - 2;
     pdf.text(totalText, totalX, currentY + 6);
     
     currentY += PDF_CONFIG.rowHeight;
@@ -207,9 +210,11 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX, currentY + 6);
   
-  // Right-align the subtotal value
-  const subtotalText = `${currencyInfo.symbol} ${quotationData.subtotal.toFixed(2)}`;
-  const subtotalX = valueStartX + adjustedColumnWidths[hasPartNumbers ? 5 : 4] - pdf.getTextWidth(subtotalText) - 2;
+  // Right-align the subtotal value with comma formatting
+  const subtotalFormatted = quotationData.subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const subtotalText = `${currencyInfo.symbol} ${subtotalFormatted}`;
+  const subtotalWidth = pdf.getTextWidth(subtotalText);
+  const subtotalX = valueStartX + adjustedColumnWidths[hasPartNumbers ? 5 : 4] - subtotalWidth - 2;
   pdf.text(subtotalText, subtotalX, currentY + 6);
 
   currentY += PDF_CONFIG.rowHeight;
@@ -221,9 +226,11 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setTextColor(...COLORS.black);
   pdf.text('VAT 15%', labelStartX, currentY + 6);
   
-  // Right-align the VAT value
-  const vatText = `${currencyInfo.symbol} ${quotationData.vat.toFixed(2)}`;
-  const vatX = valueStartX + adjustedColumnWidths[hasPartNumbers ? 5 : 4] - pdf.getTextWidth(vatText) - 2;
+  // Right-align the VAT value with comma formatting
+  const vatFormatted = quotationData.vat.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const vatText = `${currencyInfo.symbol} ${vatFormatted}`;
+  const vatWidth = pdf.getTextWidth(vatText);
+  const vatX = valueStartX + adjustedColumnWidths[hasPartNumbers ? 5 : 4] - vatWidth - 2;
   pdf.text(vatText, vatX, currentY + 6);
 
   currentY += PDF_CONFIG.rowHeight;
@@ -236,9 +243,11 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setFont('helvetica', 'bold');
   pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX, currentY + 6);
   
-  // Right-align the total value
-  const totalText = `${currencyInfo.symbol} ${quotationData.total.toFixed(2)}`;
-  const totalX = valueStartX + adjustedColumnWidths[hasPartNumbers ? 5 : 4] - pdf.getTextWidth(totalText) - 2;
+  // Right-align the total value with comma formatting
+  const totalFormatted = quotationData.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const totalText = `${currencyInfo.symbol} ${totalFormatted}`;
+  const totalWidth = pdf.getTextWidth(totalText);
+  const totalX = valueStartX + adjustedColumnWidths[hasPartNumbers ? 5 : 4] - totalWidth - 2;
   pdf.text(totalText, totalX, currentY + 6);
 
   return currentY + 25;
