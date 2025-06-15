@@ -1,4 +1,3 @@
-
 export interface QuotationData {
   number: string;
   date: string;
@@ -14,6 +13,7 @@ export interface QuotationData {
   lineItems: Array<{
     service: string;
     description: string;
+    partNumber?: string;
     quantity: number;
     unitPrice: number;
   }>;

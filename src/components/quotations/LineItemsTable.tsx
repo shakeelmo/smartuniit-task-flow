@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ interface LineItem {
   id: string;
   service: string;
   description: string;
+  partNumber?: string;
   quantity: number;
   unitPrice: number;
 }
@@ -115,6 +115,9 @@ const LineItemsTable = ({ lineItems, updateLineItem, removeLineItem }: LineItems
             <th className="text-left p-3 border-b border-gray-200 min-w-[200px]">
               Service / الخدمة
             </th>
+            <th className="text-left p-3 border-b border-gray-200 min-w-[120px]">
+              Part Number / رقم الجزء
+            </th>
             <th className="text-left p-3 border-b border-gray-200 min-w-[250px]">
               Description / الوصف
             </th>
@@ -185,6 +188,14 @@ const LineItemsTable = ({ lineItems, updateLineItem, removeLineItem }: LineItems
                     </option>
                   </select>
                 )}
+              </td>
+              <td className="p-3">
+                <Input
+                  value={item.partNumber || ''}
+                  onChange={(e) => updateLineItem(item.id, 'partNumber', e.target.value)}
+                  placeholder="Optional part number..."
+                  className="text-sm"
+                />
               </td>
               <td className="p-3">
                 <Textarea

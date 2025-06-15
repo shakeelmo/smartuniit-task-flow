@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,7 @@ interface LineItem {
   id: string;
   service: string;
   description: string;
+  partNumber?: string;
   quantity: number;
   unitPrice: number;
 }
@@ -46,7 +46,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   });
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', service: '', description: '', quantity: 1, unitPrice: 0 }
+    { id: '1', service: '', description: '', partNumber: '', quantity: 1, unitPrice: 0 }
   ]);
 
   const [notes, setNotes] = useState('');
@@ -87,6 +87,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       id: Date.now().toString(),
       service: '',
       description: '',
+      partNumber: '',
       quantity: 1,
       unitPrice: 0
     };

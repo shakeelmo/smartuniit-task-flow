@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -94,6 +93,14 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
   const tableStartY = yPosition;
   const currencyInfo = getCurrencyInfo(quotationData.currency);
 
+  // Determine if any line items have part numbers
+  const hasPartNumbers = quotationData.lineItems.some(item => item.partNumber && item.partNumber.trim());
+
+  // Adjust column widths based on whether part numbers exist
+  const adjustedColumnWidths = hasPartNumbers 
+    ? [20, 80, 25, 45, 35, 35] // S#, Item, Part#, Qty, Unit Price, Total
+    : [20, 105, 45, 35, 35]; // S#, Item, Qty, Unit Price, Total (original)
+
   // Table header
   pdf.setFillColor(...COLORS.tableHeaderBlue);
   pdf.rect(PDF_CONFIG.pageMargin, tableStartY, pageWidth - 2 * PDF_CONFIG.pageMargin, PDF_CONFIG.rowHeight, 'F');
@@ -103,7 +110,10 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
   
   let currentX = PDF_CONFIG.pageMargin + 2;
-  const headers = ['S#', 'Item', 'Quantity', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+  const headers = hasPartNumbers 
+    ? ['S#', 'Item', 'Part#', 'Qty', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`]
+    : ['S#', 'Item', 'Quantity', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+  
   headers.forEach((header, index) => {
     if (header.includes('\n')) {
       const lines = header.split('\n');
@@ -112,7 +122,7 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     } else {
       pdf.text(header, currentX, tableStartY + 6);
     }
-    currentX += COLUMN_WIDTHS[index];
+    currentX += adjustedColumnWidths[index];
   });
 
   // Table rows
@@ -132,20 +142,27 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     
     // S# column
     pdf.text((index + 1).toString(), currentX, currentY + 6);
-    currentX += COLUMN_WIDTHS[0];
+    currentX += adjustedColumnWidths[0];
     
     // Item column - wrap text if too long
-    const itemText = item.service.length > 30 ? item.service.substring(0, 30) + '...' : item.service;
+    const itemText = item.service.length > (hasPartNumbers ? 25 : 35) ? 
+      item.service.substring(0, hasPartNumbers ? 25 : 35) + '...' : item.service;
     pdf.text(itemText, currentX, currentY + 6);
-    currentX += COLUMN_WIDTHS[1];
+    currentX += adjustedColumnWidths[1];
+    
+    if (hasPartNumbers) {
+      // Part Number column
+      pdf.text(item.partNumber || '-', currentX, currentY + 6);
+      currentX += adjustedColumnWidths[2];
+    }
     
     // Quantity column
     pdf.text(item.quantity.toString(), currentX + 5, currentY + 6);
-    currentX += COLUMN_WIDTHS[2];
+    currentX += adjustedColumnWidths[hasPartNumbers ? 3 : 2];
     
     // Unit Price column
     pdf.text(item.unitPrice.toFixed(2), currentX + 5, currentY + 6);
-    currentX += COLUMN_WIDTHS[3];
+    currentX += adjustedColumnWidths[hasPartNumbers ? 4 : 3];
     
     // Total Price column
     pdf.text((item.quantity * item.unitPrice).toFixed(2), currentX + 5, currentY + 6);
@@ -161,6 +178,12 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   const currencyInfo = getCurrencyInfo(quotationData.currency);
   let currentY = yPosition;
 
+  // Determine if any line items have part numbers to adjust column positioning
+  const hasPartNumbers = quotationData.lineItems.some(item => item.partNumber && item.partNumber.trim());
+  const adjustedColumnWidths = hasPartNumbers 
+    ? [20, 80, 25, 45, 35, 35] 
+    : [20, 105, 45, 35, 35];
+
   // Total Price row
   pdf.setFillColor(...COLORS.tableHeaderBlue);
   pdf.rect(PDF_CONFIG.pageMargin, currentY, pageWidth - 2 * PDF_CONFIG.pageMargin, PDF_CONFIG.rowHeight, 'F');
@@ -168,8 +191,12 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setTextColor(...COLORS.white);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
-  pdf.text(`Total Price in ${currencyInfo.name}`, PDF_CONFIG.pageMargin + COLUMN_WIDTHS[0] + COLUMN_WIDTHS[1] + 2, currentY + 6);
-  pdf.text(`${currencyInfo.symbol} ${quotationData.subtotal.toFixed(2)}`, PDF_CONFIG.pageMargin + COLUMN_WIDTHS[0] + COLUMN_WIDTHS[1] + COLUMN_WIDTHS[2] + COLUMN_WIDTHS[3] + 7, currentY + 6);
+  
+  const totalLabelX = PDF_CONFIG.pageMargin + adjustedColumnWidths[0] + adjustedColumnWidths[1] + (hasPartNumbers ? adjustedColumnWidths[2] : 0) + 2;
+  const totalValueX = totalLabelX + adjustedColumnWidths[hasPartNumbers ? 3 : 2] + adjustedColumnWidths[hasPartNumbers ? 4 : 3] + 7;
+  
+  pdf.text(`Total Price in ${currencyInfo.name}`, totalLabelX, currentY + 6);
+  pdf.text(`${currencyInfo.symbol} ${quotationData.subtotal.toFixed(2)}`, totalValueX, currentY + 6);
 
   currentY += PDF_CONFIG.rowHeight;
 
@@ -178,8 +205,8 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.rect(PDF_CONFIG.pageMargin, currentY, pageWidth - 2 * PDF_CONFIG.pageMargin, PDF_CONFIG.rowHeight, 'F');
   
   pdf.setTextColor(...COLORS.black);
-  pdf.text('VAT 15%', PDF_CONFIG.pageMargin + COLUMN_WIDTHS[0] + COLUMN_WIDTHS[1] + 2, currentY + 6);
-  pdf.text(`${currencyInfo.symbol} ${quotationData.vat.toFixed(2)}`, PDF_CONFIG.pageMargin + COLUMN_WIDTHS[0] + COLUMN_WIDTHS[1] + COLUMN_WIDTHS[2] + COLUMN_WIDTHS[3] + 7, currentY + 6);
+  pdf.text('VAT 15%', totalLabelX, currentY + 6);
+  pdf.text(`${currencyInfo.symbol} ${quotationData.vat.toFixed(2)}`, totalValueX, currentY + 6);
 
   currentY += PDF_CONFIG.rowHeight;
 
@@ -189,8 +216,8 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   pdf.setTextColor(...COLORS.white);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`Total Price in ${currencyInfo.name}`, PDF_CONFIG.pageMargin + COLUMN_WIDTHS[0] + COLUMN_WIDTHS[1] + 2, currentY + 6);
-  pdf.text(`${currencyInfo.symbol} ${quotationData.total.toFixed(2)}`, PDF_CONFIG.pageMargin + COLUMN_WIDTHS[0] + COLUMN_WIDTHS[1] + COLUMN_WIDTHS[2] + COLUMN_WIDTHS[3] + 7, currentY + 6);
+  pdf.text(`Total Price in ${currencyInfo.name}`, totalLabelX, currentY + 6);
+  pdf.text(`${currencyInfo.symbol} ${quotationData.total.toFixed(2)}`, totalValueX, currentY + 6);
 
   return currentY + 25;
 };
