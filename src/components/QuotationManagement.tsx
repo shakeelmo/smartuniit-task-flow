@@ -1,24 +1,31 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, FileSpreadsheet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import QuotationsList from './quotations/QuotationsList';
 import CreateQuotationDialog from './quotations/CreateQuotationDialog';
 import EditQuotationDialog from './quotations/EditQuotationDialog';
+import ExcelImportDialog from './quotations/ExcelImportDialog';
 import { useToast } from '@/hooks/use-toast';
 import { QuotationData } from '@/utils/pdfExport';
 
 const QuotationManagement = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState<QuotationData | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [importedQuotations, setImportedQuotations] = useState<QuotationData[]>([]);
   const { toast } = useToast();
 
   const handleCreateQuotation = () => {
     setShowCreateDialog(true);
+  };
+
+  const handleImportExcel = () => {
+    setShowImportDialog(true);
   };
 
   const handleEditQuotation = (quotation: QuotationData) => {
@@ -43,6 +50,11 @@ const QuotationManagement = () => {
     });
   };
 
+  const handleQuotationsImported = (quotations: QuotationData[]) => {
+    setImportedQuotations(prev => [...prev, ...quotations]);
+    setShowImportDialog(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -50,10 +62,16 @@ const QuotationManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Quotations</h1>
           <p className="text-gray-600">إدارة العروض والأسعار - Manage quotes and pricing</p>
         </div>
-        <Button onClick={handleCreateQuotation} className="bg-smart-orange hover:bg-smart-orange/90">
-          <Plus className="h-4 w-4 mr-2" />
-          New Quotation
-        </Button>
+        <div className="flex space-x-2">
+          <Button onClick={handleImportExcel} variant="outline" className="bg-green-600 text-white hover:bg-green-700">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Import Excel
+          </Button>
+          <Button onClick={handleCreateQuotation} className="bg-smart-orange hover:bg-smart-orange/90">
+            <Plus className="h-4 w-4 mr-2" />
+            New Quotation
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filter Bar */}
@@ -86,10 +104,21 @@ const QuotationManagement = () => {
         </div>
       </div>
 
+      {/* Display imported quotations count */}
+      {importedQuotations.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-green-800">
+            <strong>{importedQuotations.length}</strong> quotation(s) imported from Excel. 
+            You can now edit, export, or manage these quotations.
+          </p>
+        </div>
+      )}
+
       <QuotationsList 
         searchTerm={searchTerm} 
         statusFilter={statusFilter} 
         onEditQuotation={handleEditQuotation}
+        importedQuotations={importedQuotations}
       />
 
       <CreateQuotationDialog
@@ -103,6 +132,12 @@ const QuotationManagement = () => {
         onOpenChange={setShowEditDialog}
         onQuotationUpdated={handleQuotationUpdated}
         quotationData={editingQuotation}
+      />
+
+      <ExcelImportDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        onQuotationsImported={handleQuotationsImported}
       />
     </div>
   );
