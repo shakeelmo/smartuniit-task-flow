@@ -7,7 +7,8 @@ import {
   Settings,
   Menu,
   X,
-  FileText
+  FileText,
+  Receipt
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -24,6 +25,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }: SidebarProp
     { id: 'projects', label: 'Projects', icon: FolderOpen },
     { id: 'tasks', label: 'Tasks', icon: CheckSquare },
     { id: 'quotations', label: 'Quotations', icon: FileText },
+    { id: 'invoices', label: 'Invoices', icon: Receipt },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];

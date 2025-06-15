@@ -7,6 +7,7 @@ import ProjectManagement from '@/components/ProjectManagement';
 import TaskManagement from '@/components/TaskManagement';
 import UserManagement from '@/components/UserManagement';
 import QuotationManagement from '@/components/QuotationManagement';
+import InvoiceManagement from '@/components/InvoiceManagement';
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -26,6 +27,8 @@ const Index = () => {
         return <TaskManagement />;
       case 'quotations':
         return <QuotationManagement />;
+      case 'invoices':
+        return <InvoiceManagement />;
       case 'users':
         return <UserManagement />;
       case 'settings':
