@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,6 +10,7 @@ interface QuotationsListProps {
   searchTerm: string;
   statusFilter: string;
   onEditQuotation: (quotation: QuotationData) => void;
+  importedQuotations: QuotationData[];
 }
 
 interface Quotation {
@@ -21,7 +23,7 @@ interface Quotation {
   salesRep: string;
 }
 
-const QuotationsList = ({ searchTerm, statusFilter, onEditQuotation }: QuotationsListProps) => {
+const QuotationsList = ({ searchTerm, statusFilter, onEditQuotation, importedQuotations }: QuotationsListProps) => {
   // Mock data - in real app this would come from API
   const [quotations] = useState<Quotation[]>([
     {
@@ -53,6 +55,20 @@ const QuotationsList = ({ searchTerm, statusFilter, onEditQuotation }: Quotation
     }
   ]);
 
+  // Convert imported quotations to display format
+  const convertedImportedQuotations: Quotation[] = importedQuotations.map((q, index) => ({
+    id: `imported_${index}`,
+    number: q.number,
+    customerName: q.customer.companyName,
+    date: q.date.split('T')[0], // Extract date part
+    total: q.total,
+    status: 'draft' as const,
+    salesRep: 'Imported'
+  }));
+
+  // Combine mock and imported quotations
+  const allQuotations = [...quotations, ...convertedImportedQuotations];
+
   const getStatusBadge = (status: string) => {
     const statusColors = {
       draft: 'bg-gray-100 text-gray-800',
@@ -75,7 +91,7 @@ const QuotationsList = ({ searchTerm, statusFilter, onEditQuotation }: Quotation
     );
   };
 
-  const filteredQuotations = quotations.filter(quotation => {
+  const filteredQuotations = allQuotations.filter(quotation => {
     const matchesSearch = quotation.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quotation.number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || quotation.status === statusFilter;
@@ -83,30 +99,37 @@ const QuotationsList = ({ searchTerm, statusFilter, onEditQuotation }: Quotation
   });
 
   const handleEdit = (quotation: Quotation) => {
-    // Convert the mock quotation data to QuotationData format
-    const quotationData: QuotationData = {
-      number: quotation.number,
-      date: quotation.date,
-      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
-      customer: {
-        companyName: quotation.customerName,
-        contactName: '',
-        phone: '',
-        email: '',
-        crNumber: '',
-        vatNumber: ''
-      },
-      lineItems: [],
-      subtotal: quotation.total * 0.87, // Approximate subtotal before VAT
-      discount: 0,
-      discountType: 'percentage',
-      vat: quotation.total * 0.13, // Approximate VAT
-      total: quotation.total,
-      currency: 'SAR',
-      customTerms: '',
-      notes: ''
-    };
-    onEditQuotation(quotationData);
+    // Check if this is an imported quotation
+    const importedQuotation = importedQuotations.find(q => q.number === quotation.number);
+    
+    if (importedQuotation) {
+      onEditQuotation(importedQuotation);
+    } else {
+      // Convert the mock quotation data to QuotationData format
+      const quotationData: QuotationData = {
+        number: quotation.number,
+        date: quotation.date,
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+        customer: {
+          companyName: quotation.customerName,
+          contactName: '',
+          phone: '',
+          email: '',
+          crNumber: '',
+          vatNumber: ''
+        },
+        lineItems: [],
+        subtotal: quotation.total * 0.87, // Approximate subtotal before VAT
+        discount: 0,
+        discountType: 'percentage',
+        vat: quotation.total * 0.13, // Approximate VAT
+        total: quotation.total,
+        currency: 'SAR',
+        customTerms: '',
+        notes: ''
+      };
+      onEditQuotation(quotationData);
+    }
   };
 
   return (
