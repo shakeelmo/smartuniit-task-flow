@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -270,32 +269,8 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     console.log('quotationData.discountType:', quotationData.discountType);
     console.log('quotationData.subtotal:', quotationData.subtotal);
     
-    // Convert discount to proper number, handling potential string values
-    let discountValue: number;
-    if (typeof quotationData.discount === 'string') {
-      // Remove any non-numeric characters and convert
-      discountValue = parseFloat(quotationData.discount.replace(/[^\d.]/g, '')) || 0;
-    } else {
-      discountValue = Number(quotationData.discount) || 0;
-    }
-    
-    console.log('Parsed discountValue:', discountValue);
-    
-    // If it's a percentage discount and the value seems unreasonably high, 
-    // it might be stored in a different format (like basis points)
-    if (quotationData.discountType === 'percentage' && discountValue > 100) {
-      console.log('Discount value seems too high, checking for format issues...');
-      // Check if it might be in basis points (1% = 100 basis points)
-      if (discountValue >= 1000) {
-        discountValue = discountValue / 100; // Convert from basis points to percentage
-        console.log('Converted from basis points to percentage:', discountValue);
-      }
-    }
-    
-    // For percentage, ensure it's reasonable (0-100%)
-    if (quotationData.discountType === 'percentage') {
-      discountValue = Math.min(Math.max(discountValue, 0), 100);
-    }
+    // The discount is already a number based on the type definition.
+    const discountValue = quotationData.discount;
     
     console.log('Final discountValue used:', discountValue);
     
@@ -359,7 +334,7 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   // Right-align the total value
   const totalFormatted = quotationData.total.toLocaleString('en-US', { 
-    minimizedFractionDigits: 2, 
+    minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
   const totalText = quotationData.currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
