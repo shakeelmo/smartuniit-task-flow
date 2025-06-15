@@ -31,7 +31,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
 
     // Generate PDF sections
     yPosition = addHeader(pdf, quotationData, logoBase64);
-    yPosition = addTitleBar(pdf, yPosition);
+    yPosition = addTitleBar(pdf, quotationData, yPosition);
     yPosition = addCustomerDetails(pdf, quotationData, yPosition);
     yPosition = addTable(pdf, quotationData, yPosition);
     yPosition = addTotalsSection(pdf, quotationData, yPosition);
