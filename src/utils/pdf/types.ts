@@ -1,4 +1,3 @@
-
 export interface QuotationData {
   number: string;
   date: string;
@@ -20,13 +19,14 @@ export interface QuotationData {
     unitPrice: number;
   }>;
   subtotal: number;
-  discount: number;
+  discount: number; // This is always the calculated amount, not percent (see dialog)
   discountType: 'percentage' | 'fixed';
   vat: number;
   total: number;
   currency: 'SAR' | 'USD';
   customTerms: string;
   notes: string;
+  discountPercent?: number; // NEW: Only provided for PDF, if type is percentage (raw percentage % entered by user)
 }
 
 export interface PDFPosition {

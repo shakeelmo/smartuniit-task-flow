@@ -170,6 +170,10 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
     setIsExporting(true);
 
+    // If percentage, this is the original percentage entered by the user
+    // If fixed, leave undefined
+    const discountPercent = discountType === 'percentage' ? discount : undefined;
+
     const quotationData = {
       number: generateQuoteNumber(),
       date: new Date().toISOString(),
@@ -177,13 +181,15 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       customer,
       lineItems,
       subtotal: calculateSubtotal(),
-      discount: calculateDiscountAmount(),
+      discount: calculateDiscountAmount(),     // Always pass amount for discount
       discountType,
       vat: calculateVAT(),
       total: calculateTotal(),
       currency,
       customTerms,
-      notes
+      notes,
+      // Only pass the percent if applicable
+      ...(discountType === "percentage" && discountPercent !== undefined && { discountPercent })
     };
 
     console.log('[Export PDF] Calling generateQuotationPDF', quotationData);

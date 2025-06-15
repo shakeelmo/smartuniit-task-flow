@@ -262,77 +262,18 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     
     pdf.setTextColor(...COLORS.black);
 
-    // Use the correct label format
-    const discountLabel = quotationData.discountType === 'percentage' && quotationData.discount
-      ? `Discount (${Number(
-          quotationData.discountType === 'percentage'
-            ? // Show the input percentage, not the calculated amount
-              (quotationData.discountAmountInput ?? '')
-            : ''
-        ) || quotationData.discount /* fallback for compat */}%)`
-      : 'Discount';
+    // Only use properties present in QuotationData.
+    // If it's a percentage type AND discountPercent is set, label as Discount (XX%), otherwise just Discount/Discount (%)
+    let discountLabel = 'Discount';
+    if (quotationData.discountType === 'percentage') {
+      if (typeof quotationData.discountPercent === 'number') {
+        discountLabel = `Discount (${quotationData.discountPercent}%)`;
+      } else {
+        discountLabel = 'Discount (%)';
+      }
+    }
 
-    // Show the percentage in label if applicable
-    const discountLabelFinal =
-      quotationData.discountType === 'percentage'
-        ? `Discount (${quotationData.discountPercentInput ?? '' || ''}${quotationData.discountPercentInput === undefined ? '' : '%'
-        })`
-        : 'Discount';
-
-    // Actually, the input values (for percent/fixed) are not available in pdfExport, so respect passed data.
-    // So: Show the label as "Discount (X%)" if discountType is percentage, else just "Discount"
-
-    const discountLabelToUse =
-      quotationData.discountType === 'percentage'
-        ? `Discount (${(quotationData.discountType === 'percentage' &&
-            quotationData.discountOriginalPercentage !== undefined
-              ? quotationData.discountOriginalPercentage
-              : // fallback: try to estimate % if possible, but usually must come from source
-                ''
-          ) || ''
-          }%)`
-        : 'Discount';
-
-    // For safety, just use 'Discount (X%)' if percentage and 'Discount' if fixed.
-    const labelText = quotationData.discountType === 'percentage' && quotationData.discountPercentage != null
-      ? `Discount (${quotationData.discountPercentage}%)`
-      : (quotationData.discountType === 'percentage'
-          ? 'Discount (%)'
-          : 'Discount'
-        )
-    
-    // Final logic (since only discount amount and discountType are provided):
-    const discountLabelSmart =
-      quotationData.discountType === 'percentage' && quotationData.discountPercent != null
-        ? `Discount (${quotationData.discountPercent}%)`
-        : quotationData.discountType === 'percentage'
-        ? 'Discount (%)'
-        : 'Discount';
-
-    // Show "Discount (XX%)" only if passed value exists, else just "Discount (%)"
-    const discountInputPercent =
-      (quotationData.discountType === 'percentage' && quotationData.discountInputPercent != null)
-        ? `${quotationData.discountInputPercent}%`
-        : null;
-
-    const label =
-      quotationData.discountType === 'percentage' && // try to show just % input if possible
-      typeof quotationData.discountInputPercent === 'number'
-        ? `Discount (${quotationData.discountInputPercent}%)`
-        : quotationData.discountType === 'percentage'
-        ? 'Discount (%)'
-        : 'Discount';
-
-    // Realistically, the original discount percent is **not present** in the object, so best:
-    // Show "Discount (%)" for percentage type, "Discount" otherwise
-
-    pdf.text(
-      quotationData.discountType === 'percentage'
-        ? 'Discount (%)'
-        : 'Discount',
-      labelStartX + 2,
-      currentY + 6
-    );
+    pdf.text(discountLabel, labelStartX + 2, currentY + 6);
 
     // Value: show negative discount amount, formatted correctly
     const discountFormatted = quotationData.discount.toLocaleString('en-US', {
