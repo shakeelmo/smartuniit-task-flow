@@ -38,13 +38,15 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     yPosition = addTermsAndBanking(pdf, quotationData, yPosition);
     addFooter(pdf, yPosition);
 
-    // Save PDF
-    filename = `SmartUniverse_Quotation_${quotationData.number.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    // Generate filename based on customer company name
+    const customerName = quotationData.customer.companyName || 'Quotation';
+    const sanitizedCustomerName = customerName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+    filename = `${sanitizedCustomerName}_Quotation_${quotationData.number.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
     console.log('Saving professional PDF as:', filename);
     
     try {
       pdf.save(filename);
-      fireToast("Professional PDF Generated", "Quotation exported with standardized format!", "default");
+      fireToast("Professional PDF Generated", "Quotation exported with customer name!", "default");
       console.log('Professional PDF generation completed successfully');
       return true;
     } catch (saveErr) {
