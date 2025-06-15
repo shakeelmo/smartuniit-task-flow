@@ -262,37 +262,17 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     
     pdf.setTextColor(...COLORS.black);
     
-    // Debug logging to understand the discount issue
-    console.log('=== DISCOUNT DEBUG ===');
-    console.log('quotationData.discount:', quotationData.discount);
-    console.log('typeof quotationData.discount:', typeof quotationData.discount);
-    console.log('quotationData.discountType:', quotationData.discountType);
-    console.log('quotationData.subtotal:', quotationData.subtotal);
-    
-    // The discount is already a number based on the type definition.
-    const discountValue = quotationData.discount;
-    
-    console.log('Final discountValue used:', discountValue);
-    
-    // Create discount label
+    // Use the discount label for text only (do not use value for math)
     const discountLabel = quotationData.discountType === 'percentage' 
-      ? `Discount (${discountValue}%)` 
+      ? `Discount (${quotationData.discount}%)` 
       : 'Discount';
-    
-    // Calculate the actual discount amount
-    let discountAmount: number;
-    if (quotationData.discountType === 'percentage') {
-      discountAmount = quotationData.subtotal * (discountValue / 100);
-    } else {
-      discountAmount = discountValue;
-    }
-    
-    console.log('Calculated discountAmount:', discountAmount);
-    console.log('==================');
-    
+
+    // Directly use the discount amount, which is already calculated and correct
+    const discountAmount = quotationData.discount;
+
     pdf.text(discountLabel, labelStartX + 2, currentY + 6);
-    
-    // Right-align the discount value (show as negative)
+
+    // Right-align the discount value (show as negative amount for clarity)
     const discountFormatted = discountAmount.toLocaleString('en-US', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
