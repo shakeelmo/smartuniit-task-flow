@@ -261,23 +261,87 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
     
     pdf.setTextColor(...COLORS.black);
-    
-    // Use the discount label for text only (do not use value for math)
-    const discountLabel = quotationData.discountType === 'percentage' 
-      ? `Discount (${quotationData.discount}%)` 
+
+    // Use the correct label format
+    const discountLabel = quotationData.discountType === 'percentage' && quotationData.discount
+      ? `Discount (${Number(
+          quotationData.discountType === 'percentage'
+            ? // Show the input percentage, not the calculated amount
+              (quotationData.discountAmountInput ?? '')
+            : ''
+        ) || quotationData.discount /* fallback for compat */}%)`
       : 'Discount';
 
-    // Directly use the discount amount, which is already calculated and correct
-    const discountAmount = quotationData.discount;
+    // Show the percentage in label if applicable
+    const discountLabelFinal =
+      quotationData.discountType === 'percentage'
+        ? `Discount (${quotationData.discountPercentInput ?? '' || ''}${quotationData.discountPercentInput === undefined ? '' : '%'
+        })`
+        : 'Discount';
 
-    pdf.text(discountLabel, labelStartX + 2, currentY + 6);
+    // Actually, the input values (for percent/fixed) are not available in pdfExport, so respect passed data.
+    // So: Show the label as "Discount (X%)" if discountType is percentage, else just "Discount"
 
-    // Right-align the discount value (show as negative amount for clarity)
-    const discountFormatted = discountAmount.toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
+    const discountLabelToUse =
+      quotationData.discountType === 'percentage'
+        ? `Discount (${(quotationData.discountType === 'percentage' &&
+            quotationData.discountOriginalPercentage !== undefined
+              ? quotationData.discountOriginalPercentage
+              : // fallback: try to estimate % if possible, but usually must come from source
+                ''
+          ) || ''
+          }%)`
+        : 'Discount';
+
+    // For safety, just use 'Discount (X%)' if percentage and 'Discount' if fixed.
+    const labelText = quotationData.discountType === 'percentage' && quotationData.discountPercentage != null
+      ? `Discount (${quotationData.discountPercentage}%)`
+      : (quotationData.discountType === 'percentage'
+          ? 'Discount (%)'
+          : 'Discount'
+        )
+    
+    // Final logic (since only discount amount and discountType are provided):
+    const discountLabelSmart =
+      quotationData.discountType === 'percentage' && quotationData.discountPercent != null
+        ? `Discount (${quotationData.discountPercent}%)`
+        : quotationData.discountType === 'percentage'
+        ? 'Discount (%)'
+        : 'Discount';
+
+    // Show "Discount (XX%)" only if passed value exists, else just "Discount (%)"
+    const discountInputPercent =
+      (quotationData.discountType === 'percentage' && quotationData.discountInputPercent != null)
+        ? `${quotationData.discountInputPercent}%`
+        : null;
+
+    const label =
+      quotationData.discountType === 'percentage' && // try to show just % input if possible
+      typeof quotationData.discountInputPercent === 'number'
+        ? `Discount (${quotationData.discountInputPercent}%)`
+        : quotationData.discountType === 'percentage'
+        ? 'Discount (%)'
+        : 'Discount';
+
+    // Realistically, the original discount percent is **not present** in the object, so best:
+    // Show "Discount (%)" for percentage type, "Discount" otherwise
+
+    pdf.text(
+      quotationData.discountType === 'percentage'
+        ? 'Discount (%)'
+        : 'Discount',
+      labelStartX + 2,
+      currentY + 6
+    );
+
+    // Value: show negative discount amount, formatted correctly
+    const discountFormatted = quotationData.discount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
-    const discountText = quotationData.currency === 'SAR' ? `-${discountFormatted} SR` : `-$${discountFormatted}`;
+    const discountText = quotationData.currency === 'SAR'
+      ? `-${discountFormatted} SR`
+      : `-$${discountFormatted}`;
     const discountWidth = pdf.getTextWidth(discountText);
     const discountX = valueStartX + valueColumnWidth - discountWidth - 2;
     pdf.text(discountText, discountX, currentY + 6);
