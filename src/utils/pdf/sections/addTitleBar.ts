@@ -14,8 +14,8 @@ export const addTitleBar = (
   pdf.setTextColor(...COLORS.orange);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.title);
-  // Always use "Quotations" as the title instead of the company name:
-  const titleText = 'Quotations';
+  // Always use "Quotation" as the title instead of the company name:
+  const titleText = 'Quotation';
   const titleWidth = pdf.getTextWidth(titleText);
   pdf.text(titleText, (pageWidth - titleWidth) / 2, yPosition + 8);
 
