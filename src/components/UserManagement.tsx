@@ -47,11 +47,14 @@ const UserManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Supabase error:', error);
         throw error;
       }
 
+      console.log('Fetched profiles:', data);
       setProfiles(data || []);
     } catch (error: any) {
+      console.error('Error fetching profiles:', error);
       toast({
         title: "Error",
         description: "Failed to fetch user profiles: " + error.message,
@@ -124,7 +127,7 @@ const UserManagement = () => {
                     <CardTitle className="text-lg">
                       {profile.first_name && profile.last_name 
                         ? `${profile.first_name} ${profile.last_name}`
-                        : 'Unknown User'
+                        : profile.first_name || profile.last_name || 'Unknown User'
                       }
                     </CardTitle>
                     <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
@@ -183,7 +186,9 @@ const UserManagement = () => {
       {filteredProfiles.length === 0 && !loading && (
         <div className="text-center py-12">
           <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No users found</p>
+          <p className="text-gray-500">
+            {searchTerm ? 'No users found matching your search' : 'No users found. Users will appear here after they sign up.'}
+          </p>
         </div>
       )}
 
