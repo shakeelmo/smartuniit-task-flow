@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { QuotationData } from './types';
 import { COLORS, PDF_CONFIG, COLUMN_WIDTHS } from './constants';
@@ -263,19 +262,29 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     
     pdf.setTextColor(...COLORS.black);
     
-    // Fixed discount display logic - show the discount percentage as entered by user
+    // Debug logging to understand the discount values
+    console.log('Discount Debug:', {
+      discount: quotationData.discount,
+      discountType: quotationData.discountType,
+      subtotal: quotationData.subtotal
+    });
+    
+    // Ensure discount is treated as a proper number and percentage
+    const discountValue = Number(quotationData.discount) || 0;
+    
+    // Create discount label - always show the actual percentage entered
     const discountLabel = quotationData.discountType === 'percentage' 
-      ? `Discount (${quotationData.discount}%)` 
+      ? `Discount (${discountValue}%)` 
       : 'Discount';
     
     // Calculate the actual discount amount for the value display
     let discountAmount: number;
     if (quotationData.discountType === 'percentage') {
-      // quotationData.discount is already the percentage value (e.g., 4 for 4%)
-      // So we divide by 100 to get the decimal multiplier
-      discountAmount = quotationData.subtotal * (quotationData.discount / 100);
+      // Convert percentage to decimal (e.g., 10% becomes 0.10)
+      discountAmount = quotationData.subtotal * (discountValue / 100);
     } else {
-      discountAmount = quotationData.discount;
+      // Fixed amount discount
+      discountAmount = discountValue;
     }
     
     pdf.text(discountLabel, labelStartX + 2, currentY + 6);
