@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Download } from 'lucide-react';
 import InvoiceCustomerForm from './InvoiceCustomerForm';
 import InvoiceLineItemsTable from './InvoiceLineItemsTable';
 import { InvoiceData } from '@/utils/pdf/invoiceTypes';
+import { generateInvoicePDF } from '@/utils/invoicePdfExport';
 
 interface EditInvoiceDialogProps {
   isOpen: boolean;
@@ -52,6 +53,14 @@ const EditInvoiceDialog = ({ isOpen, onClose, invoice, onSave }: EditInvoiceDial
 
   const handleSave = () => {
     onSave(invoiceData);
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      await generateInvoicePDF(invoiceData);
+    } catch (error) {
+      console.error('Error exporting invoice PDF:', error);
+    }
   };
 
   return (
@@ -139,13 +148,23 @@ const EditInvoiceDialog = ({ isOpen, onClose, invoice, onSave }: EditInvoiceDial
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
-              Cancel / إلغاء
+          <div className="flex justify-between pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={handleExportPDF}
+              className="bg-blue-50 hover:bg-blue-100"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF / تصدير PDF
             </Button>
-            <Button onClick={handleSave} className="bg-smart-orange hover:bg-smart-orange-light">
-              Save Changes / حفظ التغييرات
-            </Button>
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={onClose}>
+                Cancel / إلغاء
+              </Button>
+              <Button onClick={handleSave} className="bg-smart-orange hover:bg-smart-orange-light">
+                Save Changes / حفظ التغييرات
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

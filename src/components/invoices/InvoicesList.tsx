@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Eye, Edit, Trash2, Download, Copy, MoreHorizontal, Send } from 'lucide-react';
 import { InvoiceData } from '@/utils/pdf/invoiceTypes';
+import { generateInvoicePDF } from '@/utils/invoicePdfExport';
 
 interface InvoicesListProps {
   searchTerm: string;
@@ -137,6 +137,55 @@ const InvoicesList = ({ searchTerm, statusFilter, onEditInvoice, importedInvoice
     }
   };
 
+  const handleExportPDF = async (invoice: Invoice) => {
+    try {
+      // Check if this is an imported invoice
+      const importedInvoice = importedInvoices.find(inv => inv.number === invoice.number);
+      
+      let invoiceData: InvoiceData;
+      
+      if (importedInvoice) {
+        invoiceData = importedInvoice;
+      } else {
+        // Convert the mock invoice data to InvoiceData format
+        invoiceData = {
+          number: invoice.number,
+          date: invoice.date,
+          dueDate: invoice.dueDate,
+          customer: {
+            companyName: invoice.customerName,
+            contactName: '',
+            phone: '',
+            email: '',
+            crNumber: '',
+            vatNumber: ''
+          },
+          lineItems: [
+            {
+              id: '1',
+              description: 'Service provided',
+              quantity: 1,
+              unitPrice: invoice.total * 0.87,
+              total: invoice.total * 0.87
+            }
+          ],
+          subtotal: invoice.total * 0.87,
+          discount: 0,
+          discountType: 'percentage',
+          vat: invoice.total * 0.13,
+          total: invoice.total,
+          currency: 'SAR',
+          customTerms: 'Payment due within 30 days of invoice date',
+          notes: ''
+        };
+      }
+      
+      await generateInvoicePDF(invoiceData);
+    } catch (error) {
+      console.error('Error exporting invoice PDF:', error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg border">
       <Table>
@@ -188,7 +237,7 @@ const InvoicesList = ({ searchTerm, statusFilter, onEditInvoice, importedInvoice
                       <Send className="h-4 w-4 mr-2" />
                       Send
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportPDF(invoice)}>
                       <Download className="h-4 w-4 mr-2" />
                       Export PDF
                     </DropdownMenuItem>
