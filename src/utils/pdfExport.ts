@@ -23,6 +23,8 @@ interface QuotationData {
   subtotal: number;
   vat: number;
   total: number;
+  currency: 'SAR' | 'USD';
+  customTerms: string;
   notes: string;
 }
 
@@ -69,6 +71,19 @@ const fetchImageBase64 = (url: string): Promise<string> => {
   });
 };
 
+// Helper function to add text with proper line wrapping
+const addTextWithWrapping = (pdf: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight: number = 4) => {
+  const lines = pdf.splitTextToSize(text, maxWidth);
+  let currentY = y;
+  
+  lines.forEach((line: string) => {
+    pdf.text(line, x, currentY);
+    currentY += lineHeight;
+  });
+  
+  return currentY;
+};
+
 export const generateQuotationPDF = async (quotationData: QuotationData) => {
   console.log('Starting professional PDF generation with data:', quotationData);
   let filename: string;
@@ -78,6 +93,9 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 15;
     let yPosition = margin;
+
+    const currencySymbol = quotationData.currency === 'SAR' ? '﷼' : '$';
+    const currencyName = quotationData.currency === 'SAR' ? 'Saudi Riyals' : 'US Dollars';
 
     // Load SmartUniverse logo
     let logoBase64: string | null = null;
@@ -146,7 +164,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
       day: '2-digit', 
       month: 'short', 
       year: '2-digit' 
-    })}`, pageWidth - 80, yPosition);
+    })}`, pageWidth - 90, yPosition);
 
     yPosition += 8;
     
@@ -159,13 +177,13 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
       day: '2-digit', 
       month: 'short', 
       year: '2-digit' 
-    })}`, pageWidth - 80, yPosition);
+    })}`, pageWidth - 90, yPosition);
 
     yPosition += 6;
     pdf.text(quotationData.customer.contactName || 'N/A', margin, yPosition);
     
     // Quotation number
-    pdf.text(`Quotation number: ${quotationData.number}`, pageWidth - 80, yPosition);
+    pdf.text(`Quotation number: ${quotationData.number}`, pageWidth - 90, yPosition);
 
     yPosition += 6;
     pdf.text(quotationData.customer.phone || 'N/A', margin, yPosition);
@@ -175,7 +193,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     // ---- PROFESSIONAL TABLE ----
     const tableStartY = yPosition;
     const colWidths = [20, 60, 25, 35, 40]; // S#, Item, Quantity, Unit Price, Total Price
-    const rowHeight = 8;
+    const rowHeight = 10; // Increased row height to prevent overlap
 
     // Table header
     pdf.setFillColor(...COLORS.tableHeaderBlue);
@@ -183,17 +201,17 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     
     pdf.setTextColor(...COLORS.white);
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
+    pdf.setFontSize(9);
     
     let currentX = margin + 2;
-    const headers = ['S#', 'Item', 'Quantity', 'Unit Price\n(USD)', 'Total Price\n(USD)'];
+    const headers = ['S#', 'Item', 'Quantity', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
     headers.forEach((header, index) => {
       if (header.includes('\n')) {
         const lines = header.split('\n');
         pdf.text(lines[0], currentX, tableStartY + 4);
         pdf.text(lines[1], currentX, tableStartY + 7);
       } else {
-        pdf.text(header, currentX, tableStartY + 5);
+        pdf.text(header, currentX, tableStartY + 6);
       }
       currentX += colWidths[index];
     });
@@ -202,7 +220,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     let currentY = tableStartY + rowHeight;
     pdf.setTextColor(...COLORS.black);
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(9);
+    pdf.setFontSize(8);
 
     quotationData.lineItems.forEach((item, index) => {
       // Alternating row colors
@@ -214,38 +232,38 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
       currentX = margin + 2;
       
       // S# column
-      pdf.text((index + 1).toString(), currentX, currentY + 5);
+      pdf.text((index + 1).toString(), currentX, currentY + 6);
       currentX += colWidths[0];
       
-      // Item column
-      const itemText = item.service.length > 25 ? item.service.substring(0, 25) + '...' : item.service;
-      pdf.text(itemText, currentX, currentY + 5);
+      // Item column - wrap text if too long
+      const itemText = item.service.length > 30 ? item.service.substring(0, 30) + '...' : item.service;
+      pdf.text(itemText, currentX, currentY + 6);
       currentX += colWidths[1];
       
       // Quantity column
-      pdf.text(item.quantity.toString(), currentX, currentY + 5);
+      pdf.text(item.quantity.toString(), currentX + 5, currentY + 6);
       currentX += colWidths[2];
       
       // Unit Price column
-      pdf.text(item.unitPrice.toString(), currentX, currentY + 5);
+      pdf.text(item.unitPrice.toFixed(2), currentX + 5, currentY + 6);
       currentX += colWidths[3];
       
       // Total Price column
-      pdf.text((item.quantity * item.unitPrice).toFixed(2), currentX, currentY + 5);
+      pdf.text((item.quantity * item.unitPrice).toFixed(2), currentX + 5, currentY + 6);
       
       currentY += rowHeight;
     });
 
     // ---- TOTALS SECTION ----
-    // Total Price in SAR row
+    // Total Price row
     pdf.setFillColor(...COLORS.tableHeaderBlue);
     pdf.rect(margin, currentY, pageWidth - 2 * margin, rowHeight, 'F');
     
     pdf.setTextColor(...COLORS.white);
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
-    pdf.text('Total Price in SAR', margin + colWidths[0] + colWidths[1] + 2, currentY + 5);
-    pdf.text(quotationData.subtotal.toFixed(2), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 2, currentY + 5);
+    pdf.setFontSize(9);
+    pdf.text(`Total Price in ${currencyName}`, margin + colWidths[0] + colWidths[1] + 2, currentY + 6);
+    pdf.text(`${currencySymbol} ${quotationData.subtotal.toFixed(2)}`, margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 7, currentY + 6);
 
     currentY += rowHeight;
 
@@ -254,19 +272,19 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     pdf.rect(margin, currentY, pageWidth - 2 * margin, rowHeight, 'F');
     
     pdf.setTextColor(...COLORS.black);
-    pdf.text('VAT 15%', margin + colWidths[0] + colWidths[1] + 2, currentY + 5);
-    pdf.text(quotationData.vat.toFixed(2), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 2, currentY + 5);
+    pdf.text('VAT 15%', margin + colWidths[0] + colWidths[1] + 2, currentY + 6);
+    pdf.text(`${currencySymbol} ${quotationData.vat.toFixed(2)}`, margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 7, currentY + 6);
 
     currentY += rowHeight;
 
-    // Total Price in SAR (final) row
+    // Total Price (final) row
     pdf.setFillColor(...COLORS.tableHeaderBlue);
     pdf.rect(margin, currentY, pageWidth - 2 * margin, rowHeight, 'F');
     
     pdf.setTextColor(...COLORS.white);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Total Price in SAR', margin + colWidths[0] + colWidths[1] + 2, currentY + 5);
-    pdf.text(quotationData.total.toFixed(2), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 2, currentY + 5);
+    pdf.text(`Total Price in ${currencyName}`, margin + colWidths[0] + colWidths[1] + 2, currentY + 6);
+    pdf.text(`${currencySymbol} ${quotationData.total.toFixed(2)}`, margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 7, currentY + 6);
 
     currentY += 25;
 
@@ -277,38 +295,33 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     pdf.text('Terms and conditions', margin, currentY);
     
     // Banking Details header (right side)
-    pdf.text('Banking Details', pageWidth - 80, currentY);
+    pdf.text('Banking Details', pageWidth - 90, currentY);
 
     currentY += 10;
 
-    // Terms list
+    // Custom Terms list
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(9);
-    const terms = [
-      '• Payment: 100%',
-      '• All prices in Saudi Riyals',
-      '• Delivery– 1 Week after PO',
-      '• Offers will be confirmed based on your purchase order.',
-      '• Product availability and prices are subject to change',
-      '  without notice'
-    ];
-
-    terms.forEach(term => {
-      pdf.text(term, margin + 5, currentY);
-      currentY += 5;
+    pdf.setFontSize(8);
+    const termLines = quotationData.customTerms.split('\n');
+    
+    termLines.forEach(term => {
+      if (term.trim()) {
+        const processedTerm = term.startsWith('•') ? term : `• ${term}`;
+        currentY = addTextWithWrapping(pdf, processedTerm, margin + 2, currentY, pageWidth - 120, 4);
+        currentY += 1; // Small gap between terms
+      }
     });
 
     // Banking details (right side)
-    let bankingY = currentY - 30;
-    pdf.text('Smart Universe Communication and', pageWidth - 80, bankingY);
-    bankingY += 4;
-    pdf.text('Information Technology.', pageWidth - 80, bankingY);
-    bankingY += 4;
-    pdf.text('Bank Name: Saudi National Bank', pageWidth - 80, bankingY);
-    bankingY += 6;
-    pdf.text('IBAN: SA3610000041000000080109', pageWidth - 80, bankingY);
-    bankingY += 4;
-    pdf.text('Account Number: 41000000080109', pageWidth - 80, bankingY);
+    let bankingY = currentY - (termLines.length * 5);
+    pdf.setFontSize(8);
+    bankingY = addTextWithWrapping(pdf, 'Smart Universe Communication and Information Technology.', pageWidth - 88, bankingY, 85, 4);
+    bankingY += 2;
+    bankingY = addTextWithWrapping(pdf, 'Bank Name: Saudi National Bank', pageWidth - 88, bankingY, 85, 4);
+    bankingY += 2;
+    bankingY = addTextWithWrapping(pdf, 'IBAN: SA3610000041000000080109', pageWidth - 88, bankingY, 85, 4);
+    bankingY += 2;
+    bankingY = addTextWithWrapping(pdf, 'Account Number: 41000000080109', pageWidth - 88, bankingY, 85, 4);
 
     currentY += 15;
 
@@ -316,7 +329,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     pdf.setTextColor(...COLORS.headerBlue);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(14);
-    const endText = '***End Of Quotation*';
+    const endText = '***End Of Quotation***';
     const endTextWidth = pdf.getTextWidth(endText);
     pdf.text(endText, (pageWidth - endTextWidth) / 2, currentY);
 
@@ -325,7 +338,7 @@ export const generateQuotationPDF = async (quotationData: QuotationData) => {
     // Company address
     pdf.setTextColor(...COLORS.black);
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(9);
+    pdf.setFontSize(8);
     const addressText = 'Office # 3 in, Al Dirah Dist, P.O Box 12633, Riyadh - 11461 KSA Tel: 011-4917295';
     const addressWidth = pdf.getTextWidth(addressText);
     pdf.text(addressText, (pageWidth - addressWidth) / 2, currentY);

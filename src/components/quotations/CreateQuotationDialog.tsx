@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Minus, Save, FileText } from 'lucide-react';
 import CustomerForm from './CustomerForm';
 import LineItemsTable from './LineItemsTable';
@@ -49,6 +51,12 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
   const [notes, setNotes] = useState('');
   const [validUntil, setValidUntil] = useState('');
+  const [currency, setCurrency] = useState<'SAR' | 'USD'>('SAR');
+  const [customTerms, setCustomTerms] = useState(`• Payment: 100%
+• All prices in Saudi Riyals
+• Delivery– 1 Week after PO
+• Offers will be confirmed based on your purchase order.
+• Product availability and prices are subject to change without notice`);
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
@@ -64,6 +72,14 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
   const calculateTotal = () => {
     return calculateSubtotal() + calculateVAT();
+  };
+
+  const getCurrencySymbol = () => {
+    return currency === 'SAR' ? '﷼' : '$';
+  };
+
+  const getCurrencyName = () => {
+    return currency === 'SAR' ? 'Saudi Riyals' : 'US Dollars';
   };
 
   const addLineItem = () => {
@@ -101,6 +117,8 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       subtotal: calculateSubtotal(),
       vat: calculateVAT(),
       total: calculateTotal(),
+      currency,
+      customTerms,
       notes,
       validUntil
     });
@@ -141,6 +159,8 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       subtotal: calculateSubtotal(),
       vat: calculateVAT(),
       total: calculateTotal(),
+      currency,
+      customTerms,
       notes
     };
 
@@ -184,7 +204,19 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
           {/* Quote Details */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="text-lg font-semibold mb-4">Quote Details / تفاصيل العرض</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="currency">Currency / العملة</Label>
+                <Select value={currency} onValueChange={(value: 'SAR' | 'USD') => setCurrency(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SAR">SAR (﷼) - Saudi Riyal</SelectItem>
+                    <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="validUntil">Valid Until / صالح حتى</Label>
                 <Input
@@ -227,27 +259,40 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal / المجموع الفرعي:</span>
-                <span className="font-medium">﷼ {calculateSubtotal().toLocaleString()}</span>
+                <span className="font-medium">{getCurrencySymbol()} {calculateSubtotal().toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>VAT (15%) / ضريبة القيمة المضافة:</span>
-                <span className="font-medium">﷼ {calculateVAT().toLocaleString()}</span>
+                <span className="font-medium">{getCurrencySymbol()} {calculateVAT().toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span>Total / المجموع الكلي:</span>
-                <span>﷼ {calculateTotal().toLocaleString()}</span>
+                <span>{getCurrencySymbol()} {calculateTotal().toLocaleString()}</span>
               </div>
             </div>
           </div>
 
+          {/* Terms and Conditions */}
+          <div>
+            <Label htmlFor="customTerms">Terms and Conditions / الشروط والأحكام</Label>
+            <Textarea
+              id="customTerms"
+              value={customTerms}
+              onChange={(e) => setCustomTerms(e.target.value)}
+              placeholder="Enter terms and conditions..."
+              rows={6}
+              className="font-mono text-sm"
+            />
+          </div>
+
           {/* Notes */}
           <div>
-            <Label htmlFor="notes">Notes / ملاحظات</Label>
+            <Label htmlFor="notes">Additional Notes / ملاحظات إضافية</Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any additional notes or terms..."
+              placeholder="Add any additional notes..."
               rows={3}
             />
           </div>
@@ -279,5 +324,3 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 };
 
 export default CreateQuotationDialog;
-
-// This file is getting very long (262+ lines). Consider refactoring it into smaller components for maintainability.
