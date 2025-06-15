@@ -263,7 +263,7 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     
     pdf.setTextColor(...COLORS.black);
     
-    // Fixed discount display logic
+    // Fixed discount display logic - show the discount percentage as entered by user
     const discountLabel = quotationData.discountType === 'percentage' 
       ? `Discount (${quotationData.discount}%)` 
       : 'Discount';
@@ -271,6 +271,8 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
     // Calculate the actual discount amount for the value display
     let discountAmount: number;
     if (quotationData.discountType === 'percentage') {
+      // quotationData.discount is already the percentage value (e.g., 4 for 4%)
+      // So we divide by 100 to get the decimal multiplier
       discountAmount = quotationData.subtotal * (quotationData.discount / 100);
     } else {
       discountAmount = quotationData.discount;
