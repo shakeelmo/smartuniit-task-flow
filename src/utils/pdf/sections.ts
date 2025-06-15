@@ -98,11 +98,11 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
   // Determine if any line items have part numbers
   const hasPartNumbers = quotationData.lineItems.some(item => item.partNumber && item.partNumber.trim());
 
-  // Optimized column widths to prevent cutoff of higher price values
+  // Significantly increased column widths for price columns to prevent cutoff
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
   const adjustedColumnWidths = hasPartNumbers 
-    ? [12, 50, 18, 18, 40, 45] // S#, Item, Part#, Qty, Unit Price, Total - increased price columns further
-    : [12, 70, 18, 40, 45]; // S#, Item, Qty, Unit Price, Total - increased price columns further
+    ? [12, 45, 18, 18, 50, 55] // S#, Item, Part#, Qty, Unit Price, Total - much larger price columns
+    : [12, 65, 18, 50, 55]; // S#, Item, Qty, Unit Price, Total - much larger price columns
 
   // Table header
   pdf.setFillColor(...COLORS.tableHeaderBlue);
@@ -165,18 +165,18 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     pdf.text(item.quantity.toString(), qtyX, currentY + 6);
     currentX += qtyColumnWidth;
     
-    // Unit Price column - right aligned with proper formatting and padding
+    // Unit Price column - right aligned with proper formatting and more padding
     const unitPriceText = item.unitPrice.toLocaleString('en-US', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
     const unitPriceColumnWidth = adjustedColumnWidths[hasPartNumbers ? 4 : 3];
     const unitPriceWidth = pdf.getTextWidth(unitPriceText);
-    const unitPriceX = currentX + unitPriceColumnWidth - unitPriceWidth - 2; // Reduced padding
+    const unitPriceX = currentX + unitPriceColumnWidth - unitPriceWidth - 5; // More padding
     pdf.text(unitPriceText, unitPriceX, currentY + 6);
     currentX += unitPriceColumnWidth;
     
-    // Total Price column - right aligned with proper formatting and padding
+    // Total Price column - right aligned with proper formatting and more padding
     const totalValue = item.quantity * item.unitPrice;
     const totalText = totalValue.toLocaleString('en-US', { 
       minimumFractionDigits: 2, 
@@ -184,7 +184,7 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     });
     const totalColumnWidth = adjustedColumnWidths[hasPartNumbers ? 5 : 4];
     const totalWidth = pdf.getTextWidth(totalText);
-    const totalX = currentX + totalColumnWidth - totalWidth - 2; // Reduced padding
+    const totalX = currentX + totalColumnWidth - totalWidth - 5; // More padding
     pdf.text(totalText, totalX, currentY + 6);
     
     currentY += PDF_CONFIG.rowHeight;
@@ -202,8 +202,8 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   const hasPartNumbers = quotationData.lineItems.some(item => item.partNumber && item.partNumber.trim());
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
   const adjustedColumnWidths = hasPartNumbers 
-    ? [12, 50, 18, 18, 40, 45] 
-    : [12, 70, 18, 40, 45];
+    ? [12, 45, 18, 18, 50, 55] 
+    : [12, 65, 18, 50, 55];
 
   // Calculate positions for totals section
   const labelStartX = PDF_CONFIG.pageMargin + adjustedColumnWidths[0] + adjustedColumnWidths[1] + (hasPartNumbers ? adjustedColumnWidths[2] : 0) + 2;
@@ -220,14 +220,14 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX, currentY + 6);
   
-  // Right-align the subtotal value with proper formatting and reduced padding
+  // Right-align the subtotal value with proper formatting and more padding
   const subtotalFormatted = quotationData.subtotal.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
   const subtotalText = `${currencyInfo.symbol} ${subtotalFormatted}`;
   const subtotalWidth = pdf.getTextWidth(subtotalText);
-  const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - 2; // Reduced padding
+  const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - 5; // More padding
   pdf.text(subtotalText, subtotalX, currentY + 6);
 
   currentY += PDF_CONFIG.rowHeight;
@@ -239,14 +239,14 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setTextColor(...COLORS.black);
   pdf.text('VAT 15%', labelStartX, currentY + 6);
   
-  // Right-align the VAT value with proper formatting and reduced padding
+  // Right-align the VAT value with proper formatting and more padding
   const vatFormatted = quotationData.vat.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
   const vatText = `${currencyInfo.symbol} ${vatFormatted}`;
   const vatWidth = pdf.getTextWidth(vatText);
-  const vatX = valueStartX + valueColumnWidth - vatWidth - 2; // Reduced padding
+  const vatX = valueStartX + valueColumnWidth - vatWidth - 5; // More padding
   pdf.text(vatText, vatX, currentY + 6);
 
   currentY += PDF_CONFIG.rowHeight;
@@ -259,14 +259,14 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   pdf.setFont('helvetica', 'bold');
   pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX, currentY + 6);
   
-  // Right-align the total value with proper formatting and reduced padding
+  // Right-align the total value with proper formatting and more padding
   const totalFormatted = quotationData.total.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   });
   const totalText = `${currencyInfo.symbol} ${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
-  const totalX = valueStartX + valueColumnWidth - totalWidth - 2; // Reduced padding
+  const totalX = valueStartX + valueColumnWidth - totalWidth - 5; // More padding
   pdf.text(totalText, totalX, currentY + 6);
 
   return currentY + 25;
