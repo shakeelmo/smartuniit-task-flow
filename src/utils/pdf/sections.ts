@@ -98,13 +98,13 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
   // Determine if any line items have part numbers
   const hasPartNumbers = quotationData.lineItems.some(item => item.partNumber && item.partNumber.trim());
 
-  // Calculate available table width
+  // Calculate available table width with proper margins
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
   
-  // Adjusted column widths to ensure proper fit
+  // Optimized column widths to fit within A4 page width (210mm - 30mm margins = 180mm)
   const columnWidths = hasPartNumbers 
-    ? [12, 50, 18, 15, 40, 45] // S#, Item, Part#, Qty, Unit Price, Total - Total: 180
-    : [12, 68, 18, 40, 42]; // S#, Item, Qty, Unit Price, Total - Total: 180
+    ? [10, 45, 15, 12, 38, 45] // S#, Item, Part#, Qty, Unit Price, Total - Total: 165mm
+    : [10, 62, 15, 38, 45]; // S#, Item, Qty, Unit Price, Total - Total: 170mm
 
   // Calculate column positions
   const columnPositions: number[] = [];
@@ -154,7 +154,7 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     pdf.text((index + 1).toString(), columnPositions[0] + 2, currentY + 6);
     
     // Item column - left aligned with truncation
-    const maxItemLength = hasPartNumbers ? 18 : 25;
+    const maxItemLength = hasPartNumbers ? 16 : 22;
     const itemText = item.service.length > maxItemLength ? 
       item.service.substring(0, maxItemLength) + '...' : item.service;
     pdf.text(itemText, columnPositions[1] + 2, currentY + 6);
@@ -163,7 +163,7 @@ export const addTable = (pdf: jsPDF, quotationData: QuotationData, yPosition: nu
     if (hasPartNumbers) {
       // Part Number column - left aligned
       const partText = item.partNumber || '-';
-      const maxPartLength = 8;
+      const maxPartLength = 6;
       const truncatedPart = partText.length > maxPartLength ? 
         partText.substring(0, maxPartLength) + '...' : partText;
       pdf.text(truncatedPart, columnPositions[2] + 2, currentY + 6);
@@ -214,8 +214,8 @@ export const addTotalsSection = (pdf: jsPDF, quotationData: QuotationData, yPosi
   
   // Use same column widths as table for consistency
   const columnWidths = hasPartNumbers 
-    ? [12, 50, 18, 15, 40, 45]
-    : [12, 68, 18, 40, 42];
+    ? [10, 45, 15, 12, 38, 45]
+    : [10, 62, 15, 38, 45];
 
   // Calculate positions for totals section - align with table columns
   let labelStartX = PDF_CONFIG.pageMargin;
