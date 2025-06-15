@@ -1,13 +1,14 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Eye, Edit, Trash2, Download, Copy, MoreHorizontal } from 'lucide-react';
+import { QuotationData } from '@/utils/pdf/types';
 
 interface QuotationsListProps {
   searchTerm: string;
   statusFilter: string;
+  onEditQuotation: (quotation: QuotationData) => void;
 }
 
 interface Quotation {
@@ -20,7 +21,7 @@ interface Quotation {
   salesRep: string;
 }
 
-const QuotationsList = ({ searchTerm, statusFilter }: QuotationsListProps) => {
+const QuotationsList = ({ searchTerm, statusFilter, onEditQuotation }: QuotationsListProps) => {
   // Mock data - in real app this would come from API
   const [quotations] = useState<Quotation[]>([
     {
@@ -81,6 +82,33 @@ const QuotationsList = ({ searchTerm, statusFilter }: QuotationsListProps) => {
     return matchesSearch && matchesStatus;
   });
 
+  const handleEdit = (quotation: Quotation) => {
+    // Convert the mock quotation data to QuotationData format
+    const quotationData: QuotationData = {
+      number: quotation.number,
+      date: quotation.date,
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+      customer: {
+        companyName: quotation.customerName,
+        contactName: '',
+        phone: '',
+        email: '',
+        crNumber: '',
+        vatNumber: ''
+      },
+      lineItems: [],
+      subtotal: quotation.total * 0.87, // Approximate subtotal before VAT
+      discount: 0,
+      discountType: 'percentage',
+      vat: quotation.total * 0.13, // Approximate VAT
+      total: quotation.total,
+      currency: 'SAR',
+      customTerms: '',
+      notes: ''
+    };
+    onEditQuotation(quotationData);
+  };
+
   return (
     <div className="bg-white rounded-lg border">
       <Table>
@@ -118,7 +146,7 @@ const QuotationsList = ({ searchTerm, statusFilter }: QuotationsListProps) => {
                       <Eye className="h-4 w-4 mr-2" />
                       View
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(quotation)}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>
