@@ -272,6 +272,7 @@ const LineItemsTable = ({
                       <option value="Feature">Feature / ميزة</option>
                       <option value="Aisles">Aisles / ممرات</option>
                       <option value="m">m / متر</option>
+                      <option value="sqm">sqm / متر مربع</option>
                       <option value="Units">Units / وحدات</option>
                       <option value="Job">Job / وظيفة</option>
                       <option value="Sets">Sets / مجموعات</option>
