@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 
 export interface LineItem {
@@ -8,6 +9,12 @@ export interface LineItem {
   quantity: number;
   unit?: string;
   unitPrice: number;
+}
+
+export interface Section {
+  id: string;
+  title: string;
+  lineItems: LineItem[];
 }
 
 export interface Customer {
@@ -34,8 +41,21 @@ export const useCreateQuotationState = () => {
   const [customerType, setCustomerType] = useState<'existing' | 'new'>('new');
   const [showUnitColumn, setShowUnitColumn] = useState(false);
 
-  const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', service: '', description: '', partNumber: '', quantity: 1, unit: '', unitPrice: 0 }
+  // Changed from lineItems to sections
+  const [sections, setSections] = useState<Section[]>([
+    {
+      id: '1',
+      title: 'General Services / الخدمات العامة',
+      lineItems: [{ 
+        id: '1', 
+        service: '', 
+        description: '', 
+        partNumber: '', 
+        quantity: 1, 
+        unit: '', 
+        unitPrice: 0 
+      }]
+    }
   ]);
 
   const [notes, setNotes] = useState('');
@@ -50,8 +70,13 @@ export const useCreateQuotationState = () => {
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [isExporting, setIsExporting] = useState(false);
 
+  // Helper function to get all line items from all sections
+  const getAllLineItems = (): LineItem[] => {
+    return sections.flatMap(section => section.lineItems);
+  };
+
   const calculateSubtotal = () => {
-    return lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    return getAllLineItems().reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
   };
 
   const calculateDiscountAmount = () => {
@@ -82,29 +107,47 @@ export const useCreateQuotationState = () => {
     return currency === 'SAR' ? 'Saudi Riyals' : 'US Dollars';
   };
 
+  // Legacy functions for backward compatibility
   const addLineItem = () => {
-    const newItem: LineItem = {
-      id: Date.now().toString(),
-      service: '',
-      description: '',
-      partNumber: '',
-      quantity: 1,
-      unit: '',
-      unitPrice: 0
-    };
-    setLineItems([...lineItems, newItem]);
-  };
-
-  const removeLineItem = (id: string) => {
-    if (lineItems.length > 1) {
-      setLineItems(lineItems.filter(item => item.id !== id));
+    // Add to the first section for backward compatibility
+    if (sections.length > 0) {
+      const newLineItem: LineItem = {
+        id: Date.now().toString(),
+        service: '',
+        description: '',
+        partNumber: '',
+        quantity: 1,
+        unit: '',
+        unitPrice: 0
+      };
+      
+      const updatedSections = sections.map((section, index) => 
+        index === 0 
+          ? { ...section, lineItems: [...section.lineItems, newLineItem] }
+          : section
+      );
+      setSections(updatedSections);
     }
   };
 
+  const removeLineItem = (id: string) => {
+    const updatedSections = sections.map(section => ({
+      ...section,
+      lineItems: section.lineItems.length > 1 
+        ? section.lineItems.filter(item => item.id !== id)
+        : section.lineItems
+    }));
+    setSections(updatedSections);
+  };
+
   const updateLineItem = (id: string, field: keyof LineItem, value: any) => {
-    setLineItems(lineItems.map(item =>
-      item.id === id ? { ...item, [field]: value } : item
-    ));
+    const updatedSections = sections.map(section => ({
+      ...section,
+      lineItems: section.lineItems.map(item =>
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    }));
+    setSections(updatedSections);
   };
 
   const generateQuoteNumber = () => {
@@ -114,7 +157,7 @@ export const useCreateQuotationState = () => {
   return {
     customer, setCustomer,
     customerType, setCustomerType,
-    lineItems, setLineItems,
+    sections, setSections,
     notes, setNotes,
     validUntil, setValidUntil,
     currency, setCurrency,
@@ -133,6 +176,7 @@ export const useCreateQuotationState = () => {
     addLineItem,
     removeLineItem,
     updateLineItem,
-    generateQuoteNumber
+    generateQuoteNumber,
+    getAllLineItems
   };
 };

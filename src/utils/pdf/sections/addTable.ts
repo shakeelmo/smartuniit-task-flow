@@ -10,11 +10,49 @@ export const addTable = (
   yPosition: number
 ) => {
   const pageWidth = pdf.internal.pageSize.getWidth();
-  const tableStartY = yPosition;
+  let currentY = yPosition;
   const currencyInfo = getCurrencyInfo(quotationData.currency);
 
-  const hasPartNumbers = quotationData.lineItems.some(item => item.partNumber && item.partNumber.trim());
-  const hasUnits = quotationData.lineItems.some(item => item.unit && item.unit.trim());
+  // Check if we have sections or flat line items
+  const hasSections = quotationData.sections && quotationData.sections.length > 0;
+
+  if (hasSections) {
+    // Render sections with headers
+    quotationData.sections!.forEach((section, sectionIndex) => {
+      // Add section header
+      pdf.setFillColor(...COLORS.lightGray);
+      pdf.rect(PDF_CONFIG.pageMargin, currentY, pageWidth - 2 * PDF_CONFIG.pageMargin, 8, 'F');
+      
+      pdf.setTextColor(...COLORS.black);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(PDF_CONFIG.fontSize.normal);
+      pdf.text(section.title, PDF_CONFIG.pageMargin + 5, currentY + 6);
+      
+      currentY += 10;
+      
+      // Render table for this section
+      currentY = renderTableSection(pdf, section.lineItems, quotationData, currentY);
+      currentY += 5; // Add spacing between sections
+    });
+  } else {
+    // Render flat line items (backward compatibility)
+    currentY = renderTableSection(pdf, quotationData.lineItems, quotationData, currentY);
+  }
+
+  return currentY;
+};
+
+const renderTableSection = (
+  pdf: jsPDF,
+  lineItems: any[],
+  quotationData: QuotationData,
+  yPosition: number
+) => {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const tableStartY = yPosition;
+
+  const hasPartNumbers = lineItems.some(item => item.partNumber && item.partNumber.trim());
+  const hasUnits = lineItems.some(item => item.unit && item.unit.trim());
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
 
   // Adjust column widths based on what columns are shown
@@ -36,6 +74,7 @@ export const addTable = (
     currentX += width;
   });
 
+  // Table header
   pdf.setFillColor(...COLORS.tableHeaderBlue);
   pdf.rect(PDF_CONFIG.pageMargin, tableStartY, tableWidth, PDF_CONFIG.rowHeight, 'F');
 
@@ -70,7 +109,8 @@ export const addTable = (
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(PDF_CONFIG.fontSize.small);
 
-  quotationData.lineItems.forEach((item, index) => {
+  // Table rows
+  lineItems.forEach((item, index) => {
     if (index % 2 === 0) {
       pdf.setFillColor(...COLORS.lightGray);
       pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');

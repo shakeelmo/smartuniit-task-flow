@@ -3,7 +3,7 @@ import React from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import CustomerForm from './CustomerForm';
-import LineItemsTable from './LineItemsTable';
+import QuotationSectionsManager from './QuotationSectionsManager';
 import DiscountSection from './DiscountSection';
 import TotalsSummary from './TotalsSummary';
 import QuoteDetailsGrid from './QuoteDetailsGrid';
@@ -16,10 +16,8 @@ interface Props {
   validUntil: any;
   setValidUntil: any;
   quoteNumber: any;
-  lineItems: any;
-  addLineItem: any;
-  updateLineItem: any;
-  removeLineItem: any;
+  sections: any;
+  setSections: any;
   discountType: any;
   setDiscountType: any;
   discount: any;
@@ -49,7 +47,7 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
   currency, setCurrency,
   validUntil, setValidUntil,
   quoteNumber,
-  lineItems, addLineItem, updateLineItem, removeLineItem,
+  sections, setSections,
   discountType, setDiscountType,
   discount, setDiscount,
   calculateDiscountAmount,
@@ -69,7 +67,7 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
   showUnitColumn,
   setShowUnitColumn
 }) => (
-  <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+  <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
     <DialogHeader>
       <DialogTitle className="text-xl font-bold">
         Create New Quotation / إنشاء عرض سعر جديد
@@ -91,16 +89,10 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
         quoteNumber={quoteNumber}
       />
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Services / الخدمات</h3>
-          <Button onClick={addLineItem} variant="outline" size="sm">
-            Add Item
-          </Button>
-        </div>
-        <LineItemsTable
-          lineItems={lineItems}
-          updateLineItem={updateLineItem}
-          removeLineItem={removeLineItem}
+        <h3 className="text-lg font-semibold mb-4">Services & Infrastructure / الخدمات والبنية التحتية</h3>
+        <QuotationSectionsManager
+          sections={sections}
+          setSections={setSections}
           showUnitColumn={showUnitColumn}
           setShowUnitColumn={setShowUnitColumn}
         />

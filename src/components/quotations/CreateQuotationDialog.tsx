@@ -17,7 +17,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   const {
     customer, setCustomer,
     customerType, setCustomerType,
-    lineItems, setLineItems,
+    sections, setSections,
     notes, setNotes,
     validUntil, setValidUntil,
     currency, setCurrency,
@@ -33,15 +33,13 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
     calculateTotal,
     getCurrencySymbol,
     getCurrencyName,
-    addLineItem,
-    removeLineItem,
-    updateLineItem,
+    getAllLineItems,
     generateQuoteNumber,
   } = quotationState;
 
   const { handleExportPDF } = useExportQuotationPDF({
     customer,
-    lineItems,
+    lineItems: getAllLineItems(), // Convert sections to flat line items for PDF
     calculateSubtotal,
     calculateDiscountAmount,
     discountType,
@@ -58,6 +56,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
   const handleSave = () => {
     console.log('Quotation saved with customer type:', customerType);
+    console.log('Sections:', sections);
     onQuotationCreated();
   };
 
@@ -73,10 +72,8 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
         validUntil={validUntil}
         setValidUntil={setValidUntil}
         quoteNumber={generateQuoteNumber()}
-        lineItems={lineItems}
-        addLineItem={addLineItem}
-        updateLineItem={updateLineItem}
-        removeLineItem={removeLineItem}
+        sections={sections}
+        setSections={setSections}
         discountType={discountType}
         setDiscountType={setDiscountType}
         discount={discount}
