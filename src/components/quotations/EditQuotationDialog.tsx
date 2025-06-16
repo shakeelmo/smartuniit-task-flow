@@ -47,6 +47,7 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
   });
 
   const [customerType, setCustomerType] = useState<'existing' | 'new'>('new');
+  const [showUnitColumn, setShowUnitColumn] = useState(false);
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: '1', service: '', description: '', partNumber: '', quantity: 1, unitPrice: 0 }
@@ -270,6 +271,8 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
               lineItems={lineItems}
               updateLineItem={updateLineItem}
               removeLineItem={removeLineItem}
+              showUnitColumn={showUnitColumn}
+              setShowUnitColumn={setShowUnitColumn}
             />
           </div>
 
