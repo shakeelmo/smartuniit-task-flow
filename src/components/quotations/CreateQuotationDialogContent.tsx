@@ -40,6 +40,8 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   customerType?: 'existing' | 'new';
   setCustomerType?: (type: 'existing' | 'new') => void;
+  showUnitColumn: boolean;
+  setShowUnitColumn: (show: boolean) => void;
 }
 
 const CreateQuotationDialogContent: React.FC<Props> = ({
@@ -63,7 +65,9 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
   isExporting,
   onOpenChange,
   customerType,
-  setCustomerType
+  setCustomerType,
+  showUnitColumn,
+  setShowUnitColumn
 }) => (
   <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
     <DialogHeader>
@@ -97,6 +101,8 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
           lineItems={lineItems}
           updateLineItem={updateLineItem}
           removeLineItem={removeLineItem}
+          showUnitColumn={showUnitColumn}
+          setShowUnitColumn={setShowUnitColumn}
         />
       </div>
       <DiscountSection

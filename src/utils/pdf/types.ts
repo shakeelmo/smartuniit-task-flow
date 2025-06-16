@@ -1,3 +1,4 @@
+
 export interface QuotationData {
   number: string;
   date: string;
@@ -16,6 +17,7 @@ export interface QuotationData {
     description: string;
     partNumber?: string;
     quantity: number;
+    unit?: string;
     unitPrice: number;
   }>;
   subtotal: number;

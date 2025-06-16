@@ -25,6 +25,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
     discount, setDiscount,
     discountType, setDiscountType,
     isExporting, setIsExporting,
+    showUnitColumn, setShowUnitColumn,
     calculateSubtotal,
     calculateDiscountAmount,
     calculateAfterDiscount,
@@ -94,6 +95,8 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
         onExportPDF={handleExportPDF}
         isExporting={isExporting}
         onOpenChange={onOpenChange}
+        showUnitColumn={showUnitColumn}
+        setShowUnitColumn={setShowUnitColumn}
       />
     </Dialog>
   );

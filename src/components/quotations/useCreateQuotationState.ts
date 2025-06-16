@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 
 export interface LineItem {
@@ -7,6 +6,7 @@ export interface LineItem {
   description: string;
   partNumber?: string;
   quantity: number;
+  unit?: string;
   unitPrice: number;
 }
 
@@ -32,9 +32,10 @@ export const useCreateQuotationState = () => {
   });
 
   const [customerType, setCustomerType] = useState<'existing' | 'new'>('new');
+  const [showUnitColumn, setShowUnitColumn] = useState(false);
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', service: '', description: '', partNumber: '', quantity: 1, unitPrice: 0 }
+    { id: '1', service: '', description: '', partNumber: '', quantity: 1, unit: '', unitPrice: 0 }
   ]);
 
   const [notes, setNotes] = useState('');
@@ -88,6 +89,7 @@ export const useCreateQuotationState = () => {
       description: '',
       partNumber: '',
       quantity: 1,
+      unit: '',
       unitPrice: 0
     };
     setLineItems([...lineItems, newItem]);
@@ -120,6 +122,7 @@ export const useCreateQuotationState = () => {
     discount, setDiscount,
     discountType, setDiscountType,
     isExporting, setIsExporting,
+    showUnitColumn, setShowUnitColumn,
     calculateSubtotal,
     calculateDiscountAmount,
     calculateAfterDiscount,

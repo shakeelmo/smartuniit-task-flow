@@ -14,11 +14,21 @@ export const addTable = (
   const currencyInfo = getCurrencyInfo(quotationData.currency);
 
   const hasPartNumbers = quotationData.lineItems.some(item => item.partNumber && item.partNumber.trim());
+  const hasUnits = quotationData.lineItems.some(item => item.unit && item.unit.trim());
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
 
-  const columnWidths = hasPartNumbers
-    ? [12, 48, 20, 15, 35, 40]
-    : [12, 70, 18, 35, 40];
+  // Adjust column widths based on what columns are shown
+  let columnWidths: number[];
+  if (hasPartNumbers && hasUnits) {
+    columnWidths = [10, 40, 15, 12, 12, 30, 35];
+  } else if (hasPartNumbers) {
+    columnWidths = [12, 48, 20, 15, 35, 40];
+  } else if (hasUnits) {
+    columnWidths = [12, 60, 15, 12, 35, 40];
+  } else {
+    columnWidths = [12, 70, 18, 35, 40];
+  }
+
   const columnPositions: number[] = [];
   let currentX = PDF_CONFIG.pageMargin;
   columnWidths.forEach((width, index) => {
@@ -33,9 +43,17 @@ export const addTable = (
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
-  const headers = hasPartNumbers
-    ? ['S#', 'Item', 'Part#', 'Qty', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`]
-    : ['S#', 'Item', 'Quantity', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+  let headers: string[];
+  if (hasPartNumbers && hasUnits) {
+    headers = ['S#', 'Item', 'Part#', 'Qty', 'Unit', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+  } else if (hasPartNumbers) {
+    headers = ['S#', 'Item', 'Part#', 'Qty', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+  } else if (hasUnits) {
+    headers = ['S#', 'Item', 'Qty', 'Unit', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+  } else {
+    headers = ['S#', 'Item', 'Quantity', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+  }
+
   headers.forEach((header, index) => {
     const x = columnPositions[index] + 2;
     if (header.includes('\n')) {
@@ -60,20 +78,21 @@ export const addTable = (
 
     pdf.text((index + 1).toString(), columnPositions[0] + 2, currentY + 6);
 
-    const maxItemLength = hasPartNumbers ? 18 : 28;
+    const maxItemLength = hasPartNumbers && hasUnits ? 15 : hasPartNumbers ? 18 : hasUnits ? 23 : 28;
     const cleanServiceText = String(item.service || '').replace(/[^\x20-\x7E]/g, '');
     const itemText = cleanServiceText.length > maxItemLength
       ? cleanServiceText.substring(0, maxItemLength) + '...' : cleanServiceText;
     pdf.text(itemText, columnPositions[1] + 2, currentY + 6);
 
     let colIndex = 2;
+    
     if (hasPartNumbers) {
       const partText = item.partNumber || '-';
       const maxPartLength = 8;
       const truncatedPart = partText.length > maxPartLength
         ? partText.substring(0, maxPartLength) + '...' : partText;
-      pdf.text(truncatedPart, columnPositions[2] + 2, currentY + 6);
-      colIndex = 3;
+      pdf.text(truncatedPart, columnPositions[colIndex] + 2, currentY + 6);
+      colIndex++;
     }
 
     const qtyText = item.quantity.toString();
@@ -81,6 +100,15 @@ export const addTable = (
     const qtyX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (qtyWidth / 2);
     pdf.text(qtyText, qtyX, currentY + 6);
     colIndex++;
+
+    if (hasUnits) {
+      const unitText = item.unit || '-';
+      const maxUnitLength = 6;
+      const truncatedUnit = unitText.length > maxUnitLength
+        ? unitText.substring(0, maxUnitLength) + '...' : unitText;
+      pdf.text(truncatedUnit, columnPositions[colIndex] + 2, currentY + 6);
+      colIndex++;
+    }
 
     const unitPriceText = item.unitPrice.toLocaleString('en-US', {
       minimumFractionDigits: 2,
