@@ -3,6 +3,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Search, Plus } from 'lucide-react';
 
 interface Customer {
@@ -17,9 +18,11 @@ interface Customer {
 interface CustomerFormProps {
   customer: Customer;
   setCustomer: (customer: Customer) => void;
+  customerType?: 'existing' | 'new';
+  setCustomerType?: (type: 'existing' | 'new') => void;
 }
 
-const CustomerForm = ({ customer, setCustomer }: CustomerFormProps) => {
+const CustomerForm = ({ customer, setCustomer, customerType = 'new', setCustomerType }: CustomerFormProps) => {
   const updateCustomer = (field: keyof Customer, value: string) => {
     setCustomer({ ...customer, [field]: value });
   };
@@ -39,6 +42,27 @@ const CustomerForm = ({ customer, setCustomer }: CustomerFormProps) => {
           </Button>
         </div>
       </div>
+
+      {/* Customer Type Selection */}
+      {setCustomerType && (
+        <div className="mb-6">
+          <Label className="text-base font-medium">Customer / العميل</Label>
+          <RadioGroup 
+            value={customerType} 
+            onValueChange={(value: 'existing' | 'new') => setCustomerType(value)}
+            className="flex items-center space-x-6 mt-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="existing" id="existing" />
+              <Label htmlFor="existing" className="cursor-pointer">Existing Customer</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="new" id="new" />
+              <Label htmlFor="new" className="cursor-pointer">New Customer</Label>
+            </div>
+          </RadioGroup>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>

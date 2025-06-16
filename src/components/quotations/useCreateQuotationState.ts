@@ -31,6 +31,8 @@ export const useCreateQuotationState = () => {
     vatNumber: ''
   });
 
+  const [customerType, setCustomerType] = useState<'existing' | 'new'>('new');
+
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: '1', service: '', description: '', partNumber: '', quantity: 1, unitPrice: 0 }
   ]);
@@ -109,6 +111,7 @@ export const useCreateQuotationState = () => {
 
   return {
     customer, setCustomer,
+    customerType, setCustomerType,
     lineItems, setLineItems,
     notes, setNotes,
     validUntil, setValidUntil,

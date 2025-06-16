@@ -38,6 +38,8 @@ interface Props {
   onExportPDF: () => void;
   isExporting: boolean;
   onOpenChange: (open: boolean) => void;
+  customerType?: 'existing' | 'new';
+  setCustomerType?: (type: 'existing' | 'new') => void;
 }
 
 const CreateQuotationDialogContent: React.FC<Props> = ({
@@ -59,7 +61,9 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
   onSave,
   onExportPDF,
   isExporting,
-  onOpenChange
+  onOpenChange,
+  customerType,
+  setCustomerType
 }) => (
   <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
     <DialogHeader>
@@ -69,7 +73,12 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
     </DialogHeader>
 
     <div className="space-y-6">
-      <CustomerForm customer={customer} setCustomer={setCustomer} />
+      <CustomerForm 
+        customer={customer} 
+        setCustomer={setCustomer}
+        customerType={customerType}
+        setCustomerType={setCustomerType}
+      />
       <QuoteDetailsGrid
         currency={currency}
         setCurrency={setCurrency}

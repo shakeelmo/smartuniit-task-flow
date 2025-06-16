@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -46,6 +45,8 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
     crNumber: '',
     vatNumber: ''
   });
+
+  const [customerType, setCustomerType] = useState<'existing' | 'new'>('new');
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: '1', service: '', description: '', partNumber: '', quantity: 1, unitPrice: 0 }
@@ -142,6 +143,7 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
   const handleSave = () => {
     console.log('Updating quotation:', {
       customer,
+      customerType,
       lineItems,
       subtotal: calculateSubtotal(),
       discount: calculateDiscountAmount(),
@@ -211,7 +213,12 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
         </DialogHeader>
 
         <div className="space-y-6">
-          <CustomerForm customer={customer} setCustomer={setCustomer} />
+          <CustomerForm 
+            customer={customer} 
+            setCustomer={setCustomer}
+            customerType={customerType}
+            setCustomerType={setCustomerType}
+          />
 
           {/* Quote Details */}
           <div className="bg-gray-50 p-4 rounded-lg">
@@ -319,7 +326,6 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
               {calculateDiscountAmount() > 0 && (
                 <div className="flex justify-between text-yellow-600">
                   <span>Discount / الخصم:</span>
-                  {/* Removed the negative sign here */}
                   <span className="font-medium">{getCurrencySymbol()} {calculateDiscountAmount().toLocaleString()}</span>
                 </div>
               )}

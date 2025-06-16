@@ -16,6 +16,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
   const {
     customer, setCustomer,
+    customerType, setCustomerType,
     lineItems, setLineItems,
     notes, setNotes,
     validUntil, setValidUntil,
@@ -55,6 +56,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   });
 
   const handleSave = () => {
+    console.log('Quotation saved with customer type:', customerType);
     onQuotationCreated();
   };
 
@@ -63,6 +65,8 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
       <CreateQuotationDialogContent
         customer={customer}
         setCustomer={setCustomer}
+        customerType={customerType}
+        setCustomerType={setCustomerType}
         currency={currency}
         setCurrency={setCurrency}
         validUntil={validUntil}
