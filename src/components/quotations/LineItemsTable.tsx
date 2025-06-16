@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -269,6 +270,15 @@ const LineItemsTable = ({
                       <option value="Page">Page / صفحة</option>
                       <option value="Design">Design / تصميم</option>
                       <option value="Feature">Feature / ميزة</option>
+                      <option value="Aisles">Aisles / ممرات</option>
+                      <option value="m">m / متر</option>
+                      <option value="Units">Units / وحدات</option>
+                      <option value="Job">Job / وظيفة</option>
+                      <option value="Sets">Sets / مجموعات</option>
+                      <option value="Doors">Doors / أبواب</option>
+                      <option value="Cams">Cams / كاميرات</option>
+                      <option value="Sensors">Sensors / مجسات</option>
+                      <option value="Racks">Racks / رفوف</option>
                     </select>
                   </td>
                 )}
