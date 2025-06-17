@@ -43,7 +43,7 @@ export const addTableHeader = (
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.medium);
 
-  // Enhanced header text with better formatting
+  // Enhanced header text with better formatting - always include Total Price column
   let headers: string[];
   const currencyText = currency === 'SAR' ? 'SAR' : 'USD';
   
@@ -54,14 +54,14 @@ export const addTableHeader = (
   } else if (hasUnits) {
     headers = ['S#', 'Item Description', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
   } else {
-    headers = ['S#', 'Item Description', 'Quantity', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
+    headers = ['S#', 'Item Description', 'Qty', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
   }
 
   headers.forEach((header, index) => {
     const cellPadding = 6;
     
     // Center align S# and Qty columns with improved spacing
-    if (header === 'S#' || header === 'Qty' || header === 'Quantity') {
+    if (header === 'S#' || header === 'Qty') {
       const textWidth = pdf.getTextWidth(header);
       const centeredX = columnPositions[index] + (columnWidths[index] / 2) - (textWidth / 2);
       pdf.text(header, centeredX, yPosition + 11);

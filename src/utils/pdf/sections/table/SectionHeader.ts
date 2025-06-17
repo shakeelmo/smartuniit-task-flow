@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
 
@@ -9,8 +8,40 @@ export const addSectionHeader = (
   isContinuation: boolean = false
 ): number => {
   const pageWidth = pdf.internal.pageSize.getWidth();
-  // Clean the section title to prevent encoding issues
-  const cleanTitle = sectionTitle.replace(/[^\x20-\x7E]/g, '');
+  
+  // Clean the section title to prevent encoding issues and handle Arabic/Unicode text properly
+  let cleanTitle = sectionTitle;
+  try {
+    // Try to decode if it's encoded
+    if (sectionTitle.includes('Þ') || sectionTitle.includes('ß') || sectionTitle.includes('°')) {
+      // This appears to be corrupted encoding, try to fix common patterns
+      cleanTitle = sectionTitle
+        .replace(/Þ°/g, 'ا')
+        .replace(/Þç/g, 'ل')
+        .replace(/Þ±/g, 'ر')
+        .replace(/Þß/g, 'س')
+        .replace(/Þ¨/g, 'ت')
+        .replace(/Þ«/g, 'ع');
+      
+      // If still contains strange characters, fall back to English equivalent
+      if (cleanTitle.includes('Þ')) {
+        if (sectionTitle.toLowerCase().includes('civil') || sectionTitle.toLowerCase().includes('infrastructure')) {
+          cleanTitle = 'Civil Infrastructure';
+        } else if (sectionTitle.toLowerCase().includes('professional') || sectionTitle.toLowerCase().includes('service')) {
+          cleanTitle = 'Professional Services & Integration';
+        } else {
+          cleanTitle = sectionTitle.replace(/[^\x20-\x7E]/g, '');
+        }
+      }
+    } else {
+      // Remove non-printable characters but keep basic ASCII
+      cleanTitle = sectionTitle.replace(/[^\x20-\x7E]/g, '');
+    }
+  } catch (error) {
+    console.warn('Error cleaning section title:', error);
+    cleanTitle = sectionTitle.replace(/[^\x20-\x7E]/g, '');
+  }
+  
   const displayTitle = isContinuation ? `${cleanTitle} (Continued)` : cleanTitle;
   
   // Enhanced section header with improved styling

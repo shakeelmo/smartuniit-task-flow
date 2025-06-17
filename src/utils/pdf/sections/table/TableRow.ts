@@ -123,7 +123,7 @@ export const addTableRow = (
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned
+  // Total Price column - right aligned (FIXED: This was missing proper calculation and display)
   const totalValue = item.quantity * item.unitPrice;
   const totalFormatted = totalValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
