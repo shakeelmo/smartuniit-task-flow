@@ -20,62 +20,72 @@ export const addTableRow = (
   config: TableRowConfig
 ): number => {
   const { hasPartNumbers, hasUnits, columnWidths, columnPositions, tableWidth, currency } = config;
-  const enhancedRowHeight = 12;
+  const baseRowHeight = 14;
 
-  // Calculate required height for this row based on text wrapping
+  // Clean and prepare text content
   const serviceText = String(item.service || '').replace(/[^\x20-\x7E]/g, '');
+  const partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '') || '-';
+  const unitText = String(item.unit || '').replace(/[^\x20-\x7E]/g, '') || '-';
+
+  // Calculate text wrapping for description
   const maxServiceWidth = hasPartNumbers && hasUnits ? 40 : hasPartNumbers ? 50 : hasUnits ? 60 : 70;
   const wrappedServiceLines = wrapText(pdf, serviceText, maxServiceWidth);
-  const requiredRowHeight = Math.max(enhancedRowHeight, wrappedServiceLines.length * 5 + 4);
+  const requiredRowHeight = Math.max(baseRowHeight, wrappedServiceLines.length * 6 + 6);
 
-  // Enhanced alternating row colors
+  // Professional alternating row colors
   if (index % 2 === 0) {
-    pdf.setFillColor(248, 250, 252); // Very light blue-gray
-  } else {
     pdf.setFillColor(255, 255, 255); // White
+  } else {
+    pdf.setFillColor(248, 249, 250); // Very light grey
   }
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, requiredRowHeight, 'F');
 
-  // Add cell borders
-  pdf.setDrawColor(...COLORS.borderGray);
+  // Add professional cell borders
+  pdf.setDrawColor(220, 220, 220); // Light grey borders
   pdf.setLineWidth(0.3);
   
   // Horizontal borders
   pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
   pdf.line(PDF_CONFIG.pageMargin, yPosition + requiredRowHeight, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
   
-  // Vertical borders
+  // Vertical borders with proper spacing
   let currentXPos = PDF_CONFIG.pageMargin;
-  columnWidths.forEach((width, index) => {
-    pdf.line(currentXPos, yPosition, currentXPos, yPosition + requiredRowHeight);
+  columnWidths.forEach((width, colIndex) => {
+    if (colIndex > 0) {
+      pdf.line(currentXPos, yPosition, currentXPos, yPosition + requiredRowHeight);
+    }
     currentXPos += width;
   });
+  // Right border
   pdf.line(currentXPos, yPosition, currentXPos, yPosition + requiredRowHeight);
 
-  // Reset text properties
+  // Set text properties
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(PDF_CONFIG.fontSize.small);
 
-  // S# column - centered with padding
+  let colIndex = 0;
+
+  // S# column - centered with better padding
   const serialText = (index + 1).toString();
   const serialWidth = pdf.getTextWidth(serialText);
-  const serialX = columnPositions[0] + (columnWidths[0] / 2) - (serialWidth / 2);
-  pdf.text(serialText, serialX, yPosition + 8);
+  const serialX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (serialWidth / 2);
+  pdf.text(serialText, serialX, yPosition + 9);
+  colIndex++;
 
-  // Service/Description column with proper text wrapping
+  // Service/Description column with improved text wrapping
+  const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedServiceLines.length * 6)) / 2 + 6);
   wrappedServiceLines.forEach((line, lineIndex) => {
-    pdf.text(line, columnPositions[1] + PDF_CONFIG.cellPadding, yPosition + 8 + (lineIndex * 5));
+    pdf.text(line, columnPositions[colIndex] + PDF_CONFIG.cellPadding + 1, serviceStartY + (lineIndex * 6));
   });
+  colIndex++;
 
-  let colIndex = 2;
-  
   // Part Number column (if present)
   if (hasPartNumbers) {
-    const partText = item.partNumber || '-';
-    const wrappedPartLines = wrapText(pdf, partText, columnWidths[colIndex] - 6);
+    const wrappedPartLines = wrapText(pdf, partNumberText, columnWidths[colIndex] - 8);
+    const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 6)) / 2 + 6);
     wrappedPartLines.forEach((line, lineIndex) => {
-      pdf.text(line, columnPositions[colIndex] + PDF_CONFIG.cellPadding, yPosition + 8 + (lineIndex * 5));
+      pdf.text(line, columnPositions[colIndex] + PDF_CONFIG.cellPadding + 1, partStartY + (lineIndex * 6));
     });
     colIndex++;
   }
@@ -84,40 +94,40 @@ export const addTableRow = (
   const qtyText = item.quantity.toString();
   const qtyWidth = pdf.getTextWidth(qtyText);
   const qtyX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (qtyWidth / 2);
-  pdf.text(qtyText, qtyX, yPosition + 8);
+  pdf.text(qtyText, qtyX, yPosition + 9);
   colIndex++;
 
   // Unit column (if present)
   if (hasUnits) {
-    const unitText = item.unit || '-';
-    const wrappedUnitLines = wrapText(pdf, unitText, columnWidths[colIndex] - 6);
+    const wrappedUnitLines = wrapText(pdf, unitText, columnWidths[colIndex] - 8);
+    const unitStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedUnitLines.length * 6)) / 2 + 6);
     wrappedUnitLines.forEach((line, lineIndex) => {
-      pdf.text(line, columnPositions[colIndex] + PDF_CONFIG.cellPadding, yPosition + 8 + (lineIndex * 5));
+      pdf.text(line, columnPositions[colIndex] + PDF_CONFIG.cellPadding + 1, unitStartY + (lineIndex * 6));
     });
     colIndex++;
   }
 
-  // Unit Price column - right aligned with proper currency formatting
-  const unitPriceText = item.unitPrice.toLocaleString('en-US', {
+  // Unit Price column - right aligned with proper formatting
+  const unitPriceFormatted = item.unitPrice.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  const formattedUnitPrice = currency === 'SAR' ? `${unitPriceText} SR` : `$${unitPriceText}`;
-  const unitPriceWidth = pdf.getTextWidth(formattedUnitPrice);
-  const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - PDF_CONFIG.cellPadding;
-  pdf.text(formattedUnitPrice, unitPriceX, yPosition + 8);
+  const unitPriceText = currency === 'SAR' ? `${unitPriceFormatted} SR` : `$${unitPriceFormatted}`;
+  const unitPriceWidth = pdf.getTextWidth(unitPriceText);
+  const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - PDF_CONFIG.cellPadding - 1;
+  pdf.text(unitPriceText, unitPriceX, yPosition + 9);
   colIndex++;
 
-  // Total Price column - right aligned with proper currency formatting
+  // Total Price column - right aligned with consistent formatting
   const totalValue = item.quantity * item.unitPrice;
-  const totalText = totalValue.toLocaleString('en-US', {
+  const totalFormatted = totalValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  const formattedTotal = currency === 'SAR' ? `${totalText} SR` : `$${totalText}`;
-  const totalWidth = pdf.getTextWidth(formattedTotal);
-  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - PDF_CONFIG.cellPadding;
-  pdf.text(formattedTotal, totalX, yPosition + 8);
+  const totalText = currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
+  const totalWidth = pdf.getTextWidth(totalText);
+  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - PDF_CONFIG.cellPadding - 1;
+  pdf.text(totalText, totalX, yPosition + 9);
 
   return yPosition + requiredRowHeight;
 };

@@ -17,56 +17,64 @@ export const addTableHeader = (
   config: TableHeaderConfig
 ): number => {
   const { hasPartNumbers, hasUnits, currency, columnWidths, columnPositions, tableWidth } = config;
-  const enhancedRowHeight = 12;
+  const headerRowHeight = 14;
 
-  // Enhanced header with better styling and borders
-  pdf.setFillColor(...COLORS.headerGray);
-  pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, enhancedRowHeight, 'FD');
+  // Enhanced header with professional styling
+  pdf.setFillColor(240, 240, 240); // Light grey background
+  pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'F');
 
-  // Add border lines for header
+  // Add strong border for header
   pdf.setDrawColor(...COLORS.black);
-  pdf.setLineWidth(0.5);
+  pdf.setLineWidth(0.8);
+  pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'S');
   
-  // Top border
-  pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
-  // Bottom border
-  pdf.line(PDF_CONFIG.pageMargin, yPosition + enhancedRowHeight, PDF_CONFIG.pageMargin + tableWidth, yPosition + enhancedRowHeight);
-  
-  // Vertical borders
+  // Add vertical separators for columns
   let currentXPos = PDF_CONFIG.pageMargin;
   columnWidths.forEach((width, index) => {
-    pdf.line(currentXPos, yPosition, currentXPos, yPosition + enhancedRowHeight);
+    if (index > 0) { // Skip first border as it's part of the outer rectangle
+      pdf.line(currentXPos, yPosition, currentXPos, yPosition + headerRowHeight);
+    }
     currentXPos += width;
   });
-  // Right border
-  pdf.line(currentXPos, yPosition, currentXPos, yPosition + enhancedRowHeight);
 
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
-  // Fixed headers with proper text encoding
+  // Clean header text to prevent encoding issues
   let headers: string[];
+  const currencyText = currency === 'SAR' ? 'SAR' : 'USD';
+  
   if (hasPartNumbers && hasUnits) {
-    headers = ['S#', 'Item Description', 'Part Number', 'Qty', 'Unit', `Unit Price\n(${currency})`, `Total Price\n(${currency})`];
+    headers = ['S#', 'Item Description', 'Part Number', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
   } else if (hasPartNumbers) {
-    headers = ['S#', 'Item Description', 'Part Number', 'Qty', `Unit Price\n(${currency})`, `Total Price\n(${currency})`];
+    headers = ['S#', 'Item Description', 'Part Number', 'Qty', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
   } else if (hasUnits) {
-    headers = ['S#', 'Item Description', 'Qty', 'Unit', `Unit Price\n(${currency})`, `Total Price\n(${currency})`];
+    headers = ['S#', 'Item Description', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
   } else {
-    headers = ['S#', 'Item Description', 'Quantity', `Unit Price\n(${currency})`, `Total Price\n(${currency})`];
+    headers = ['S#', 'Item Description', 'Quantity', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
   }
 
   headers.forEach((header, index) => {
-    const x = columnPositions[index] + PDF_CONFIG.cellPadding;
-    if (header.includes('\n')) {
-      const lines = header.split('\n');
-      pdf.text(lines[0], x, yPosition + 5);
-      pdf.text(lines[1], x, yPosition + 9);
-    } else {
-      pdf.text(header, x, yPosition + 8);
+    const x = columnPositions[index] + PDF_CONFIG.cellPadding + 1;
+    
+    // Center align S# and Qty columns
+    if (header === 'S#' || header === 'Qty' || header === 'Quantity') {
+      const textWidth = pdf.getTextWidth(header);
+      const centeredX = columnPositions[index] + (columnWidths[index] / 2) - (textWidth / 2);
+      pdf.text(header, centeredX, yPosition + 9);
+    }
+    // Right align price columns
+    else if (header.includes('Price')) {
+      const textWidth = pdf.getTextWidth(header);
+      const rightAlignedX = columnPositions[index] + columnWidths[index] - textWidth - PDF_CONFIG.cellPadding - 1;
+      pdf.text(header, rightAlignedX, yPosition + 9);
+    }
+    // Left align other columns
+    else {
+      pdf.text(header, x, yPosition + 9);
     }
   });
 
-  return yPosition + enhancedRowHeight;
+  return yPosition + headerRowHeight;
 };

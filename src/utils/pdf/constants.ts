@@ -9,15 +9,15 @@ export const COLORS = {
   white: [255, 255, 255] as const,         // White background
   lightGray: [240, 240, 240] as const,     // Light gray for alternating rows
   orange: [255, 165, 0] as const,          // Orange for branding
-  borderGray: [200, 200, 200] as const,    // Light gray for borders
-  headerGray: [220, 220, 220] as const     // Light gray for headers
+  borderGray: [220, 220, 220] as const,    // Light gray for borders
+  headerGray: [240, 240, 240] as const     // Light gray for headers
 };
 
 export const PDF_CONFIG = {
   pageMargin: 15,
   logoSize: 25,
-  rowHeight: 12, // Increased for better spacing
-  lineHeight: 5, // Increased for better text spacing
+  rowHeight: 14, // Increased for better spacing
+  lineHeight: 6, // Improved line spacing
   fontSize: {
     small: 8,
     normal: 9,
@@ -25,8 +25,8 @@ export const PDF_CONFIG = {
     large: 11,
     title: 14
   },
-  cellPadding: 3, // New: standard cell padding
-  textWrapMargin: 4 // New: margin for text wrapping calculations
+  cellPadding: 4, // Increased cell padding for better readability
+  textWrapMargin: 6 // Improved text wrapping margin
 };
 
 export const COLUMN_WIDTHS = [20, 60, 25, 35, 40]; // S#, Item, Quantity, Unit Price, Total Price
