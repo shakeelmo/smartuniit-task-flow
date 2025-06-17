@@ -2,6 +2,7 @@
 import React from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { FileText, File } from 'lucide-react';
 import CustomerForm from './CustomerForm';
 import QuotationSectionsManager from './QuotationSectionsManager';
 import DiscountSection from './DiscountSection';
@@ -34,6 +35,7 @@ interface Props {
   setNotes: (t: string) => void;
   onSave: () => void;
   onExportPDF: () => void;
+  onExportWord?: () => void;
   isExporting: boolean;
   onOpenChange: (open: boolean) => void;
   customerType?: 'existing' | 'new';
@@ -60,6 +62,7 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
   notes, setNotes,
   onSave,
   onExportPDF,
+  onExportWord,
   isExporting,
   onOpenChange,
   customerType,
@@ -148,8 +151,21 @@ const CreateQuotationDialogContent: React.FC<Props> = ({
           disabled={isExporting}
           type="button"
         >
+          <FileText className="h-4 w-4 mr-2" />
           {isExporting ? 'Exporting...' : 'Export PDF'}
         </Button>
+        {onExportWord && (
+          <Button
+            onClick={onExportWord}
+            variant="outline"
+            className="bg-green-600 text-white hover:bg-green-700"
+            disabled={isExporting}
+            type="button"
+          >
+            <File className="h-4 w-4 mr-2" />
+            {isExporting ? 'Exporting...' : 'Export as Word'}
+          </Button>
+        )}
       </div>
     </div>
   </DialogContent>

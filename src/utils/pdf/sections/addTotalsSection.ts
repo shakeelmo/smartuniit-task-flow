@@ -17,8 +17,8 @@ export const addTotalsSection = (
   let currentY = yPosition;
 
   // Enhanced spacing and section height calculations
-  const enhancedRowHeight = 14;
-  const totalsSectionHeight = 80;
+  const enhancedRowHeight = 12;
+  const totalsSectionHeight = 70;
   
   // Check if we need a new page for totals section
   if (currentY + totalsSectionHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
@@ -35,40 +35,24 @@ export const addTotalsSection = (
   const hasUnits = allLineItems.some(item => item.unit && item.unit.trim());
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
 
-  // Enhanced column width calculations for better alignment
-  const columnWidths = hasPartNumbers && hasUnits 
-    ? [18, 55, 25, 18, 22, 45, 50]
-    : hasPartNumbers 
-    ? [18, 65, 28, 22, 48, 52]
-    : hasUnits
-    ? [18, 75, 18, 22, 48, 52]
-    : [18, 85, 25, 48, 52];
-
-  const labelsSpan = hasPartNumbers && hasUnits ? 5 : hasPartNumbers ? 4 : hasUnits ? 4 : 3;
-  let labelStartX = PDF_CONFIG.pageMargin;
-  for (let i = 0; i < labelsSpan; i++) {
-    labelStartX += columnWidths[i];
-  }
-
-  const valueColumnIndex = hasPartNumbers && hasUnits ? 6 : hasPartNumbers ? 5 : hasUnits ? 5 : 4;
-  let valueStartX = PDF_CONFIG.pageMargin;
-  for (let i = 0; i < valueColumnIndex; i++) {
-    valueStartX += columnWidths[i];
-  }
-  const valueColumnWidth = columnWidths[valueColumnIndex];
+  // Simplified and consistent totals section positioning
+  const labelColumnWidth = tableWidth * 0.65; // 65% for labels
+  const valueColumnWidth = tableWidth * 0.35; // 35% for values
+  const labelStartX = PDF_CONFIG.pageMargin;
+  const valueStartX = PDF_CONFIG.pageMargin + labelColumnWidth;
 
   // Enhanced separator line with professional styling
   pdf.setDrawColor(...COLORS.black);
   pdf.setLineWidth(1.2);
-  pdf.line(PDF_CONFIG.pageMargin, currentY, pageWidth - PDF_CONFIG.pageMargin, currentY);
-  currentY += 10;
+  pdf.line(PDF_CONFIG.pageMargin, currentY, PDF_CONFIG.pageMargin + tableWidth, currentY);
+  currentY += 8;
 
-  // Subtotal row with enhanced styling and spacing
-  pdf.setFillColor(245, 247, 250); // Light blue-gray background
+  const cellPadding = 6;
+
+  // Subtotal row
+  pdf.setFillColor(248, 250, 252);
   pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'F');
-
-  // Enhanced border styling
-  pdf.setDrawColor(180, 180, 180);
+  pdf.setDrawColor(200, 200, 200);
   pdf.setLineWidth(0.5);
   pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'S');
 
@@ -76,8 +60,7 @@ export const addTotalsSection = (
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.medium);
 
-  const cellPadding = 8; // Increased padding
-  pdf.text(`Subtotal in ${currencyInfo.name}`, labelStartX + cellPadding, currentY + 9);
+  pdf.text(`Subtotal in ${currencyInfo.name}`, labelStartX + cellPadding, currentY + 8);
 
   const subtotalFormatted = quotationData.subtotal.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -86,17 +69,16 @@ export const addTotalsSection = (
   const subtotalText = quotationData.currency === 'SAR' ? `${subtotalFormatted} SR` : `$${subtotalFormatted}`;
   const subtotalWidth = pdf.getTextWidth(subtotalText);
   const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - cellPadding;
-  pdf.text(subtotalText, subtotalX, currentY + 9);
+  pdf.text(subtotalText, subtotalX, currentY + 8);
 
-  currentY += enhancedRowHeight + 2; // Added spacing between rows
+  currentY += enhancedRowHeight;
 
-  // Enhanced discount row with improved styling
+  // Discount row (if applicable)
   if (quotationData.discount && quotationData.discount > 0) {
-    pdf.setFillColor(255, 252, 230); // Light yellow background
+    pdf.setFillColor(255, 252, 230);
     pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'F');
-
-    pdf.setDrawColor(220, 200, 150);
-    pdf.setLineWidth(0.4);
+    pdf.setDrawColor(200, 200, 200);
+    pdf.setLineWidth(0.5);
     pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'S');
 
     pdf.setTextColor(...COLORS.black);
@@ -107,12 +89,10 @@ export const addTotalsSection = (
     if (quotationData.discountType === 'percentage') {
       if (typeof quotationData.discountPercent === 'number') {
         discountLabel = `Discount (${quotationData.discountPercent}%)`;
-      } else {
-        discountLabel = 'Discount (%)';
       }
     }
 
-    pdf.text(discountLabel, labelStartX + cellPadding, currentY + 9);
+    pdf.text(discountLabel, labelStartX + cellPadding, currentY + 8);
 
     const discountFormatted = quotationData.discount.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -123,23 +103,22 @@ export const addTotalsSection = (
       : `-$${discountFormatted}`;
     const discountWidth = pdf.getTextWidth(discountText);
     const discountX = valueStartX + valueColumnWidth - discountWidth - cellPadding;
-    pdf.text(discountText, discountX, currentY + 9);
+    pdf.text(discountText, discountX, currentY + 8);
 
-    currentY += enhancedRowHeight + 2;
+    currentY += enhancedRowHeight;
   }
 
-  // Enhanced VAT row with professional styling
-  pdf.setFillColor(255, 250, 210); // Light yellow background
+  // VAT row
+  pdf.setFillColor(255, 250, 210);
   pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'F');
-  
-  pdf.setDrawColor(220, 200, 150);
-  pdf.setLineWidth(0.4);
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(0.5);
   pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'S');
 
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(PDF_CONFIG.fontSize.medium);
-  pdf.text('VAT 15%', labelStartX + cellPadding, currentY + 9);
+  pdf.text('VAT 15%', labelStartX + cellPadding, currentY + 8);
 
   const vatFormatted = quotationData.vat.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -148,23 +127,23 @@ export const addTotalsSection = (
   const vatText = quotationData.currency === 'SAR' ? `${vatFormatted} SR` : `$${vatFormatted}`;
   const vatWidth = pdf.getTextWidth(vatText);
   const vatX = valueStartX + valueColumnWidth - vatWidth - cellPadding;
-  pdf.text(vatText, vatX, currentY + 9);
+  pdf.text(vatText, vatX, currentY + 8);
 
-  currentY += enhancedRowHeight + 2;
+  currentY += enhancedRowHeight;
 
-  // Enhanced total row with premium styling
-  pdf.setFillColor(240, 242, 247); // Light gray background
-  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'F');
+  // Total row with enhanced styling
+  pdf.setFillColor(240, 242, 247);
+  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight + 2, 'F');
   
   // Bold border for total row
   pdf.setDrawColor(...COLORS.black);
   pdf.setLineWidth(1);
-  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'S');
+  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight + 2, 'S');
 
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.large);
-  pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX + cellPadding, currentY + 10);
+  pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX + cellPadding, currentY + 9);
 
   const totalFormatted = quotationData.total.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -173,16 +152,15 @@ export const addTotalsSection = (
   const totalText = quotationData.currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = valueStartX + valueColumnWidth - totalWidth - cellPadding;
-  pdf.text(totalText, totalX, currentY + 10);
+  pdf.text(totalText, totalX, currentY + 9);
 
-  return currentY + 25;
+  return currentY + 20;
 };
 
 const addPageHeader = (pdf: jsPDF, quotationData: QuotationData): number => {
   const pageWidth = pdf.internal.pageSize.getWidth();
   let yPosition = PDF_CONFIG.pageMargin;
 
-  // Enhanced header for continuation pages
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.large);

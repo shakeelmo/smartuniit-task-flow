@@ -37,9 +37,9 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
     generateQuoteNumber,
   } = quotationState;
 
-  const { handleExportPDF } = useExportQuotationPDF({
+  const { handleExportPDF, handleExportWord } = useExportQuotationPDF({
     customer,
-    sections, // Pass sections instead of flat lineItems
+    sections,
     calculateSubtotal,
     calculateDiscountAmount,
     discountType,
@@ -90,6 +90,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
         setNotes={setNotes}
         onSave={handleSave}
         onExportPDF={handleExportPDF}
+        onExportWord={handleExportWord}
         isExporting={isExporting}
         onOpenChange={onOpenChange}
         showUnitColumn={showUnitColumn}
@@ -98,4 +99,5 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
     </Dialog>
   );
 };
+
 export default CreateQuotationDialog;
