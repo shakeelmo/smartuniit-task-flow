@@ -4,6 +4,9 @@ import { QuotationData } from '../types';
 import { COLORS, PDF_CONFIG } from '../constants';
 import { getCurrencyInfo } from '../helpers';
 
+const PAGE_HEIGHT = 297; // A4 height in mm
+const BOTTOM_MARGIN = 40; // Space reserved for footer/totals
+
 export const addTable = (
   pdf: jsPDF,
   quotationData: QuotationData,
@@ -19,6 +22,12 @@ export const addTable = (
   if (hasSections) {
     // Render sections with headers
     quotationData.sections!.forEach((section, sectionIndex) => {
+      // Check if we need a new page for section header
+      if (currentY > PAGE_HEIGHT - BOTTOM_MARGIN) {
+        pdf.addPage();
+        currentY = addPageHeader(pdf, quotationData);
+      }
+
       // Add section header
       pdf.setFillColor(...COLORS.lightGray);
       pdf.rect(PDF_CONFIG.pageMargin, currentY, pageWidth - 2 * PDF_CONFIG.pageMargin, 8, 'F');
@@ -42,6 +51,26 @@ export const addTable = (
   return currentY;
 };
 
+const addPageHeader = (pdf: jsPDF, quotationData: QuotationData): number => {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  let yPosition = PDF_CONFIG.pageMargin;
+
+  // Add basic header info on continuation pages
+  pdf.setTextColor(...COLORS.black);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(PDF_CONFIG.fontSize.large);
+  pdf.text('Quotation (Continued)', PDF_CONFIG.pageMargin, yPosition);
+  
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(PDF_CONFIG.fontSize.medium);
+  pdf.text(`Quote: ${quotationData.number}`, pageWidth - 80, yPosition);
+  
+  yPosition += 10;
+  pdf.text(`Customer: ${quotationData.customer.companyName}`, PDF_CONFIG.pageMargin, yPosition);
+  
+  return yPosition + 15;
+};
+
 const renderTableSection = (
   pdf: jsPDF,
   lineItems: any[],
@@ -49,7 +78,7 @@ const renderTableSection = (
   yPosition: number
 ) => {
   const pageWidth = pdf.internal.pageSize.getWidth();
-  const tableStartY = yPosition;
+  let currentY = yPosition;
 
   const hasPartNumbers = lineItems.some(item => item.partNumber && item.partNumber.trim());
   const hasUnits = lineItems.some(item => item.unit && item.unit.trim());
@@ -74,43 +103,56 @@ const renderTableSection = (
     currentX += width;
   });
 
-  // Table header
-  pdf.setFillColor(...COLORS.tableHeaderBlue);
-  pdf.rect(PDF_CONFIG.pageMargin, tableStartY, tableWidth, PDF_CONFIG.rowHeight, 'F');
+  // Function to add table header
+  const addTableHeader = (y: number) => {
+    pdf.setFillColor(...COLORS.tableHeaderBlue);
+    pdf.rect(PDF_CONFIG.pageMargin, y, tableWidth, PDF_CONFIG.rowHeight, 'F');
 
-  pdf.setTextColor(...COLORS.white);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(PDF_CONFIG.fontSize.normal);
+    pdf.setTextColor(...COLORS.white);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
-  let headers: string[];
-  if (hasPartNumbers && hasUnits) {
-    headers = ['S#', 'Item', 'Part#', 'Qty', 'Unit', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
-  } else if (hasPartNumbers) {
-    headers = ['S#', 'Item', 'Part#', 'Qty', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
-  } else if (hasUnits) {
-    headers = ['S#', 'Item', 'Qty', 'Unit', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
-  } else {
-    headers = ['S#', 'Item', 'Quantity', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
-  }
-
-  headers.forEach((header, index) => {
-    const x = columnPositions[index] + 2;
-    if (header.includes('\n')) {
-      const lines = header.split('\n');
-      pdf.text(lines[0], x, tableStartY + 4);
-      pdf.text(lines[1], x, tableStartY + 7);
+    let headers: string[];
+    if (hasPartNumbers && hasUnits) {
+      headers = ['S#', 'Item', 'Part#', 'Qty', 'Unit', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+    } else if (hasPartNumbers) {
+      headers = ['S#', 'Item', 'Part#', 'Qty', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
+    } else if (hasUnits) {
+      headers = ['S#', 'Item', 'Qty', 'Unit', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
     } else {
-      pdf.text(header, x, tableStartY + 6);
+      headers = ['S#', 'Item', 'Quantity', `Unit Price\n(${quotationData.currency})`, `Total Price\n(${quotationData.currency})`];
     }
-  });
 
-  let currentY = tableStartY + PDF_CONFIG.rowHeight;
+    headers.forEach((header, index) => {
+      const x = columnPositions[index] + 2;
+      if (header.includes('\n')) {
+        const lines = header.split('\n');
+        pdf.text(lines[0], x, y + 4);
+        pdf.text(lines[1], x, y + 7);
+      } else {
+        pdf.text(header, x, y + 6);
+      }
+    });
+
+    return y + PDF_CONFIG.rowHeight;
+  };
+
+  // Add initial table header
+  currentY = addTableHeader(currentY);
+
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(PDF_CONFIG.fontSize.small);
 
-  // Table rows
+  // Table rows with pagination
   lineItems.forEach((item, index) => {
+    // Check if we need a new page (accounting for row height and bottom margin)
+    if (currentY + PDF_CONFIG.rowHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+      pdf.addPage();
+      currentY = addPageHeader(pdf, quotationData);
+      currentY = addTableHeader(currentY);
+    }
+
     if (index % 2 === 0) {
       pdf.setFillColor(...COLORS.lightGray);
       pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');

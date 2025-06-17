@@ -2,9 +2,19 @@
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../constants';
 
+const PAGE_HEIGHT = 297; // A4 height in mm
+const BOTTOM_MARGIN = 40; // Space reserved for footer
+
 export const addFooter = (pdf: jsPDF, yPosition: number) => {
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
+  const totalPages = pdf.internal.pages.length - 1; // Subtract 1 because pages array includes a null first element
+
+  // Check if we need a new page for footer content
+  if (yPosition + 30 > PAGE_HEIGHT - BOTTOM_MARGIN) {
+    pdf.addPage();
+    yPosition = PDF_CONFIG.pageMargin;
+  }
 
   pdf.setTextColor(...COLORS.headerBlue);
   pdf.setFont('helvetica', 'bold');
@@ -22,14 +32,24 @@ export const addFooter = (pdf: jsPDF, yPosition: number) => {
   const addressWidth = pdf.getTextWidth(addressText);
   pdf.text(addressText, (pageWidth - addressWidth) / 2, yPosition);
 
-  const footerY = pageHeight - 30;
+  // Add footer to all pages
+  for (let i = 1; i <= totalPages; i++) {
+    pdf.setPage(i);
+    
+    const footerY = pageHeight - 30;
 
-  pdf.setFillColor(...COLORS.headerBlue);
-  pdf.triangle(pageWidth, pageHeight, pageWidth - 40, pageHeight, pageWidth, pageHeight - 25, 'F');
+    // Blue triangular design in bottom-right
+    pdf.setFillColor(...COLORS.headerBlue);
+    pdf.triangle(pageWidth, pageHeight, pageWidth - 40, pageHeight, pageWidth, pageHeight - 25, 'F');
 
-  pdf.setTextColor(...COLORS.orange);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(PDF_CONFIG.fontSize.small);
-  pdf.text('Copy Right© Smart Universe for Communication & IT', PDF_CONFIG.pageMargin, footerY);
-  pdf.text('Page 1 of 1', pageWidth - 25, footerY);
+    // Copyright and page number
+    pdf.setTextColor(...COLORS.orange);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(PDF_CONFIG.fontSize.small);
+    pdf.text('Copy Right© Smart Universe for Communication & IT', PDF_CONFIG.pageMargin, footerY);
+    pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 30, footerY);
+  }
+
+  // Return to last page
+  pdf.setPage(totalPages);
 };
