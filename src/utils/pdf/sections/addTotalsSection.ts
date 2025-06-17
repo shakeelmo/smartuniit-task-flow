@@ -17,7 +17,8 @@ export const addTotalsSection = (
   let currentY = yPosition;
 
   // Calculate space needed for totals section
-  const totalsSectionHeight = 60; // Approximate height needed for all totals rows
+  const enhancedRowHeight = 12; // Match table row height
+  const totalsSectionHeight = 70; // Approximate height needed for all totals rows
   
   // Check if we need a new page for totals section
   if (currentY + totalsSectionHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
@@ -36,12 +37,12 @@ export const addTotalsSection = (
 
   // Adjust column widths based on what columns are shown
   const columnWidths = hasPartNumbers && hasUnits 
-    ? [10, 40, 15, 12, 12, 30, 35]
+    ? [12, 45, 18, 15, 15, 35, 35]
     : hasPartNumbers 
-    ? [12, 48, 20, 15, 35, 40]
+    ? [12, 55, 25, 20, 40, 45]
     : hasUnits
-    ? [12, 60, 15, 12, 35, 40]
-    : [12, 70, 18, 35, 40];
+    ? [12, 65, 18, 15, 40, 45]
+    : [12, 75, 25, 40, 45];
 
   const labelsSpan = hasPartNumbers && hasUnits ? 5 : hasPartNumbers ? 4 : hasUnits ? 4 : 3;
   let labelStartX = PDF_CONFIG.pageMargin;
@@ -56,21 +57,26 @@ export const addTotalsSection = (
   }
   const valueColumnWidth = columnWidths[valueColumnIndex];
 
-  // Add a separator line before totals
+  // Add a separator line before totals with enhanced styling
   pdf.setDrawColor(...COLORS.black);
   pdf.setLineWidth(1);
   pdf.line(PDF_CONFIG.pageMargin, currentY, pageWidth - PDF_CONFIG.pageMargin, currentY);
-  currentY += 5;
+  currentY += 8;
 
-  // Subtotal row
-  pdf.setFillColor(...COLORS.tableHeaderBlue);
-  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
+  // Enhanced subtotal row with better styling
+  pdf.setFillColor(...COLORS.headerGray);
+  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'FD');
 
-  pdf.setTextColor(...COLORS.white);
+  // Add border
+  pdf.setDrawColor(...COLORS.black);
+  pdf.setLineWidth(0.5);
+  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'S');
+
+  pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
-  pdf.text(`Subtotal in ${currencyInfo.name}`, labelStartX + 2, currentY + 6);
+  pdf.text(`Subtotal in ${currencyInfo.name}`, labelStartX + PDF_CONFIG.cellPadding, currentY + 8);
 
   const subtotalFormatted = quotationData.subtotal.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -78,17 +84,23 @@ export const addTotalsSection = (
   });
   const subtotalText = quotationData.currency === 'SAR' ? `${subtotalFormatted} SR` : `$${subtotalFormatted}`;
   const subtotalWidth = pdf.getTextWidth(subtotalText);
-  const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - 2;
-  pdf.text(subtotalText, subtotalX, currentY + 6);
+  const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - PDF_CONFIG.cellPadding;
+  pdf.text(subtotalText, subtotalX, currentY + 8);
 
-  currentY += PDF_CONFIG.rowHeight;
+  currentY += enhancedRowHeight;
 
-  // Discount row (if applicable)
+  // Enhanced discount row (if applicable)
   if (quotationData.discount && quotationData.discount > 0) {
-    pdf.setFillColor(...COLORS.yellow);
-    pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
+    pdf.setFillColor(255, 252, 230); // Light yellow background
+    pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'FD');
+
+    // Add border
+    pdf.setDrawColor(...COLORS.borderGray);
+    pdf.setLineWidth(0.3);
+    pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'S');
 
     pdf.setTextColor(...COLORS.black);
+    pdf.setFont('helvetica', 'normal');
 
     let discountLabel = 'Discount';
     if (quotationData.discountType === 'percentage') {
@@ -99,7 +111,7 @@ export const addTotalsSection = (
       }
     }
 
-    pdf.text(discountLabel, labelStartX + 2, currentY + 6);
+    pdf.text(discountLabel, labelStartX + PDF_CONFIG.cellPadding, currentY + 8);
 
     const discountFormatted = quotationData.discount.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -109,17 +121,24 @@ export const addTotalsSection = (
       ? `-${discountFormatted} SR`
       : `-$${discountFormatted}`;
     const discountWidth = pdf.getTextWidth(discountText);
-    const discountX = valueStartX + valueColumnWidth - discountWidth - 2;
-    pdf.text(discountText, discountX, currentY + 6);
+    const discountX = valueStartX + valueColumnWidth - discountWidth - PDF_CONFIG.cellPadding;
+    pdf.text(discountText, discountX, currentY + 8);
 
-    currentY += PDF_CONFIG.rowHeight;
+    currentY += enhancedRowHeight;
   }
 
-  // VAT row
-  pdf.setFillColor(...COLORS.yellow);
-  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
+  // Enhanced VAT row
+  pdf.setFillColor(255, 252, 230); // Light yellow background
+  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'FD');
+  
+  // Add border
+  pdf.setDrawColor(...COLORS.borderGray);
+  pdf.setLineWidth(0.3);
+  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'S');
+
   pdf.setTextColor(...COLORS.black);
-  pdf.text('VAT 15%', labelStartX + 2, currentY + 6);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('VAT 15%', labelStartX + PDF_CONFIG.cellPadding, currentY + 8);
 
   const vatFormatted = quotationData.vat.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -127,17 +146,24 @@ export const addTotalsSection = (
   });
   const vatText = quotationData.currency === 'SAR' ? `${vatFormatted} SR` : `$${vatFormatted}`;
   const vatWidth = pdf.getTextWidth(vatText);
-  const vatX = valueStartX + valueColumnWidth - vatWidth - 2;
-  pdf.text(vatText, vatX, currentY + 6);
+  const vatX = valueStartX + valueColumnWidth - vatWidth - PDF_CONFIG.cellPadding;
+  pdf.text(vatText, vatX, currentY + 8);
 
-  currentY += PDF_CONFIG.rowHeight;
+  currentY += enhancedRowHeight;
 
-  // Total row
-  pdf.setFillColor(...COLORS.tableHeaderBlue);
-  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
-  pdf.setTextColor(...COLORS.white);
+  // Enhanced total row
+  pdf.setFillColor(...COLORS.headerGray);
+  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'FD');
+  
+  // Add bold border
+  pdf.setDrawColor(...COLORS.black);
+  pdf.setLineWidth(0.8);
+  pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, enhancedRowHeight, 'S');
+
+  pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX + 2, currentY + 6);
+  pdf.setFontSize(PDF_CONFIG.fontSize.normal);
+  pdf.text(`Total Price in ${currencyInfo.name}`, labelStartX + PDF_CONFIG.cellPadding, currentY + 8);
 
   const totalFormatted = quotationData.total.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -145,8 +171,8 @@ export const addTotalsSection = (
   });
   const totalText = quotationData.currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
-  const totalX = valueStartX + valueColumnWidth - totalWidth - 2;
-  pdf.text(totalText, totalX, currentY + 6);
+  const totalX = valueStartX + valueColumnWidth - totalWidth - PDF_CONFIG.cellPadding;
+  pdf.text(totalText, totalX, currentY + 8);
 
   return currentY + 25;
 };
