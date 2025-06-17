@@ -39,7 +39,7 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
 
   const { handleExportPDF } = useExportQuotationPDF({
     customer,
-    lineItems: getAllLineItems(), // Convert sections to flat line items for PDF
+    sections, // Pass sections instead of flat lineItems
     calculateSubtotal,
     calculateDiscountAmount,
     discountType,

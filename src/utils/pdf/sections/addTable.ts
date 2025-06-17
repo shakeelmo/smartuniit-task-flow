@@ -20,32 +20,32 @@ export const addTable = (
   const hasSections = quotationData.sections && quotationData.sections.length > 0;
 
   if (hasSections) {
-    // Render sections with headers
+    // Render sections with headers as separate table blocks
     quotationData.sections!.forEach((section, sectionIndex) => {
       // Check if we need a new page for section header
-      if (currentY > PAGE_HEIGHT - BOTTOM_MARGIN) {
+      if (currentY + 30 > PAGE_HEIGHT - BOTTOM_MARGIN) {
         pdf.addPage();
         currentY = addPageHeader(pdf, quotationData);
       }
 
-      // Add section header
-      pdf.setFillColor(...COLORS.lightGray);
-      pdf.rect(PDF_CONFIG.pageMargin, currentY, pageWidth - 2 * PDF_CONFIG.pageMargin, 8, 'F');
+      // Add section header with enhanced styling
+      pdf.setFillColor(...COLORS.headerBlue);
+      pdf.rect(PDF_CONFIG.pageMargin, currentY, pageWidth - 2 * PDF_CONFIG.pageMargin, 12, 'F');
       
-      pdf.setTextColor(...COLORS.black);
+      pdf.setTextColor(...COLORS.white);
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(PDF_CONFIG.fontSize.normal);
-      pdf.text(section.title, PDF_CONFIG.pageMargin + 5, currentY + 6);
+      pdf.setFontSize(PDF_CONFIG.fontSize.medium);
+      pdf.text(section.title, PDF_CONFIG.pageMargin + 5, currentY + 8);
       
-      currentY += 10;
+      currentY += 15;
       
-      // Render table for this section
-      currentY = renderTableSection(pdf, section.lineItems, quotationData, currentY);
-      currentY += 5; // Add spacing between sections
+      // Render separate table for this section
+      currentY = renderSectionTable(pdf, section.lineItems, quotationData, currentY, section.title);
+      currentY += 10; // Add spacing between sections
     });
   } else {
     // Render flat line items (backward compatibility)
-    currentY = renderTableSection(pdf, quotationData.lineItems, quotationData, currentY);
+    currentY = renderSectionTable(pdf, quotationData.lineItems, quotationData, currentY);
   }
 
   return currentY;
@@ -71,11 +71,12 @@ const addPageHeader = (pdf: jsPDF, quotationData: QuotationData): number => {
   return yPosition + 15;
 };
 
-const renderTableSection = (
+const renderSectionTable = (
   pdf: jsPDF,
   lineItems: any[],
   quotationData: QuotationData,
-  yPosition: number
+  yPosition: number,
+  sectionTitle?: string
 ) => {
   const pageWidth = pdf.internal.pageSize.getWidth();
   let currentY = yPosition;
@@ -103,8 +104,8 @@ const renderTableSection = (
     currentX += width;
   });
 
-  // Function to add table header
-  const addTableHeader = (y: number) => {
+  // Function to add table header for each section
+  const addSectionTableHeader = (y: number) => {
     pdf.setFillColor(...COLORS.tableHeaderBlue);
     pdf.rect(PDF_CONFIG.pageMargin, y, tableWidth, PDF_CONFIG.rowHeight, 'F');
 
@@ -137,22 +138,37 @@ const renderTableSection = (
     return y + PDF_CONFIG.rowHeight;
   };
 
-  // Add initial table header
-  currentY = addTableHeader(currentY);
+  // Add table header for this section
+  currentY = addSectionTableHeader(currentY);
 
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(PDF_CONFIG.fontSize.small);
 
-  // Table rows with pagination
+  // Table rows with pagination for this section
   lineItems.forEach((item, index) => {
     // Check if we need a new page (accounting for row height and bottom margin)
     if (currentY + PDF_CONFIG.rowHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
       pdf.addPage();
       currentY = addPageHeader(pdf, quotationData);
-      currentY = addTableHeader(currentY);
+      
+      // Re-add section title if continuing on new page
+      if (sectionTitle) {
+        pdf.setFillColor(...COLORS.headerBlue);
+        pdf.rect(PDF_CONFIG.pageMargin, currentY, pageWidth - 2 * PDF_CONFIG.pageMargin, 12, 'F');
+        
+        pdf.setTextColor(...COLORS.white);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(PDF_CONFIG.fontSize.medium);
+        pdf.text(`${sectionTitle} (Continued)`, PDF_CONFIG.pageMargin + 5, currentY + 8);
+        
+        currentY += 15;
+      }
+      
+      currentY = addSectionTableHeader(currentY);
     }
 
+    // Alternating row colors for better readability
     if (index % 2 === 0) {
       pdf.setFillColor(...COLORS.lightGray);
       pdf.rect(PDF_CONFIG.pageMargin, currentY, tableWidth, PDF_CONFIG.rowHeight, 'F');
@@ -212,6 +228,13 @@ const renderTableSection = (
 
     currentY += PDF_CONFIG.rowHeight;
   });
+
+  // Add a border around the entire section table
+  pdf.setDrawColor(...COLORS.black);
+  pdf.setLineWidth(0.5);
+  const tableStartY = yPosition - 15; // Include section header
+  const tableHeight = currentY - tableStartY;
+  pdf.rect(PDF_CONFIG.pageMargin, tableStartY, tableWidth, tableHeight, 'S');
 
   return currentY;
 };

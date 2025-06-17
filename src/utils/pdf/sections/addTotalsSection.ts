@@ -25,8 +25,13 @@ export const addTotalsSection = (
     currentY = addPageHeader(pdf, quotationData);
   }
 
-  const hasPartNumbers = quotationData.lineItems.some(item => item.partNumber && item.partNumber.trim());
-  const hasUnits = quotationData.lineItems.some(item => item.unit && item.unit.trim());
+  // Determine column configuration based on data
+  const allLineItems = quotationData.sections 
+    ? quotationData.sections.flatMap(section => section.lineItems)
+    : quotationData.lineItems;
+    
+  const hasPartNumbers = allLineItems.some(item => item.partNumber && item.partNumber.trim());
+  const hasUnits = allLineItems.some(item => item.unit && item.unit.trim());
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
 
   // Adjust column widths based on what columns are shown
@@ -50,6 +55,12 @@ export const addTotalsSection = (
     valueStartX += columnWidths[i];
   }
   const valueColumnWidth = columnWidths[valueColumnIndex];
+
+  // Add a separator line before totals
+  pdf.setDrawColor(...COLORS.black);
+  pdf.setLineWidth(1);
+  pdf.line(PDF_CONFIG.pageMargin, currentY, pageWidth - PDF_CONFIG.pageMargin, currentY);
+  currentY += 5;
 
   // Subtotal row
   pdf.setFillColor(...COLORS.tableHeaderBlue);

@@ -1,11 +1,10 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { generateQuotationPDF } from '@/utils/pdfExport';
 import { QuotationData } from '@/utils/pdf/types';
 
 export const useExportQuotationPDF = ({
   customer,
-  lineItems,
+  sections, // Changed from lineItems to sections
   calculateSubtotal,
   calculateDiscountAmount,
   discountType,
@@ -29,7 +28,12 @@ export const useExportQuotationPDF = ({
       return;
     }
 
-    if (lineItems.length === 0 || lineItems.every((item: any) => !item.service.trim())) {
+    // Check if any section has line items with services
+    const hasServices = sections.some((section: any) => 
+      section.lineItems.some((item: any) => item.service.trim())
+    );
+
+    if (!hasServices) {
       toast({ title: "No Services", description: "Please add at least one service item before exporting PDF", variant: "destructive" });
       return;
     }
@@ -43,12 +47,21 @@ export const useExportQuotationPDF = ({
 
     const discountPercent = discountType === 'percentage' ? discount : undefined;
 
+    // Convert sections to flat lineItems for backward compatibility AND keep sections
+    const flatLineItems = sections.flatMap((section: any) => 
+      section.lineItems.map((item: any) => ({
+        ...item,
+        sectionTitle: section.title
+      }))
+    );
+
     const quotationData: QuotationData = {
       number: generateQuoteNumber(),
       date: new Date().toISOString(),
       validUntil: validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       customer,
-      lineItems,
+      lineItems: flatLineItems, // Flat structure for backward compatibility
+      sections: sections, // New sectioned structure for enhanced PDF
       subtotal: calculateSubtotal(),
       discount: calculateDiscountAmount(),
       discountType,
