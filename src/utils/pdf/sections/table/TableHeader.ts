@@ -17,10 +17,10 @@ export const addTableHeader = (
   config: TableHeaderConfig
 ): number => {
   const { hasPartNumbers, hasUnits, currency, columnWidths, columnPositions, tableWidth } = config;
-  const headerRowHeight = 14;
+  const headerRowHeight = 16;
 
-  // Enhanced header with professional styling
-  pdf.setFillColor(240, 240, 240); // Light grey background
+  // Enhanced header with professional blue background
+  pdf.setFillColor(83, 122, 166); // Medium blue background
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'F');
 
   // Add strong border for header
@@ -28,20 +28,22 @@ export const addTableHeader = (
   pdf.setLineWidth(0.8);
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'S');
   
-  // Add vertical separators for columns
+  // Add vertical separators for columns with enhanced spacing
   let currentXPos = PDF_CONFIG.pageMargin;
   columnWidths.forEach((width, index) => {
-    if (index > 0) { // Skip first border as it's part of the outer rectangle
+    if (index > 0) {
+      pdf.setLineWidth(0.5);
+      pdf.setDrawColor(200, 200, 200);
       pdf.line(currentXPos, yPosition, currentXPos, yPosition + headerRowHeight);
     }
     currentXPos += width;
   });
 
-  pdf.setTextColor(...COLORS.black);
+  pdf.setTextColor(...COLORS.white);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(PDF_CONFIG.fontSize.normal);
+  pdf.setFontSize(PDF_CONFIG.fontSize.medium);
 
-  // Clean header text to prevent encoding issues
+  // Enhanced header text with better formatting
   let headers: string[];
   const currencyText = currency === 'SAR' ? 'SAR' : 'USD';
   
@@ -56,23 +58,23 @@ export const addTableHeader = (
   }
 
   headers.forEach((header, index) => {
-    const x = columnPositions[index] + PDF_CONFIG.cellPadding + 1;
+    const cellPadding = 6;
     
-    // Center align S# and Qty columns
+    // Center align S# and Qty columns with improved spacing
     if (header === 'S#' || header === 'Qty' || header === 'Quantity') {
       const textWidth = pdf.getTextWidth(header);
       const centeredX = columnPositions[index] + (columnWidths[index] / 2) - (textWidth / 2);
-      pdf.text(header, centeredX, yPosition + 9);
+      pdf.text(header, centeredX, yPosition + 11);
     }
-    // Right align price columns
+    // Right align price columns with consistent formatting
     else if (header.includes('Price')) {
       const textWidth = pdf.getTextWidth(header);
-      const rightAlignedX = columnPositions[index] + columnWidths[index] - textWidth - PDF_CONFIG.cellPadding - 1;
-      pdf.text(header, rightAlignedX, yPosition + 9);
+      const rightAlignedX = columnPositions[index] + columnWidths[index] - textWidth - cellPadding;
+      pdf.text(header, rightAlignedX, yPosition + 11);
     }
-    // Left align other columns
+    // Left align other columns with proper padding
     else {
-      pdf.text(header, x, yPosition + 9);
+      pdf.text(header, columnPositions[index] + cellPadding, yPosition + 11);
     }
   });
 
