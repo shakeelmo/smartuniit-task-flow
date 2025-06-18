@@ -6,10 +6,20 @@ export const wrapText = (
   pdf: jsPDF,
   text: string,
   maxWidth: number,
-  fontSize: number = PDF_CONFIG.fontSize.small
+  fontSize: number = PDF_CONFIG.fontSize.normal
 ): string[] => {
+  if (!text || typeof text !== 'string') {
+    return [''];
+  }
+
   pdf.setFontSize(fontSize);
-  const words = text.split(' ');
+  const cleanText = text.trim();
+  
+  if (!cleanText) {
+    return [''];
+  }
+
+  const words = cleanText.split(' ');
   const lines: string[] = [];
   let currentLine = '';
 
@@ -25,7 +35,7 @@ export const wrapText = (
         currentLine = word;
       } else {
         // Handle very long words that exceed cell width
-        lines.push(word.substring(0, Math.floor(maxWidth / 3)) + '...');
+        lines.push(word.substring(0, Math.floor(maxWidth / 4)) + '...');
         currentLine = '';
       }
     }

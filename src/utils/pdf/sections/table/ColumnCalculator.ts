@@ -9,20 +9,20 @@ export const calculateColumnConfig = (
   hasUnits: boolean,
   pageMargin: number
 ): ColumnConfig => {
-  // Enhanced column widths for better balance and readability - ALWAYS include Total Price column
+  // Improved column widths with better balance for readability - ensure Total Price has enough space
   let columnWidths: number[];
   if (hasPartNumbers && hasUnits) {
     // S#, Description, Part#, Qty, Unit, Unit Price, Total Price
-    columnWidths = [15, 50, 20, 15, 18, 40, 45];
+    columnWidths = [15, 45, 20, 15, 18, 35, 50];
   } else if (hasPartNumbers) {
     // S#, Description, Part#, Qty, Unit Price, Total Price
-    columnWidths = [15, 55, 25, 18, 42, 48];
+    columnWidths = [15, 50, 25, 18, 35, 50];
   } else if (hasUnits) {
     // S#, Description, Qty, Unit, Unit Price, Total Price
-    columnWidths = [15, 65, 18, 20, 42, 48];
+    columnWidths = [15, 60, 18, 20, 35, 50];
   } else {
     // S#, Description, Qty, Unit Price, Total Price
-    columnWidths = [15, 75, 22, 42, 48];
+    columnWidths = [15, 70, 22, 35, 50];
   }
 
   const columnPositions: number[] = [];

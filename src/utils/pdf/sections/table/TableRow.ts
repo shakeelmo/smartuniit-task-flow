@@ -22,16 +22,18 @@ export const addTableRow = (
   const { hasPartNumbers, hasUnits, columnWidths, columnPositions, tableWidth, currency } = config;
   const baseRowHeight = 14;
 
-  // Clean and prepare text content
-  const serviceText = String(item.service || '').replace(/[^\x20-\x7E]/g, '');
+  // Clean and prepare text content - ensure service text is properly extracted
+  const serviceText = String(item.service || item.description || item.name || '').trim();
   const partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '') || '-';
   const unitText = String(item.unit || '').replace(/[^\x20-\x7E]/g, '') || '-';
 
+  console.log('Processing item:', { service: serviceText, partNumber: partNumberText, unit: unitText, quantity: item.quantity, unitPrice: item.unitPrice });
+
   // Calculate text wrapping for description
   const descriptionColumnIndex = 1;
-  const maxServiceWidth = columnWidths[descriptionColumnIndex] - 10;
+  const maxServiceWidth = columnWidths[descriptionColumnIndex] - 8;
   const wrappedServiceLines = wrapText(pdf, serviceText, maxServiceWidth);
-  const requiredRowHeight = Math.max(baseRowHeight, wrappedServiceLines.length * 5 + 6);
+  const requiredRowHeight = Math.max(baseRowHeight, wrappedServiceLines.length * 5 + 8);
 
   // Alternating row colors
   if (index % 2 === 0) {
@@ -67,7 +69,7 @@ export const addTableRow = (
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
   let colIndex = 0;
-  const cellPadding = 4;
+  const cellPadding = 3;
 
   // S# column - centered
   const serialText = (index + 1).toString();
@@ -76,16 +78,23 @@ export const addTableRow = (
   pdf.text(serialText, serialX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Service/Description column
+  // Service/Description column - ensure text is displayed
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedServiceLines.length * 5)) / 2 + 4);
-  wrappedServiceLines.forEach((line, lineIndex) => {
-    pdf.text(line, columnPositions[colIndex] + cellPadding, serviceStartY + (lineIndex * 5));
-  });
+  if (wrappedServiceLines.length > 0 && wrappedServiceLines[0]) {
+    wrappedServiceLines.forEach((line, lineIndex) => {
+      if (line && line.trim()) {
+        pdf.text(line, columnPositions[colIndex] + cellPadding, serviceStartY + (lineIndex * 5));
+      }
+    });
+  } else {
+    // Fallback if wrapping fails
+    pdf.text(serviceText, columnPositions[colIndex] + cellPadding, serviceStartY);
+  }
   colIndex++;
 
   // Part Number column (if present)
   if (hasPartNumbers) {
-    const maxPartWidth = columnWidths[colIndex] - 8;
+    const maxPartWidth = columnWidths[colIndex] - 6;
     const wrappedPartLines = wrapText(pdf, partNumberText, maxPartWidth);
     const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 5)) / 2 + 4);
     wrappedPartLines.forEach((line, lineIndex) => {
@@ -95,7 +104,7 @@ export const addTableRow = (
   }
 
   // Quantity column - centered
-  const qtyText = item.quantity.toString();
+  const qtyText = String(item.quantity || 0);
   const qtyWidth = pdf.getTextWidth(qtyText);
   const qtyX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (qtyWidth / 2);
   pdf.text(qtyText, qtyX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
@@ -103,7 +112,7 @@ export const addTableRow = (
 
   // Unit column (if present)
   if (hasUnits) {
-    const maxUnitWidth = columnWidths[colIndex] - 8;
+    const maxUnitWidth = columnWidths[colIndex] - 6;
     const wrappedUnitLines = wrapText(pdf, unitText, maxUnitWidth);
     const unitStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedUnitLines.length * 5)) / 2 + 4);
     wrappedUnitLines.forEach((line, lineIndex) => {
@@ -112,8 +121,9 @@ export const addTableRow = (
     colIndex++;
   }
 
-  // Unit Price column - right aligned
-  const unitPriceFormatted = item.unitPrice.toLocaleString('en-US', {
+  // Unit Price column - right aligned with proper spacing
+  const unitPriceValue = parseFloat(item.unitPrice) || 0;
+  const unitPriceFormatted = unitPriceValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
@@ -123,8 +133,9 @@ export const addTableRow = (
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned (FIXED: This was missing proper calculation and display)
-  const totalValue = item.quantity * item.unitPrice;
+  // Total Price column - right aligned with proper spacing and formatting
+  const quantityValue = parseFloat(item.quantity) || 0;
+  const totalValue = quantityValue * unitPriceValue;
   const totalFormatted = totalValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -132,6 +143,9 @@ export const addTableRow = (
   const totalText = currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
+  
+  console.log('Total price display:', { totalValue, totalFormatted, totalText, totalX, columnWidth: columnWidths[colIndex] });
+  
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
 
   return yPosition + requiredRowHeight;
