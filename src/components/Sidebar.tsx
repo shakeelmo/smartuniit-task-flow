@@ -1,119 +1,122 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-  LayoutDashboard, 
-  FolderOpen, 
-  CheckSquare, 
+  Home, 
   Users, 
-  Settings,
+  Briefcase, 
+  CheckSquare, 
+  FileText, 
+  Receipt, 
+  PresentationChart,
   Menu,
   X,
-  FileText,
-  Receipt
+  LogOut,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Dashboard from './Dashboard';
+import UserManagement from './UserManagement';
+import ProjectManagement from './ProjectManagement';
+import TaskManagement from './TaskManagement';
+import QuotationManagement from './QuotationManagement';
+import InvoiceManagement from './InvoiceManagement';
+import ProposalManagement from './ProposalManagement';
+import EditProfileDialog from './EditProfileDialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 interface SidebarProps {
-  isOpen: boolean;
+  isCollapsed: boolean;
   toggleSidebar: () => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
 }
 
-const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }: SidebarProps) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
+  const { user, signOut } = useAuth();
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'projects', label: 'Projects', icon: FolderOpen },
-    { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-    { id: 'quotations', label: 'Quotations', icon: FileText },
-    { id: 'invoices', label: 'Invoices', icon: Receipt },
-    { id: 'users', label: 'Users', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { icon: Home, label: 'Dashboard', path: '/', component: Dashboard },
+    { icon: Users, label: 'User Management', path: '/users', component: UserManagement },
+    { icon: Briefcase, label: 'Project Management', path: '/projects', component: ProjectManagement },
+    { icon: CheckSquare, label: 'Task Management', path: '/tasks', component: TaskManagement },
+    { icon: FileText, label: 'Quotation Management', path: '/quotations', component: QuotationManagement },
+    { icon: Receipt, label: 'Invoice Management', path: '/invoices', component: InvoiceManagement },
+    { icon: PresentationChart, label: 'Proposal Management', path: '/proposals', component: ProposalManagement },
   ];
 
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    } else {
+      signOut();
+    }
+  };
+
   return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={toggleSidebar}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <div className={`
-        fixed left-0 top-0 h-full bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:z-auto
-        w-64
-      `}>
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <img 
-              src="/lovable-uploads/555c7b9e-8ad0-49a2-bc05-010dd1f53c9b.png" 
-              alt="Smart Universe Logo" 
-              className="w-8 h-8"
-            />
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">SmartUniit</h2>
-              <p className="text-xs text-gray-500">Project Manager</p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleSidebar}
-            className="lg:hidden"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      if (window.innerWidth < 1024) {
-                        toggleSidebar();
-                      }
-                    }}
-                    className={`
-                      w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors
-                      ${activeTab === item.id 
-                        ? 'bg-smart-orange text-white' 
-                        : 'text-gray-700 hover:bg-smart-orange-light hover:text-white'
-                      }
-                    `}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center space-x-2 mb-2">
-              <div className="w-8 h-8 bg-smart-blue rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">JD</span>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">John Doe</p>
-                <p className="text-xs text-gray-500">Admin</p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div
+      className={`flex flex-col h-screen bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}
+    >
+      {/* Top Section: Logo and Collapse Button */}
+      <div className="flex items-center justify-between p-4">
+        {!isCollapsed && <span className="font-bold text-lg">Smart Universe</span>}
+        <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+          {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+        </Button>
       </div>
-    </>
+
+      {/* Middle Section: Navigation Items */}
+      <nav className="flex-grow p-4">
+        <ul>
+          {menuItems.map((item) => (
+            <li key={item.label} className="mb-2">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2"
+                onClick={() => {
+                  // Implement navigation logic here, e.g., using react-router-dom
+                  console.log(`Navigating to ${item.path}`);
+                }}
+              >
+                <item.icon className="h-4 w-4" />
+                {!isCollapsed && <span>{item.label}</span>}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Bottom Section: User Profile and Logout */}
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Avatar>
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
+            </Avatar>
+            {!isCollapsed && <div>
+              <div className="font-medium">{user?.user_metadata?.first_name} {user?.user_metadata?.last_name}</div>
+              <div className="text-sm text-muted-foreground">{user?.email}</div>
+            </div>}
+          </div>
+          {!isCollapsed && <Button variant="ghost" size="icon" onClick={() => setEditProfileOpen(true)}>
+            <User className="h-4 w-4" />
+          </Button>}
+        </div>
+        <Button variant="outline" className="w-full" onClick={handleSignOut}>
+          {isCollapsed ? <LogOut className="h-4 w-4" /> : 'Logout'}
+        </Button>
+      </div>
+
+      <EditProfileDialog open={editProfileOpen} onOpenChange={setEditProfileOpen} />
+    </div>
   );
 };
 

@@ -36,6 +36,281 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_budget_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          item_name: string
+          proposal_id: string
+          quantity: number | null
+          sort_order: number | null
+          total_price: number | null
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_name: string
+          proposal_id: string
+          quantity?: number | null
+          sort_order?: number | null
+          total_price?: number | null
+          unit?: string | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_name?: string
+          proposal_id?: string
+          quantity?: number | null
+          sort_order?: number | null
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_budget_items_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_case_studies: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          description: string | null
+          id: string
+          proposal_id: string
+          sort_order: number | null
+          testimonial: string | null
+          title: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          proposal_id: string
+          sort_order?: number | null
+          testimonial?: string | null
+          title: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          proposal_id?: string
+          sort_order?: number | null
+          testimonial?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_case_studies_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_deliverables: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          proposal_id: string
+          sort_order: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          proposal_id: string
+          sort_order?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          proposal_id?: string
+          sort_order?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_deliverables_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_timeline: {
+        Row: {
+          completion_date: string | null
+          created_at: string
+          description: string | null
+          id: string
+          phase_name: string
+          proposal_id: string
+          sort_order: number | null
+          start_date: string | null
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          phase_name: string
+          proposal_id: string
+          sort_order?: number | null
+          start_date?: string | null
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          phase_name?: string
+          proposal_id?: string
+          sort_order?: number | null
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_timeline_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          abstract: string | null
+          appendix: string | null
+          background_context: string | null
+          call_to_action: string | null
+          client_address: string | null
+          client_company_name: string | null
+          client_contact_person: string | null
+          client_email: string | null
+          client_logo_url: string | null
+          client_phone: string | null
+          company_bio: string | null
+          company_contact_details: string | null
+          company_logo_url: string | null
+          company_name: string | null
+          created_at: string
+          executive_summary: string | null
+          glossary: string | null
+          id: string
+          key_objectives: string | null
+          problem_description: string | null
+          project_name: string | null
+          proposed_solution: string | null
+          reference_number: string | null
+          status: string
+          strategy_method: string | null
+          submission_date: string | null
+          table_of_contents: boolean | null
+          team_bios: Json | null
+          team_photo_url: string | null
+          terms_conditions: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          why_choose_us: string | null
+        }
+        Insert: {
+          abstract?: string | null
+          appendix?: string | null
+          background_context?: string | null
+          call_to_action?: string | null
+          client_address?: string | null
+          client_company_name?: string | null
+          client_contact_person?: string | null
+          client_email?: string | null
+          client_logo_url?: string | null
+          client_phone?: string | null
+          company_bio?: string | null
+          company_contact_details?: string | null
+          company_logo_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          executive_summary?: string | null
+          glossary?: string | null
+          id?: string
+          key_objectives?: string | null
+          problem_description?: string | null
+          project_name?: string | null
+          proposed_solution?: string | null
+          reference_number?: string | null
+          status?: string
+          strategy_method?: string | null
+          submission_date?: string | null
+          table_of_contents?: boolean | null
+          team_bios?: Json | null
+          team_photo_url?: string | null
+          terms_conditions?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          why_choose_us?: string | null
+        }
+        Update: {
+          abstract?: string | null
+          appendix?: string | null
+          background_context?: string | null
+          call_to_action?: string | null
+          client_address?: string | null
+          client_company_name?: string | null
+          client_contact_person?: string | null
+          client_email?: string | null
+          client_logo_url?: string | null
+          client_phone?: string | null
+          company_bio?: string | null
+          company_contact_details?: string | null
+          company_logo_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          executive_summary?: string | null
+          glossary?: string | null
+          id?: string
+          key_objectives?: string | null
+          problem_description?: string | null
+          project_name?: string | null
+          proposed_solution?: string | null
+          reference_number?: string | null
+          status?: string
+          strategy_method?: string | null
+          submission_date?: string | null
+          table_of_contents?: boolean | null
+          team_bios?: Json | null
+          team_photo_url?: string | null
+          terms_conditions?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          why_choose_us?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
