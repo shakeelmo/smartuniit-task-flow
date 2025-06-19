@@ -135,14 +135,45 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
 
   const grandTotal = items.reduce((sum, item) => sum + Number(item.total_price), 0);
 
+  // Create quotation data format for PDF generation
+  const createQuotationData = () => {
+    const subtotal = grandTotal;
+    const vatRate = 0.15; // 15% VAT
+    const vatAmount = subtotal * vatRate;
+    const total = subtotal + vatAmount;
+
+    return {
+      quotationNumber: `QUO-${proposalId.slice(-8)}`,
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      currency: 'SAR',
+      items: items.map(item => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+        total: item.total_price,
+        unit: item.unit
+      })),
+      subtotal,
+      discountAmount: 0,
+      taxAmount: vatAmount,
+      grandTotal: total,
+      terms: formData.payment_terms,
+      notes: `Project Duration: ${formData.project_duration_days} days`
+    };
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Save proposal data
+      // Create quotation data for the proposal
+      const quotationData = items.length > 0 ? createQuotationData() : null;
+      
+      // Save proposal data including quotation_data
       const proposalData = {
         payment_terms: formData.payment_terms,
         project_duration_days: formData.project_duration_days ? parseInt(formData.project_duration_days) : null,
-        bank_details: formData.bank_details as any // Cast to any to match Json type
+        bank_details: formData.bank_details as any,
+        quotation_data: quotationData // This is crucial for PDF generation
       };
 
       if (onUpdate) {
@@ -328,9 +359,15 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                     {/* Grand Total */}
                     <div className="border-t pt-4">
                       <div className="flex justify-end">
-                        <div className="text-right">
-                          <div className="text-lg font-bold">
-                            Grand Total: SAR {grandTotal.toLocaleString()}
+                        <div className="text-right space-y-2">
+                          <div className="text-lg">
+                            Subtotal: SAR {grandTotal.toLocaleString()}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            VAT (15%): SAR {(grandTotal * 0.15).toLocaleString()}
+                          </div>
+                          <div className="text-xl font-bold border-t pt-2">
+                            Grand Total: SAR {(grandTotal * 1.15).toLocaleString()}
                           </div>
                         </div>
                       </div>
