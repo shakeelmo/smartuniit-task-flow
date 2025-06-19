@@ -23,24 +23,23 @@ export const addFooter = (pdf: jsPDF, yPosition: number) => {
   const endTextWidth = pdf.getTextWidth(endText);
   pdf.text(endText, (pageWidth - endTextWidth) / 2, yPosition);
 
-  yPosition += 10;
-
-  pdf.setTextColor(...COLORS.black);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(PDF_CONFIG.fontSize.small);
-  const addressText = 'Office # 3 in, Al Dirah Dist, P.O Box 12633, Riyadh - 11461 KSA Tel: 011-4917295';
-  const addressWidth = pdf.getTextWidth(addressText);
-  pdf.text(addressText, (pageWidth - addressWidth) / 2, yPosition);
-
   // Add footer to all pages
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i);
     
-    const footerY = pageHeight - 30;
+    const footerY = pageHeight - 25;
 
     // Blue triangular design in bottom-right
     pdf.setFillColor(...COLORS.headerBlue);
     pdf.triangle(pageWidth, pageHeight, pageWidth - 40, pageHeight, pageWidth, pageHeight - 25, 'F');
+
+    // Contact information footer
+    pdf.setTextColor(...COLORS.black);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(PDF_CONFIG.fontSize.small);
+    const contactText = 'Office # 3 in, Al Dirah Dist, P.O Box 12633, Riyadh - 11461 KSA Tel: 011-4917295';
+    const contactWidth = pdf.getTextWidth(contactText);
+    pdf.text(contactText, (pageWidth - contactWidth) / 2, footerY - 10);
 
     // Copyright and page number
     pdf.setTextColor(...COLORS.orange);

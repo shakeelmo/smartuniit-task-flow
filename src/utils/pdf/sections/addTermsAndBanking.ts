@@ -5,7 +5,7 @@ import { COLORS, PDF_CONFIG } from '../constants';
 import { addTextWithWrapping } from '../helpers';
 
 const PAGE_HEIGHT = 297; // A4 height in mm
-const BOTTOM_MARGIN = 40; // Space reserved for footer
+const BOTTOM_MARGIN = 50; // Increased space reserved for footer
 
 export const addTermsAndBanking = (
   pdf: jsPDF,
@@ -15,61 +15,26 @@ export const addTermsAndBanking = (
   const pageWidth = pdf.internal.pageSize.getWidth();
   let currentY = yPosition;
 
-  // Calculate approximate space needed for terms and banking section
-  const termLines = quotationData.customTerms.split('\n');
-  const termsHeight = termLines.length * 6 + 20; // Approximate height calculation
-  
-  // Check if we need a new page for terms section
-  if (currentY + termsHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+  // Check if we have enough space for the section headers
+  if (currentY + 25 > PAGE_HEIGHT - BOTTOM_MARGIN) {
     pdf.addPage();
     currentY = addPageHeader(pdf, quotationData);
   }
 
+  // Section headers
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.large);
   pdf.text('Terms and conditions', PDF_CONFIG.pageMargin, currentY);
-  pdf.text('Banking Details', pageWidth - 90, currentY);
+  pdf.text('Banking Details', pageWidth - 100, currentY);
 
   currentY += 10;
 
+  // Process terms and banking in parallel to avoid extra pages
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(PDF_CONFIG.fontSize.small);
 
-  termLines.forEach(term => {
-    if (term.trim()) {
-      // Check if we need a new page for this term
-      if (currentY + PDF_CONFIG.lineHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
-        pdf.addPage();
-        currentY = addPageHeader(pdf, quotationData);
-        
-        // Re-add section headers on new page
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(PDF_CONFIG.fontSize.large);
-        pdf.text('Terms and conditions (Continued)', PDF_CONFIG.pageMargin, currentY);
-        pdf.text('Banking Details', pageWidth - 90, currentY);
-        currentY += 10;
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(PDF_CONFIG.fontSize.small);
-      }
-      
-      const processedTerm = term.startsWith('•') ? term : `• ${term}`;
-      currentY = addTextWithWrapping(
-        pdf,
-        processedTerm,
-        PDF_CONFIG.pageMargin + 2,
-        currentY,
-        pageWidth - 120,
-        PDF_CONFIG.lineHeight
-      );
-      currentY += 1;
-    }
-  });
-
-  // Banking details (right side) - calculate position based on terms height
-  let bankingY = yPosition + 10;
-  pdf.setFontSize(PDF_CONFIG.fontSize.small);
-  
+  const termLines = quotationData.customTerms.split('\n').filter(line => line.trim());
   const bankingDetails = [
     'Smart Universe Communication and Information Technology.',
     'Bank Name: Saudi National Bank',
@@ -77,26 +42,72 @@ export const addTermsAndBanking = (
     'Account Number: 41000000080109'
   ];
 
-  bankingDetails.forEach(detail => {
-    // Check if banking detail fits on current page
-    if (bankingY + PDF_CONFIG.lineHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+  // Calculate the maximum number of lines we can fit on current page
+  const availableSpace = (PAGE_HEIGHT - BOTTOM_MARGIN) - currentY;
+  const linesPerPage = Math.floor(availableSpace / PDF_CONFIG.lineHeight);
+  
+  let termsY = currentY;
+  let bankingY = currentY;
+  
+  // Process terms (left side)
+  termLines.forEach((term, index) => {
+    // Check if we need a new page
+    if (termsY + PDF_CONFIG.lineHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
       pdf.addPage();
-      bankingY = addPageHeader(pdf, quotationData);
+      const newY = addPageHeader(pdf, quotationData);
       
-      // Re-add banking header on new page
+      // Re-add section headers on new page
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(PDF_CONFIG.fontSize.large);
-      pdf.text('Banking Details (Continued)', pageWidth - 90, bankingY);
-      bankingY += 10;
+      pdf.text('Terms and conditions (Continued)', PDF_CONFIG.pageMargin, newY);
+      pdf.text('Banking Details (Continued)', pageWidth - 100, newY);
+      
+      termsY = newY + 10;
+      bankingY = newY + 10;
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(PDF_CONFIG.fontSize.small);
     }
     
-    bankingY = addTextWithWrapping(pdf, detail, pageWidth - 88, bankingY, 85, PDF_CONFIG.lineHeight);
+    if (term.trim()) {
+      const processedTerm = term.startsWith('•') ? term : `• ${term}`;
+      termsY = addTextWithWrapping(
+        pdf,
+        processedTerm,
+        PDF_CONFIG.pageMargin + 2,
+        termsY,
+        pageWidth - 130, // Leave more space for banking details
+        PDF_CONFIG.lineHeight
+      );
+      termsY += 1;
+    }
+  });
+
+  // Process banking details (right side) - reset to original position
+  bankingY = currentY;
+  bankingDetails.forEach((detail, index) => {
+    // Check if banking detail fits on current page
+    if (bankingY + PDF_CONFIG.lineHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+      // If terms created a new page, we need to adjust banking position
+      const currentPageNum = pdf.internal.getCurrentPageInfo().pageNumber;
+      pdf.setPage(currentPageNum);
+      
+      // Find the right Y position on the current page
+      bankingY = PDF_CONFIG.pageMargin + 25; // Standard position after headers
+    }
+    
+    bankingY = addTextWithWrapping(
+      pdf, 
+      detail, 
+      pageWidth - 98, // Fixed right alignment
+      bankingY, 
+      95, // Fixed width for banking section
+      PDF_CONFIG.lineHeight
+    );
     bankingY += 2;
   });
 
-  return Math.max(currentY, bankingY) + 15;
+  // Return the maximum Y position to ensure proper spacing
+  return Math.max(termsY, bankingY) + 10;
 };
 
 const addPageHeader = (pdf: jsPDF, quotationData: QuotationData): number => {
