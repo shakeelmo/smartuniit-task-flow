@@ -18,8 +18,8 @@ const TotalsSummary: React.FC<TotalsSummaryProps> = ({
   calculateTotal,
   getCurrencySymbol,
 }) => {
-  // Use the correct Saudi Riyal symbol ﷼
-  const displaySymbol = getCurrencySymbol() === 'SAR' ? '﷼' : getCurrencySymbol();
+  // Use the proper Unicode character for Saudi Riyal
+  const displaySymbol = getCurrencySymbol() === 'SAR' ? 'ر.س' : getCurrencySymbol();
   
   return (
     <div className="bg-gray-50 p-4 rounded-lg">

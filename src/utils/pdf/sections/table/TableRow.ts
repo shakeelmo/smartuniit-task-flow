@@ -161,28 +161,28 @@ export const addTableRow = (
     colIndex++;
   }
 
-  // Unit Price column - right aligned with CORRECT Saudi Riyal symbol
+  // Unit Price column - right aligned with proper Saudi Riyal symbol
   const unitPriceValue = parseFloat(item.unitPrice) || 0;
   const unitPriceFormatted = unitPriceValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  // Use correct Saudi Riyal symbol ﷼
-  const unitPriceText = currency === 'SAR' ? `﷼ ${unitPriceFormatted}` : `$${unitPriceFormatted}`;
+  // Use proper Unicode character for Saudi Riyal
+  const unitPriceText = currency === 'SAR' ? `ر.س ${unitPriceFormatted}` : `$${unitPriceFormatted}`;
   const unitPriceWidth = pdf.getTextWidth(unitPriceText);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned with CORRECT Saudi Riyal symbol
+  // Total Price column - right aligned with proper Saudi Riyal symbol
   const quantityValue = parseFloat(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
   const totalFormatted = totalValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  // Use correct Saudi Riyal symbol ﷼
-  const totalText = currency === 'SAR' ? `﷼ ${totalFormatted}` : `$${totalFormatted}`;
+  // Use proper Unicode character for Saudi Riyal
+  const totalText = currency === 'SAR' ? `ر.س ${totalFormatted}` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - (cellPadding + 2);
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
