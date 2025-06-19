@@ -7,6 +7,7 @@ import { ProposalDeliverablesForm } from './forms/ProposalDeliverablesForm';
 import { ProposalTimelineForm } from './forms/ProposalTimelineForm';
 import { ProposalBudgetForm } from './forms/ProposalBudgetForm';
 import { ProposalCaseStudiesForm } from './forms/ProposalCaseStudiesForm';
+import { ProposalQuotationForm } from './forms/ProposalQuotationForm';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -72,11 +73,12 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
             <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
+            <TabsTrigger value="quotation">Quotation</TabsTrigger>
             <TabsTrigger value="case-studies">Case Studies</TabsTrigger>
           </TabsList>
           
@@ -98,6 +100,10 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
           
           <TabsContent value="budget" className="mt-4">
             <ProposalBudgetForm proposalId={proposal?.id} />
+          </TabsContent>
+          
+          <TabsContent value="quotation" className="mt-4">
+            <ProposalQuotationForm proposalId={proposal?.id} />
           </TabsContent>
           
           <TabsContent value="case-studies" className="mt-4">

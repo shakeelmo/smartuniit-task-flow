@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CreateProposalQuotationSection } from './CreateProposalQuotationSection';
 
 interface CreateProposalDialogProps {
   open: boolean;
@@ -24,6 +25,7 @@ export const CreateProposalDialog: React.FC<CreateProposalDialogProps> = ({
 }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [quotationData, setQuotationData] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     status: 'draft',
@@ -53,25 +55,38 @@ export const CreateProposalDialog: React.FC<CreateProposalDialogProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleQuotationDataChange = (data: any) => {
+    setQuotationData(data);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
     try {
+      const proposalDataToInsert = {
+        ...formData,
+        user_id: user.id,
+        submission_date: formData.submission_date || null
+      };
+
+      // Add quotation data if present
+      if (quotationData && quotationData.items && quotationData.items.length > 0) {
+        proposalDataToInsert.quotation_data = quotationData;
+      }
+
       const { error } = await supabase
         .from('proposals')
-        .insert([{
-          ...formData,
-          user_id: user.id,
-          submission_date: formData.submission_date || null
-        }]);
+        .insert([proposalDataToInsert]);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Proposal created successfully",
+        description: quotationData && quotationData.items?.length > 0 
+          ? "Proposal with quotation created successfully"
+          : "Proposal created successfully",
       });
       
       onSuccess();
@@ -101,6 +116,7 @@ export const CreateProposalDialog: React.FC<CreateProposalDialogProps> = ({
         terms_conditions: '',
         call_to_action: 'Contact Us'
       });
+      setQuotationData(null);
     } catch (error) {
       console.error('Error creating proposal:', error);
       toast({
@@ -248,6 +264,9 @@ export const CreateProposalDialog: React.FC<CreateProposalDialogProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Quotation Section */}
+            <CreateProposalQuotationSection onQuotationDataChange={handleQuotationDataChange} />
 
             {/* Executive Summary */}
             <div className="space-y-4">
