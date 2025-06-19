@@ -24,20 +24,22 @@ export const addTableHeader = (
   pdf.setFillColor(83, 122, 166); // Medium blue background
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'F');
 
-  // Add strong outer border for header
+  // CONSISTENT BORDER SYSTEM - Draw complete header borders
   pdf.setDrawColor(...COLORS.black);
   pdf.setLineWidth(1.0);
+  
+  // Draw outer border rectangle
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'S');
   
-  // Add vertical separators for columns with proper borders
-  let currentXPos = PDF_CONFIG.pageMargin;
+  // Draw vertical column separators with consistent styling
+  let currentXPosition = PDF_CONFIG.pageMargin;
   columnWidths.forEach((width, index) => {
-    if (index > 0) {
+    if (index > 0) { // Skip the first column (no left border needed)
       pdf.setLineWidth(0.8);
-      pdf.setDrawColor(...COLORS.white); // White separators for better visibility
-      pdf.line(currentXPos, yPosition, currentXPos, yPosition + headerRowHeight);
+      pdf.setDrawColor(...COLORS.white); // White separators for visibility on blue background
+      pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + headerRowHeight);
     }
-    currentXPos += width;
+    currentXPosition += width;
   });
 
   // Set header text properties
@@ -45,9 +47,9 @@ export const addTableHeader = (
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
-  // Define header text based on configuration
+  // Define header text based on configuration with FIXED currency labels
   let headers: string[];
-  const currencyText = currency === 'SAR' ? 'SAR' : 'USD';
+  const currencyText = currency === 'SAR' ? 'SAR' : 'USD'; // Use SAR instead of ﷼
   
   if (hasPartNumbers && hasUnits) {
     headers = ['S#', 'Item Description', 'Part Number', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];

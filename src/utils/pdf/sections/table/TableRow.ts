@@ -77,31 +77,36 @@ export const addTableRow = (
   }
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, requiredRowHeight, 'F');
 
-  // Enhanced cell borders - complete grid system
+  // ENHANCED BORDER SYSTEM - Draw complete grid with consistent borders
   pdf.setDrawColor(180, 180, 180);
   pdf.setLineWidth(0.5);
   
-  // Draw horizontal borders (top and bottom)
+  // Draw horizontal borders (top and bottom of row)
   pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
   pdf.line(PDF_CONFIG.pageMargin, yPosition + requiredRowHeight, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
   
-  // Draw complete vertical border grid
-  let currentX = PDF_CONFIG.pageMargin;
+  // Draw ALL vertical borders systematically
+  let currentXPosition = PDF_CONFIG.pageMargin;
   
-  // Draw left border of table
+  // Left border of table (darker)
   pdf.setLineWidth(0.8);
   pdf.setDrawColor(...COLORS.black);
-  pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
+  pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
   
-  // Draw internal column separators and right border
+  // Internal column separators
   columnWidths.forEach((width, colIndex) => {
-    currentX += width;
+    currentXPosition += width;
     
-    // Draw all vertical separators including the final right border
-    pdf.setLineWidth(0.8);
-    pdf.setDrawColor(...COLORS.black);
-    pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
+    // Draw each vertical separator with consistent styling
+    pdf.setLineWidth(0.5);
+    pdf.setDrawColor(180, 180, 180);
+    pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
   });
+  
+  // Right border of table (darker) - override the last separator
+  pdf.setLineWidth(0.8);
+  pdf.setDrawColor(...COLORS.black);
+  pdf.line(PDF_CONFIG.pageMargin + tableWidth, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
 
   // Set text properties
   pdf.setTextColor(...COLORS.black);
@@ -156,28 +161,30 @@ export const addTableRow = (
     colIndex++;
   }
 
-  // Unit Price column - right aligned
+  // Unit Price column - right aligned with FIXED Saudi Riyal symbol
   const unitPriceValue = parseFloat(item.unitPrice) || 0;
   const unitPriceFormatted = unitPriceValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  const unitPriceText = currency === 'SAR' ? `${unitPriceFormatted} ﷼` : `$${unitPriceFormatted}`;
+  // Use proper SAR symbol formatting
+  const unitPriceText = currency === 'SAR' ? `${unitPriceFormatted} SAR` : `$${unitPriceFormatted}`;
   const unitPriceWidth = pdf.getTextWidth(unitPriceText);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned with proper space
+  // Total Price column - right aligned with FIXED Saudi Riyal symbol
   const quantityValue = parseFloat(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
   const totalFormatted = totalValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  const totalText = currency === 'SAR' ? `${totalFormatted} ﷼` : `$${totalFormatted}`;
+  // Use proper SAR symbol formatting
+  const totalText = currency === 'SAR' ? `${totalFormatted} SAR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
-  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - (cellPadding + 2); // Extra padding for border
+  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - (cellPadding + 2);
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
 
   return yPosition + requiredRowHeight;
