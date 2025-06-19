@@ -74,28 +74,33 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       unitPrice: 0,
       total: 0
     };
+    console.log('Adding new item:', newItem);
     const updatedItems = [...items, newItem];
     setItems(updatedItems);
-    console.log('Added new item, total items:', updatedItems.length);
+    console.log('Total items after addition:', updatedItems.length);
   };
 
   const removeItem = (id: string) => {
+    console.log('Removing item with id:', id);
     const updatedItems = items.filter(item => item.id !== id);
     setItems(updatedItems);
-    console.log('Removed item, remaining items:', updatedItems.length);
+    console.log('Remaining items after removal:', updatedItems.length);
   };
 
   const updateItem = (id: string, field: keyof QuotationItem, value: string | number) => {
-    setItems(items.map(item => {
+    console.log('Updating item:', id, field, value);
+    const updatedItems = items.map(item => {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         if (field === 'quantity' || field === 'unitPrice') {
           updatedItem.total = Number(updatedItem.quantity) * Number(updatedItem.unitPrice);
         }
+        console.log('Updated item:', updatedItem);
         return updatedItem;
       }
       return item;
-    }));
+    });
+    setItems(updatedItems);
   };
 
   const subtotal = items.reduce((sum, item) => sum + Number(item.total), 0);
@@ -119,21 +124,21 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   const prepareQuotationDataForSave = () => {
     const serializedItems = items.map(item => ({
       id: item.id,
-      description: item.description,
-      quantity: Number(item.quantity),
-      unitPrice: Number(item.unitPrice),
-      total: Number(item.total)
+      description: String(item.description || '').trim(),
+      quantity: Number(item.quantity) || 0,
+      unitPrice: Number(item.unitPrice) || 0,
+      total: Number(item.total) || 0
     }));
 
     const quotationToSave = {
-      quotationNumber: quotationData.quotationNumber,
+      quotationNumber: String(quotationData.quotationNumber || '').trim(),
       validUntil: quotationData.validUntil,
       currency: quotationData.currency,
-      taxRate: Number(quotationData.taxRate),
+      taxRate: Number(quotationData.taxRate) || 0,
       discountType: quotationData.discountType,
-      discountValue: Number(quotationData.discountValue),
-      notes: quotationData.notes,
-      terms: quotationData.terms,
+      discountValue: Number(quotationData.discountValue) || 0,
+      notes: String(quotationData.notes || '').trim(),
+      terms: String(quotationData.terms || '').trim(),
       items: serializedItems,
       subtotal: Number(subtotal.toFixed(2)),
       discountAmount: Number(discountAmount.toFixed(2)),
@@ -309,9 +314,12 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Services / الخدمات</CardTitle>
+                <CardTitle>Services / الخدمات ({items.length} items)</CardTitle>
                 <Button 
-                  onClick={addItem} 
+                  onClick={() => {
+                    console.log('Add Service button clicked, current items:', items.length);
+                    addItem();
+                  }} 
                   type="button"
                   className="bg-smart-orange hover:bg-smart-orange/90"
                 >
@@ -319,6 +327,9 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                   Add Service
                 </Button>
               </div>
+              <CardDescription>
+                Click "Add Service" to add unlimited services to your quotation
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {items.length === 0 ? (
@@ -376,7 +387,10 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                           variant="outline"
                           size="sm"
                           type="button"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => {
+                            console.log('Remove button clicked for item:', item.id);
+                            removeItem(item.id);
+                          }}
                           className="text-red-600 hover:text-red-700 w-full"
                         >
                           <Trash2 className="h-4 w-4" />
