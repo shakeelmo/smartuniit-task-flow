@@ -38,21 +38,45 @@ const safeText = (pdf: jsPDF, text: string, x: number, y: number) => {
   }
 };
 
-// Helper function to format currency with proper spacing
-const formatCurrency = (value: number, currency: 'SAR' | 'USD'): string => {
+// Enhanced function to format currency with proper spacing and truncation
+const formatCurrency = (value: number, currency: 'SAR' | 'USD', maxWidth?: number, pdf?: jsPDF): string => {
   const formatted = value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
   
+  let currencyText: string;
   if (currency === 'SAR') {
-    return `${formatted} SAR`;
+    currencyText = `${formatted} SAR`;
   } else {
-    return `$${formatted}`;
+    currencyText = `$${formatted}`;
   }
+
+  // If maxWidth and pdf are provided, truncate if necessary
+  if (maxWidth && pdf) {
+    const textWidth = pdf.getTextWidth(currencyText);
+    if (textWidth > maxWidth) {
+      // Try shorter format first
+      const shortFormatted = Number(value).toFixed(0);
+      const shortCurrencyText = currency === 'SAR' ? `${shortFormatted} SAR` : `$${shortFormatted}`;
+      
+      if (pdf.getTextWidth(shortCurrencyText) <= maxWidth) {
+        return shortCurrencyText;
+      }
+      
+      // If still too long, truncate with ellipsis
+      let truncated = currencyText;
+      while (pdf.getTextWidth(truncated + '...') > maxWidth && truncated.length > 5) {
+        truncated = truncated.slice(0, -1);
+      }
+      return truncated + '...';
+    }
+  }
+  
+  return currencyText;
 };
 
-// Helper function to ensure text fits in column width
+// Helper function to ensure text fits in column width with smart truncation
 const truncateTextToFit = (pdf: jsPDF, text: string, maxWidth: number): string => {
   if (!text || maxWidth <= 0) return '';
   
@@ -141,9 +165,10 @@ export const addTableRow = (
     unitText = 'Each';
   }
 
-  // Calculate text wrapping with improved column widths
+  // Calculate text wrapping with improved column widths and more conservative padding
+  const cellPadding = 1; // Reduced padding to maximize text space
   const serviceColumnIndex = 1;
-  const maxServiceWidth = Math.max(columnWidths[serviceColumnIndex] - 4, 15);
+  const maxServiceWidth = Math.max(columnWidths[serviceColumnIndex] - (cellPadding * 2), 10);
   const wrappedServiceLines = wrapText(pdf, serviceText, maxServiceWidth);
   
   // Limit service name to maximum 2 lines
@@ -160,7 +185,7 @@ export const addTableRow = (
   let wrappedDescriptionLines: string[] = [];
   if (descriptionText) {
     const descriptionColumnIndex = hasPartNumbers ? 3 : 2;
-    const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - 4, 15);
+    const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - (cellPadding * 2), 10);
     const rawDescriptionLines = wrapText(pdf, descriptionText, maxDescriptionWidth);
     wrappedDescriptionLines = rawDescriptionLines.slice(0, 2);
     
@@ -178,7 +203,7 @@ export const addTableRow = (
   let partColumnIndex = -1;
   if (hasPartNumbers) {
     partColumnIndex = 2;
-    const maxPartWidth = Math.max(columnWidths[partColumnIndex] - 4, 12);
+    const maxPartWidth = Math.max(columnWidths[partColumnIndex] - (cellPadding * 2), 8);
     
     const partNumberWidth = pdf.getTextWidth(partNumberText);
     
@@ -250,7 +275,6 @@ export const addTableRow = (
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
   let colIndex = 0;
-  const cellPadding = 2; // Reduced padding for better fit
 
   // SERIAL NUMBER COLUMN - centered and clearly visible
   const serialNumber = index + 1;
@@ -330,7 +354,8 @@ export const addTableRow = (
 
   // UNIT COLUMN (if present) - centered
   if (hasUnits) {
-    const truncatedUnit = truncateTextToFit(pdf, unitText, columnWidths[colIndex] - 4);
+    const maxUnitWidth = columnWidths[colIndex] - (cellPadding * 2);
+    const truncatedUnit = truncateTextToFit(pdf, unitText, maxUnitWidth);
     const unitWidth = pdf.getTextWidth(truncatedUnit);
     const unitX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (unitWidth / 2);
     if (!isNaN(unitX) && !isNaN(textY)) {
@@ -339,31 +364,29 @@ export const addTableRow = (
     colIndex++;
   }
 
-  // UNIT PRICE COLUMN - right aligned with currency, improved formatting
+  // UNIT PRICE COLUMN - right aligned with currency, enhanced formatting
   const unitPriceValue = Number(item.unitPrice) || 0;
-  const unitPriceText = formatCurrency(unitPriceValue, currency);
   const maxUnitPriceWidth = columnWidths[colIndex] - (cellPadding * 2);
-  const truncatedUnitPrice = truncateTextToFit(pdf, unitPriceText, maxUnitPriceWidth);
-  const unitPriceWidth = pdf.getTextWidth(truncatedUnitPrice);
+  const unitPriceText = formatCurrency(unitPriceValue, currency, maxUnitPriceWidth, pdf);
+  const unitPriceWidth = pdf.getTextWidth(unitPriceText);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
   
   if (!isNaN(unitPriceX) && !isNaN(textY)) {
-    safeText(pdf, truncatedUnitPrice, unitPriceX, textY);
+    safeText(pdf, unitPriceText, unitPriceX, textY);
   }
   colIndex++;
 
-  // TOTAL PRICE COLUMN - right aligned with currency, improved formatting
+  // TOTAL PRICE COLUMN - right aligned with currency, enhanced formatting
   const quantityValue = Number(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
-  const totalText = formatCurrency(totalValue, currency);
   const maxTotalWidth = columnWidths[colIndex] - (cellPadding * 2);
-  const truncatedTotal = truncateTextToFit(pdf, totalText, maxTotalWidth);
-  const totalWidth = pdf.getTextWidth(truncatedTotal);
+  const totalText = formatCurrency(totalValue, currency, maxTotalWidth, pdf);
+  const totalWidth = pdf.getTextWidth(totalText);
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
   
   pdf.setFont('helvetica', 'bold');
   if (!isNaN(totalX) && !isNaN(textY)) {
-    safeText(pdf, truncatedTotal, totalX, textY);
+    safeText(pdf, totalText, totalX, textY);
   }
   pdf.setFont('helvetica', 'normal');
 
