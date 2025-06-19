@@ -1,7 +1,6 @@
 
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
-import { wrapText } from './TextWrapper';
 
 export interface TableHeaderConfig {
   hasPartNumbers: boolean;
@@ -21,22 +20,22 @@ export const addTableHeader = (
   const headerRowHeight = 20;
 
   // Enhanced header with professional blue background
-  pdf.setFillColor(83, 122, 166); // Medium blue background
+  pdf.setFillColor(83, 122, 166);
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'F');
 
-  // CONSISTENT BORDER SYSTEM - Draw complete header borders
+  // Draw complete header borders
   pdf.setDrawColor(...COLORS.black);
   pdf.setLineWidth(1.0);
   
   // Draw outer border rectangle
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'S');
   
-  // Draw vertical column separators with consistent styling
+  // Draw vertical column separators
   let currentXPosition = PDF_CONFIG.pageMargin;
   columnWidths.forEach((width, index) => {
-    if (index > 0) { // Skip the first column (no left border needed)
+    if (index > 0) {
       pdf.setLineWidth(0.8);
-      pdf.setDrawColor(...COLORS.white); // White separators for visibility on blue background
+      pdf.setDrawColor(...COLORS.white);
       pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + headerRowHeight);
     }
     currentXPosition += width;
@@ -47,46 +46,40 @@ export const addTableHeader = (
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
-  // Define header text based on configuration - use simple "SAR" for currency display
+  // Define header text - ensuring S# is clearly labeled
   let headers: string[];
   const currencyText = currency === 'SAR' ? 'SAR' : 'USD';
   
   if (hasPartNumbers && hasUnits) {
-    headers = ['S#', 'Item Description', 'Part Number', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
+    headers = ['S#', 'Description', 'Part Number', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total (${currencyText})`];
   } else if (hasPartNumbers) {
-    headers = ['S#', 'Item Description', 'Part Number', 'Qty', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
+    headers = ['S#', 'Description', 'Part Number', 'Qty', `Unit Price (${currencyText})`, `Total (${currencyText})`];
   } else if (hasUnits) {
-    headers = ['S#', 'Item Description', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
+    headers = ['S#', 'Description', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total (${currencyText})`];
   } else {
-    headers = ['S#', 'Item Description', 'Qty', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
+    headers = ['S#', 'Description', 'Qty', `Unit Price (${currencyText})`, `Total (${currencyText})`];
   }
 
-  // Render header text with proper alignment and visibility
+  // Render header text with proper alignment
   headers.forEach((header, index) => {
     const cellPadding = 3;
-    const maxWidth = columnWidths[index] - (cellPadding * 2);
-    
-    // Use single line for headers to ensure visibility
-    const headerText = header.replace(/\n/g, ' '); // Remove line breaks for better display
-    
-    // Calculate text position for proper centering
-    const textY = yPosition + (headerRowHeight / 2) + 2; // Center vertically
+    const textY = yPosition + (headerRowHeight / 2) + 2;
     
     // Center align S# and Qty columns
     if (header === 'S#' || header === 'Qty') {
-      const textWidth = pdf.getTextWidth(headerText);
+      const textWidth = pdf.getTextWidth(header);
       const centeredX = columnPositions[index] + (columnWidths[index] / 2) - (textWidth / 2);
-      pdf.text(headerText, centeredX, textY);
+      pdf.text(header, centeredX, textY);
     }
     // Right align price columns
-    else if (header.includes('Price')) {
-      const textWidth = pdf.getTextWidth(headerText);
+    else if (header.includes('Price') || header.includes('Total')) {
+      const textWidth = pdf.getTextWidth(header);
       const rightAlignedX = columnPositions[index] + columnWidths[index] - textWidth - cellPadding;
-      pdf.text(headerText, rightAlignedX, textY);
+      pdf.text(header, rightAlignedX, textY);
     }
-    // Left align other columns (Description, Part Number, Unit)
+    // Left align other columns
     else {
-      pdf.text(headerText, columnPositions[index] + cellPadding, textY);
+      pdf.text(header, columnPositions[index] + cellPadding, textY);
     }
   });
 
