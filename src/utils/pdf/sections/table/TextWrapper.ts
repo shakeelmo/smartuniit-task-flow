@@ -13,7 +13,13 @@ export const wrapText = (
   }
 
   pdf.setFontSize(fontSize);
-  const cleanText = text.trim();
+  
+  // Additional text cleaning to handle encoding issues
+  const cleanText = text
+    .trim()
+    .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '') // Keep printable ASCII and Latin extended
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim();
   
   if (!cleanText) {
     return [''];
@@ -35,7 +41,12 @@ export const wrapText = (
         currentLine = word;
       } else {
         // Handle very long words that exceed cell width
-        lines.push(word.substring(0, Math.floor(maxWidth / 4)) + '...');
+        const maxChars = Math.floor((maxWidth - PDF_CONFIG.textWrapMargin) / 2.5); // Rough character estimate
+        if (word.length > maxChars) {
+          lines.push(word.substring(0, maxChars - 3) + '...');
+        } else {
+          lines.push(word);
+        }
         currentLine = '';
       }
     }

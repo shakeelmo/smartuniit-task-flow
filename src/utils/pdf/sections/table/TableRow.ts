@@ -22,12 +22,43 @@ export const addTableRow = (
   const { hasPartNumbers, hasUnits, columnWidths, columnPositions, tableWidth, currency } = config;
   const baseRowHeight = 14;
 
-  // Clean and prepare text content - ensure service text is properly extracted
-  const serviceText = String(item.service || item.description || item.name || '').trim();
-  const partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '') || '-';
-  const unitText = String(item.unit || '').replace(/[^\x20-\x7E]/g, '') || '-';
+  // Improved service text extraction with better cleaning and fallback logic
+  let serviceText = '';
+  
+  // Try multiple fields to get the service description
+  if (item.service && typeof item.service === 'string') {
+    serviceText = item.service;
+  } else if (item.description && typeof item.description === 'string') {
+    serviceText = item.description;
+  } else if (item.name && typeof item.name === 'string') {
+    serviceText = item.name;
+  } else if (item.title && typeof item.title === 'string') {
+    serviceText = item.title;
+  }
 
-  console.log('Processing item:', { service: serviceText, partNumber: partNumberText, unit: unitText, quantity: item.quantity, unitPrice: item.unitPrice });
+  // Clean the text thoroughly to remove encoding issues
+  serviceText = String(serviceText || '')
+    .trim()
+    .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '') // Keep only printable ASCII and Latin extended
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim();
+
+  // If still empty or contains garbage, provide a fallback
+  if (!serviceText || serviceText.length < 2 || /^[^\w\s]*$/.test(serviceText)) {
+    serviceText = 'Service Item';
+  }
+
+  const partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
+  const unitText = String(item.unit || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
+
+  console.log('Processing item:', { 
+    originalService: item.service, 
+    cleanedService: serviceText, 
+    partNumber: partNumberText, 
+    unit: unitText, 
+    quantity: item.quantity, 
+    unitPrice: item.unitPrice 
+  });
 
   // Calculate text wrapping for description
   const descriptionColumnIndex = 1;
@@ -78,16 +109,17 @@ export const addTableRow = (
   pdf.text(serialText, serialX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Service/Description column - ensure text is displayed
+  // Service/Description column - ensure clean text is displayed
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedServiceLines.length * 5)) / 2 + 4);
-  if (wrappedServiceLines.length > 0 && wrappedServiceLines[0]) {
+  if (wrappedServiceLines.length > 0 && wrappedServiceLines[0] && wrappedServiceLines[0].trim()) {
     wrappedServiceLines.forEach((line, lineIndex) => {
-      if (line && line.trim()) {
-        pdf.text(line, columnPositions[colIndex] + cellPadding, serviceStartY + (lineIndex * 5));
+      const cleanLine = line.trim();
+      if (cleanLine) {
+        pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, serviceStartY + (lineIndex * 5));
       }
     });
   } else {
-    // Fallback if wrapping fails
+    // Direct fallback if wrapping fails
     pdf.text(serviceText, columnPositions[colIndex] + cellPadding, serviceStartY);
   }
   colIndex++;
@@ -133,7 +165,7 @@ export const addTableRow = (
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned with proper spacing and formatting
+  // Total Price column - right aligned with increased padding for better visibility
   const quantityValue = parseFloat(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
   const totalFormatted = totalValue.toLocaleString('en-US', {
@@ -142,9 +174,20 @@ export const addTableRow = (
   });
   const totalText = currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
-  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
   
-  console.log('Total price display:', { totalValue, totalFormatted, totalText, totalX, columnWidth: columnWidths[colIndex] });
+  // Increased padding to ensure text is not cut off
+  const totalPadding = 8; // Increased from 3 to 8
+  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - totalPadding;
+  
+  console.log('Total price display:', { 
+    totalValue, 
+    totalFormatted, 
+    totalText, 
+    totalX, 
+    columnWidth: columnWidths[colIndex],
+    textWidth: totalWidth,
+    padding: totalPadding
+  });
   
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
 
