@@ -63,7 +63,7 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
         description: "Proposal updated successfully",
       });
 
-      // Refresh parent component
+      // Refresh parent component immediately to reflect changes
       onSuccess();
     } catch (error) {
       console.error('Error updating proposal:', error);

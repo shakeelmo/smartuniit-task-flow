@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -72,12 +73,54 @@ export const ProposalBasicForm: React.FC<ProposalBasicFormProps> = ({
     }
   });
 
+  // Update form when proposal changes
+  useEffect(() => {
+    if (proposal) {
+      console.log('ProposalBasicForm: Updating form with proposal data:', proposal);
+      form.reset({
+        title: proposal.title || '',
+        project_name: proposal.project_name || '',
+        client_company_name: proposal.client_company_name || '',
+        client_contact_person: proposal.client_contact_person || '',
+        client_email: proposal.client_email || '',
+        client_phone: proposal.client_phone || '',
+        client_address: proposal.client_address || '',
+        company_name: proposal.company_name || '',
+        company_contact_details: proposal.company_contact_details || '',
+        reference_number: proposal.reference_number || '',
+        submission_date: proposal.submission_date || '',
+        executive_summary: proposal.executive_summary || '',
+        key_objectives: proposal.key_objectives || '',
+        why_choose_us: proposal.why_choose_us || '',
+        problem_description: proposal.problem_description || '',
+        background_context: proposal.background_context || '',
+        proposed_solution: proposal.proposed_solution || '',
+        strategy_method: proposal.strategy_method || '',
+        company_bio: proposal.company_bio || '',
+        terms_conditions: proposal.terms_conditions || '',
+        call_to_action: proposal.call_to_action || '',
+        customer_logo_url: proposal.customer_logo_url || '',
+      });
+    }
+  }, [proposal, form]);
+
   const onSubmit = (data: z.infer<typeof proposalBasicSchema>) => {
+    console.log('ProposalBasicForm: Submitting form data:', data);
     onUpdate(data);
   };
 
   const handleLogoChange = (logoUrl: string | null) => {
+    console.log('ProposalBasicForm: Logo changed to:', logoUrl);
     form.setValue('customer_logo_url', logoUrl || '');
+    
+    // Auto-save the logo change immediately
+    const currentFormData = form.getValues();
+    const updatedData = {
+      ...currentFormData,
+      customer_logo_url: logoUrl || ''
+    };
+    console.log('ProposalBasicForm: Auto-saving logo change:', updatedData);
+    onUpdate(updatedData);
   };
 
   return (
