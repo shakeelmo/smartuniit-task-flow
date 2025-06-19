@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
 import { wrapText } from './TextWrapper';
@@ -171,7 +172,7 @@ export const addTableRow = (
   const descriptionColumnIndex = 1;
   const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - (cellPadding * 2), 10);
   
-  // Combine service and description for the Description column
+  // DISPLAY SERVICE INFO AS PRIMARY TEXT with description as secondary
   const combinedText = descriptionText ? `${serviceText}\n${descriptionText}` : serviceText;
   const wrappedDescriptionLines = wrapText(pdf, combinedText, maxDescriptionWidth);
   
@@ -226,7 +227,7 @@ export const addTableRow = (
   }
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, requiredRowHeight, 'F');
 
-  // Enhanced border system - Draw complete grid
+  // Enhanced border system - Draw complete grid with FIXED EXTRA LINE ISSUE
   pdf.setDrawColor(200, 200, 200);
   pdf.setLineWidth(0.3);
   
@@ -234,7 +235,7 @@ export const addTableRow = (
   pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
   pdf.line(PDF_CONFIG.pageMargin, yPosition + requiredRowHeight, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
   
-  // Draw vertical borders with proper positioning
+  // Draw vertical borders with proper positioning - FIXED TO PREVENT EXTRA LINES
   let currentXPosition = PDF_CONFIG.pageMargin;
   
   // Left border of table
@@ -242,12 +243,15 @@ export const addTableRow = (
   pdf.setDrawColor(...COLORS.black);
   pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
   
-  // Internal column separators
+  // Internal column separators - AVOID DRAWING EXTRA LINE AFTER LAST COLUMN
   columnWidths.forEach((width, colIndex) => {
     currentXPosition += width;
-    pdf.setLineWidth(0.3);
-    pdf.setDrawColor(200, 200, 200);
-    pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
+    // Only draw separator if it's not the last column
+    if (colIndex < columnWidths.length - 1) {
+      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
+    }
   });
   
   // Right border of table
