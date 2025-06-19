@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -253,10 +252,10 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full relative">
-      {/* Scrollable Content with proper height calculation */}
-      <ScrollArea className="flex-1 h-[calc(100vh-200px)]">
-        <div className="space-y-6 p-1 pb-32">
+    <div className="flex flex-col h-full">
+      {/* Main content with proper scrolling */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-6 p-1">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -340,7 +339,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                   لم يتم إضافة أي خدمات بعد. انقر على "إضافة خدمة" للبدء.
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                <div className="space-y-4">
                   {items.map((item, index) => (
                     <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 border rounded-lg bg-white shadow-sm">
                       <div className="lg:col-span-5">
@@ -536,29 +535,27 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
               </div>
             </CardContent>
           </Card>
-        </div>
-      </ScrollArea>
 
-      {/* Fixed Save Buttons */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white border-t shadow-lg z-10">
-        <div className="flex justify-end gap-3 p-4">
-          <Button 
-            variant="outline" 
-            type="button"
-            onClick={handleSaveAsDraft}
-            disabled={loading || externalLoading}
-            className="min-w-[120px]"
-          >
-            {loading ? 'Saving...' : 'Save as Draft'}
-          </Button>
-          <Button 
-            type="button"
-            className="bg-smart-orange hover:bg-smart-orange/90 min-w-[120px]"
-            onClick={handleSaveQuotation}
-            disabled={loading || externalLoading}
-          >
-            {loading ? 'Saving...' : 'Save Quotation'}
-          </Button>
+          {/* Save Buttons Section - now included in scrollable area */}
+          <div className="flex justify-end gap-3 p-4 border-t bg-gray-50 rounded-lg">
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={handleSaveAsDraft}
+              disabled={loading || externalLoading}
+              className="min-w-[120px]"
+            >
+              {loading ? 'Saving...' : 'Save as Draft'}
+            </Button>
+            <Button 
+              type="button"
+              className="bg-smart-orange hover:bg-smart-orange/90 min-w-[120px]"
+              onClick={handleSaveQuotation}
+              disabled={loading || externalLoading}
+            >
+              {loading ? 'Saving...' : 'Save Quotation'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
