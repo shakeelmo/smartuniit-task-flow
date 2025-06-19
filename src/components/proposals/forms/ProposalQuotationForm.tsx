@@ -68,14 +68,15 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
 
   const addItem = () => {
     const newItem: QuotationItem = {
-      id: Date.now().toString(),
+      id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       description: '',
       quantity: 1,
       unitPrice: 0,
       total: 0
     };
-    setItems([...items, newItem]);
-    console.log('Added new item, total items:', items.length + 1);
+    const updatedItems = [...items, newItem];
+    setItems(updatedItems);
+    console.log('Added new item, total items:', updatedItems.length);
   };
 
   const removeItem = (id: string) => {
@@ -89,7 +90,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         if (field === 'quantity' || field === 'unitPrice') {
-          updatedItem.total = updatedItem.quantity * updatedItem.unitPrice;
+          updatedItem.total = Number(updatedItem.quantity) * Number(updatedItem.unitPrice);
         }
         return updatedItem;
       }
@@ -97,12 +98,12 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     }));
   };
 
-  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+  const subtotal = items.reduce((sum, item) => sum + Number(item.total), 0);
   const discountAmount = quotationData.discountType === 'percentage' 
-    ? (subtotal * quotationData.discountValue) / 100 
-    : quotationData.discountValue;
+    ? (subtotal * Number(quotationData.discountValue)) / 100 
+    : Number(quotationData.discountValue);
   const taxableAmount = subtotal - discountAmount;
-  const taxAmount = (taxableAmount * quotationData.taxRate) / 100;
+  const taxAmount = (taxableAmount * Number(quotationData.taxRate)) / 100;
   const grandTotal = taxableAmount + taxAmount;
 
   const getCurrencySymbol = () => {
@@ -116,7 +117,6 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   };
 
   const prepareQuotationDataForSave = () => {
-    // Convert items to plain objects compatible with Json type
     const serializedItems = items.map(item => ({
       id: item.id,
       description: item.description,
@@ -135,10 +135,10 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       notes: quotationData.notes,
       terms: quotationData.terms,
       items: serializedItems,
-      subtotal: Number(subtotal),
-      discountAmount: Number(discountAmount),
-      taxAmount: Number(taxAmount),
-      grandTotal: Number(grandTotal)
+      subtotal: Number(subtotal.toFixed(2)),
+      discountAmount: Number(discountAmount.toFixed(2)),
+      taxAmount: Number(taxAmount.toFixed(2)),
+      grandTotal: Number(grandTotal.toFixed(2))
     };
 
     console.log('Prepared quotation data for save:', quotationToSave);
@@ -146,7 +146,6 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   };
 
   const handleSaveQuotation = async (e?: React.MouseEvent) => {
-    // Prevent any default behavior that might cause dialog to close
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -164,11 +163,9 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       console.log('Updating proposal with:', updateData);
 
       if (onUpdate) {
-        // Use the parent's update function if provided
         await onUpdate(updateData);
         console.log('Updated via parent onUpdate function');
       } else {
-        // Direct database update
         const { data, error } = await supabase
           .from('proposals')
           .update(updateData)
@@ -200,7 +197,6 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   };
 
   const handleSaveAsDraft = async (e?: React.MouseEvent) => {
-    // Prevent any default behavior that might cause dialog to close
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -208,10 +204,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     
     setLoading(true);
     try {
-      const quotationDataToSave = {
-        ...prepareQuotationDataForSave(),
-        status: 'draft'
-      };
+      const quotationDataToSave = prepareQuotationDataForSave();
 
       const updateData = {
         quotation_data: quotationDataToSave,
@@ -254,25 +247,24 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-full">
+    <div className="w-full max-w-full space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Calculator className="h-6 w-6" />
-              Quotation Information
-            </h2>
-            <p className="text-gray-600">معلومات عرض الأسعار - Add pricing and quotation details to your proposal</p>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Calculator className="h-6 w-6" />
+            Quotation Information
+          </h2>
+          <p className="text-gray-600">معلومات عرض الأسعار - Add pricing and quotation details to your proposal</p>
         </div>
       </div>
 
-      {/* Form Content */}
-      <div className="space-y-6">
-        {/* Quote Details */}
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-4">Quote Details / تفاصيل العرض</h3>
+      {/* Quote Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quote Details / تفاصيل العرض</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="quotationNumber">Quotation Number / رقم العرض</Label>
@@ -307,79 +299,82 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
               </Select>
             </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Line Items */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Services / الخدمات</h3>
+      {/* Line Items */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Services / الخدمات</CardTitle>
             <Button 
               onClick={addItem} 
               type="button"
               className="bg-smart-orange hover:bg-smart-orange/90"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Item
+              Add Service
             </Button>
           </div>
-          
+        </CardHeader>
+        <CardContent>
           {items.length === 0 ? (
             <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-              No items added yet. Click "Add Item" to get started.
+              No services added yet. Click "Add Service" to get started.
               <br />
-              لم يتم إضافة أي عناصر بعد. انقر على "إضافة عنصر" للبدء.
+              لم يتم إضافة أي خدمات بعد. انقر على "إضافة خدمة" للبدء.
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {items.map((item, index) => (
-                <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end p-3 border rounded-lg bg-white">
-                  <div className="md:col-span-5">
-                    <Label className="text-xs">Description / الوصف</Label>
+                <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 border rounded-lg bg-white shadow-sm">
+                  <div className="lg:col-span-5">
+                    <Label className="text-xs font-medium">Description / الوصف</Label>
                     <Textarea
                       value={item.description}
                       onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                      placeholder={`Item ${index + 1} description... / وصف العنصر ${index + 1}`}
-                      rows={2}
-                      className="text-sm"
+                      placeholder={`Service ${index + 1} description... / وصف الخدمة ${index + 1}`}
+                      rows={3}
+                      className="text-sm mt-1"
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label className="text-xs">Quantity / الكمية</Label>
+                  <div className="lg:col-span-2">
+                    <Label className="text-xs font-medium">Quantity / الكمية</Label>
                     <Input
                       type="number"
                       value={item.quantity}
                       onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                       min="0"
                       step="0.01"
-                      className="text-sm"
+                      className="text-sm mt-1"
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label className="text-xs">Unit Price / سعر الوحدة</Label>
+                  <div className="lg:col-span-2">
+                    <Label className="text-xs font-medium">Unit Price / سعر الوحدة</Label>
                     <Input
                       type="number"
                       value={item.unitPrice}
                       onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                       min="0"
                       step="0.01"
-                      className="text-sm"
+                      className="text-sm mt-1"
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label className="text-xs">Total / المجموع</Label>
+                  <div className="lg:col-span-2">
+                    <Label className="text-xs font-medium">Total / المجموع</Label>
                     <Input
                       value={item.total.toFixed(2)}
                       readOnly
-                      className="bg-gray-50 text-sm font-medium"
+                      className="bg-gray-50 text-sm font-medium mt-1"
                     />
                   </div>
-                  <div className="md:col-span-1">
+                  <div className="lg:col-span-1 flex items-end">
                     <Button
                       variant="outline"
                       size="sm"
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="text-red-600 hover:text-red-700 w-full md:w-auto"
+                      className="text-red-600 hover:text-red-700 w-full"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -388,15 +383,19 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
               ))}
             </div>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Discount Section - Show when items exist */}
-        {items.length > 0 && (
-          <div className="bg-yellow-50 p-4 rounded-lg border">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
+      {/* Discount Section */}
+      {items.length > 0 && (
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardHeader>
+            <CardTitle className="flex items-center">
               <Percent className="h-5 w-5 mr-2" />
-              Discount / الخصم
-            </h3>
+              Discount & Tax / الخصم والضريبة
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Discount Type / نوع الخصم</Label>
@@ -442,14 +441,18 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                 />
               </div>
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Totals - Show when items exist */}
-        {items.length > 0 && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4">Pricing Summary / ملخص التسعير</h3>
-            <div className="space-y-2">
+      {/* Totals */}
+      {items.length > 0 && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader>
+            <CardTitle>Pricing Summary / ملخص التسعير</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span>Subtotal / المجموع الفرعي:</span>
                 <span className="font-medium">{getCurrencySymbol()} {subtotal.toLocaleString()}</span>
@@ -470,61 +473,69 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                   <span className="font-medium">{getCurrencySymbol()} {taxAmount.toLocaleString()}</span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
+              <div className="flex justify-between text-xl font-bold border-t pt-3">
                 <span>Grand Total / المجموع الكلي:</span>
-                <Badge variant="default" className="text-lg px-3 py-1">
+                <Badge variant="default" className="text-xl px-4 py-2">
                   {getCurrencySymbol()} {grandTotal.toLocaleString()}
                 </Badge>
               </div>
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Terms and Conditions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="notes">Quotation Notes / ملاحظات العرض</Label>
-            <Textarea
-              id="notes"
-              value={quotationData.notes}
-              onChange={(e) => setQuotationData({...quotationData, notes: e.target.value})}
-              placeholder="Any additional notes for this quotation... / أي ملاحظات إضافية لهذا العرض"
-              rows={4}
-              className="text-sm"
-            />
+      {/* Terms and Conditions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Additional Information / معلومات إضافية</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label htmlFor="notes">Quotation Notes / ملاحظات العرض</Label>
+              <Textarea
+                id="notes"
+                value={quotationData.notes}
+                onChange={(e) => setQuotationData({...quotationData, notes: e.target.value})}
+                placeholder="Any additional notes for this quotation... / أي ملاحظات إضافية لهذا العرض"
+                rows={4}
+                className="text-sm mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="terms">Payment Terms / شروط الدفع</Label>
+              <Textarea
+                id="terms"
+                value={quotationData.terms}
+                onChange={(e) => setQuotationData({...quotationData, terms: e.target.value})}
+                placeholder="Payment terms, delivery conditions, etc... / شروط الدفع وشروط التسليم"
+                rows={4}
+                className="text-sm mt-2"
+              />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="terms">Payment Terms / شروط الدفع</Label>
-            <Textarea
-              id="terms"
-              value={quotationData.terms}
-              onChange={(e) => setQuotationData({...quotationData, terms: e.target.value})}
-              placeholder="Payment terms, delivery conditions, etc... / شروط الدفع وشروط التسليم"
-              rows={4}
-              className="text-sm"
-            />
-          </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Save Buttons - Always visible at bottom */}
-        <div className="flex justify-end gap-2 pt-4 border-t bg-white sticky bottom-0">
-          <Button 
-            variant="outline" 
-            type="button"
-            onClick={handleSaveAsDraft}
-            disabled={loading || externalLoading}
-          >
-            {loading ? 'Saving...' : 'Save as Draft'}
-          </Button>
-          <Button 
-            type="button"
-            className="bg-smart-orange hover:bg-smart-orange/90"
-            onClick={handleSaveQuotation}
-            disabled={loading || externalLoading}
-          >
-            {loading ? 'Saving...' : 'Save Quotation'}
-          </Button>
-        </div>
+      {/* Save Buttons */}
+      <div className="flex justify-end gap-3 pt-6 border-t bg-white sticky bottom-0 pb-4">
+        <Button 
+          variant="outline" 
+          type="button"
+          onClick={handleSaveAsDraft}
+          disabled={loading || externalLoading}
+          className="min-w-[120px]"
+        >
+          {loading ? 'Saving...' : 'Save as Draft'}
+        </Button>
+        <Button 
+          type="button"
+          className="bg-smart-orange hover:bg-smart-orange/90 min-w-[120px]"
+          onClick={handleSaveQuotation}
+          disabled={loading || externalLoading}
+        >
+          {loading ? 'Saving...' : 'Save Quotation'}
+        </Button>
       </div>
     </div>
   );

@@ -197,17 +197,17 @@ const addSectionHeader = (pdf: jsPDF, title: string, yPosition: number) => {
   return yPosition + 15;
 };
 
-const checkPageBreak = (pdf: jsPDF, yPosition: number, requiredSpace: number, proposalData: ProposalData, logoBase64: string | null) => {
+const checkPageBreak = (pdf: jsPDF, yPosition: number, requiredSpace: number, proposalData: ProposalData, logoBase64: string | null, customerLogoBase64: string | null) => {
   const pageHeight = pdf.internal.pageSize.getHeight();
   if (yPosition + requiredSpace > pageHeight - 50) {
     pdf.addPage();
     const pageNumber = pdf.internal.pages.length - 1;
-    return addProposalHeader(pdf, proposalData, logoBase64, null, pageNumber);
+    return addProposalHeader(pdf, proposalData, logoBase64, customerLogoBase64, pageNumber);
   }
   return yPosition;
 };
 
-const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, proposalData: ProposalData, logoBase64: string | null) => {
+const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, proposalData: ProposalData, logoBase64: string | null, customerLogoBase64: string | null) => {
   if (!quotationData || !quotationData.items || quotationData.items.length === 0) {
     return yPosition;
   }
@@ -215,7 +215,7 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
   const pageWidth = pdf.internal.pageSize.getWidth();
   
   // Section header
-  yPosition = addSectionHeader(pdf, 'Quotation', yPosition);
+  yPosition = addSectionHeader(pdf, 'Quotation / عرض الأسعار', yPosition);
   yPosition += 10;
 
   // Quotation details
@@ -229,6 +229,7 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
   if (quotationData.currency) quotationDetails.push(`Currency: ${quotationData.currency}`);
   
   quotationDetails.forEach(detail => {
+    yPosition = checkPageBreak(pdf, yPosition, 10, proposalData, logoBase64, customerLogoBase64);
     pdf.text(detail, PDF_CONFIG.pageMargin, yPosition);
     yPosition += 6;
   });
@@ -236,11 +237,11 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
   yPosition += 10;
 
   // Table header
-  yPosition = checkPageBreak(pdf, yPosition, 30, proposalData, logoBase64);
+  yPosition = checkPageBreak(pdf, yPosition, 30, proposalData, logoBase64, customerLogoBase64);
   
   const tableStartY = yPosition;
   const tableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin;
-  const columnWidths = [80, 20, 30, 35]; // Description, Qty, Unit Price, Total
+  const columnWidths = [85, 20, 30, 35]; // Description, Qty, Unit Price, Total
   
   // Table header background
   pdf.setFillColor(...COLORS.tableHeaderBlue);
@@ -251,7 +252,7 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
   
   let currentX = PDF_CONFIG.pageMargin + 2;
-  const headers = ['Description', 'Quantity', `Unit Price (${quotationData.currency})`, `Total (${quotationData.currency})`];
+  const headers = ['Description / الوصف', 'Qty / الكمية', `Unit Price (${quotationData.currency}) / سعر الوحدة`, `Total (${quotationData.currency}) / المجموع`];
   
   headers.forEach((header, index) => {
     pdf.text(header, currentX, tableStartY + 7);
@@ -266,19 +267,23 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
   pdf.setFontSize(PDF_CONFIG.fontSize.small);
   
   quotationData.items.forEach((item: any, index: number) => {
-    yPosition = checkPageBreak(pdf, yPosition, 12, proposalData, logoBase64);
+    yPosition = checkPageBreak(pdf, yPosition, 20, proposalData, logoBase64, customerLogoBase64);
     
     // Alternating row colors
     if (index % 2 === 0) {
       pdf.setFillColor(...COLORS.lightGray);
-      pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, 12, 'F');
+      pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, 20, 'F');
     }
     
     currentX = PDF_CONFIG.pageMargin + 2;
     
-    // Description
-    const description = item.description.length > 40 ? item.description.substring(0, 40) + '...' : item.description;
-    pdf.text(description, currentX, yPosition + 7);
+    // Description (with text wrapping)
+    const descriptionLines = pdf.splitTextToSize(item.description, columnWidths[0] - 5);
+    let lineY = yPosition + 5;
+    descriptionLines.slice(0, 3).forEach((line: string) => { // Limit to 3 lines
+      pdf.text(line, currentX, lineY);
+      lineY += 4;
+    });
     currentX += columnWidths[0];
     
     // Quantity
@@ -290,42 +295,79 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
     currentX += columnWidths[2];
     
     // Total
+    pdf.setFont('helvetica', 'bold');
     pdf.text(item.total.toFixed(2), currentX, yPosition + 7);
+    pdf.setFont('helvetica', 'normal');
     
-    yPosition += 12;
+    yPosition += 20;
   });
 
   // Totals section
-  yPosition += 5;
-  yPosition = checkPageBreak(pdf, yPosition, 60, proposalData, logoBase64);
+  yPosition += 10;
+  yPosition = checkPageBreak(pdf, yPosition, 80, proposalData, logoBase64, customerLogoBase64);
   
   const totalsStartX = pageWidth - 100;
   
+  // Background for totals
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(totalsStartX - 10, yPosition - 5, 110, 70, 'F');
+  
   if (quotationData.subtotal) {
     pdf.setFont('helvetica', 'normal');
-    pdf.text('Subtotal:', totalsStartX, yPosition);
-    pdf.text(`${quotationData.currency} ${quotationData.subtotal.toFixed(2)}`, totalsStartX + 40, yPosition);
-    yPosition += 8;
+    pdf.text('Subtotal / المجموع الفرعي:', totalsStartX, yPosition);
+    pdf.text(`${quotationData.currency} ${quotationData.subtotal.toFixed(2)}`, totalsStartX + 50, yPosition);
+    yPosition += 10;
   }
   
   if (quotationData.discountAmount && quotationData.discountAmount > 0) {
     pdf.setTextColor(...COLORS.black);
-    pdf.text('Discount:', totalsStartX, yPosition);
-    pdf.text(`-${quotationData.currency} ${quotationData.discountAmount.toFixed(2)}`, totalsStartX + 40, yPosition);
-    yPosition += 8;
+    pdf.text('Discount / الخصم:', totalsStartX, yPosition);
+    pdf.text(`-${quotationData.currency} ${quotationData.discountAmount.toFixed(2)}`, totalsStartX + 50, yPosition);
+    yPosition += 10;
   }
   
   if (quotationData.taxAmount && quotationData.taxAmount > 0) {
-    pdf.text('Tax:', totalsStartX, yPosition);
-    pdf.text(`${quotationData.currency} ${quotationData.taxAmount.toFixed(2)}`, totalsStartX + 40, yPosition);
-    yPosition += 8;
+    pdf.text('Tax / الضريبة:', totalsStartX, yPosition);
+    pdf.text(`${quotationData.currency} ${quotationData.taxAmount.toFixed(2)}`, totalsStartX + 50, yPosition);
+    yPosition += 10;
   }
   
   // Grand total
+  yPosition += 5;
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.medium);
-  pdf.text('Grand Total:', totalsStartX, yPosition);
-  pdf.text(`${quotationData.currency} ${quotationData.grandTotal?.toFixed(2) || '0.00'}`, totalsStartX + 40, yPosition);
+  pdf.setTextColor(...COLORS.headerBlue);
+  pdf.text('Grand Total / المجموع الكلي:', totalsStartX, yPosition);
+  pdf.text(`${quotationData.currency} ${quotationData.grandTotal?.toFixed(2) || '0.00'}`, totalsStartX + 50, yPosition);
+  
+  // Terms and notes
+  yPosition += 20;
+  if (quotationData.terms) {
+    yPosition = checkPageBreak(pdf, yPosition, 30, proposalData, logoBase64, customerLogoBase64);
+    pdf.setTextColor(...COLORS.black);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(PDF_CONFIG.fontSize.normal);
+    pdf.text('Payment Terms / شروط الدفع:', PDF_CONFIG.pageMargin, yPosition);
+    yPosition += 8;
+    
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(PDF_CONFIG.fontSize.small);
+    yPosition = addTextWithWrapping(pdf, quotationData.terms, PDF_CONFIG.pageMargin, yPosition, pageWidth - 2 * PDF_CONFIG.pageMargin, 5);
+    yPosition += 10;
+  }
+  
+  if (quotationData.notes) {
+    yPosition = checkPageBreak(pdf, yPosition, 30, proposalData, logoBase64, customerLogoBase64);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(PDF_CONFIG.fontSize.normal);
+    pdf.text('Notes / ملاحظات:', PDF_CONFIG.pageMargin, yPosition);
+    yPosition += 8;
+    
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(PDF_CONFIG.fontSize.small);
+    yPosition = addTextWithWrapping(pdf, quotationData.notes, PDF_CONFIG.pageMargin, yPosition, pageWidth - 2 * PDF_CONFIG.pageMargin, 5);
+    yPosition += 10;
+  }
   
   return yPosition + 20;
 };
@@ -374,7 +416,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
 
     // Executive Summary
     if (proposal.executive_summary) {
-      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64);
+      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64, customerLogoBase64);
       yPosition = addSectionHeader(pdf, 'Executive Summary', yPosition);
       
       pdf.setTextColor(...COLORS.black);
@@ -384,7 +426,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
       yPosition += 15;
 
       if (proposal.key_objectives) {
-        yPosition = checkPageBreak(pdf, yPosition, 30, proposal, logoBase64);
+        yPosition = checkPageBreak(pdf, yPosition, 30, proposal, logoBase64, customerLogoBase64);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(PDF_CONFIG.fontSize.large);
         pdf.text('Key Objectives', PDF_CONFIG.pageMargin, yPosition);
@@ -397,7 +439,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
       }
 
       if (proposal.why_choose_us) {
-        yPosition = checkPageBreak(pdf, yPosition, 30, proposal, logoBase64);
+        yPosition = checkPageBreak(pdf, yPosition, 30, proposal, logoBase64, customerLogoBase64);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(PDF_CONFIG.fontSize.large);
         pdf.text('Why Choose Us', PDF_CONFIG.pageMargin, yPosition);
@@ -412,7 +454,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
 
     // Problem Statement
     if (proposal.problem_description || proposal.background_context) {
-      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64);
+      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64, customerLogoBase64);
       yPosition = addSectionHeader(pdf, 'Problem Statement', yPosition);
 
       if (proposal.problem_description) {
@@ -424,7 +466,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
       }
 
       if (proposal.background_context) {
-        yPosition = checkPageBreak(pdf, yPosition, 30, proposal, logoBase64);
+        yPosition = checkPageBreak(pdf, yPosition, 30, proposal, logoBase64, customerLogoBase64);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(PDF_CONFIG.fontSize.large);
         pdf.text('Background Context', PDF_CONFIG.pageMargin, yPosition);
@@ -439,7 +481,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
 
     // Approach & Solution
     if (proposal.proposed_solution || proposal.strategy_method) {
-      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64);
+      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64, customerLogoBase64);
       yPosition = addSectionHeader(pdf, 'Approach & Solution', yPosition);
 
       if (proposal.proposed_solution) {
@@ -451,7 +493,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
       }
 
       if (proposal.strategy_method) {
-        yPosition = checkPageBreak(pdf, yPosition, 30, proposal, logoBase64);
+        yPosition = checkPageBreak(pdf, yPosition, 30, proposal, logoBase64, customerLogoBase64);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(PDF_CONFIG.fontSize.large);
         pdf.text('Strategy & Method', PDF_CONFIG.pageMargin, yPosition);
@@ -464,15 +506,15 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
       }
     }
 
-    // Quotation Section (if exists)
+    // Quotation Section (Enhanced and always included if exists)
     if (proposal.quotation_data) {
-      yPosition = checkPageBreak(pdf, yPosition, 60, proposal, logoBase64);
-      yPosition = addQuotationSection(pdf, proposal.quotation_data, yPosition, proposal, logoBase64);
+      yPosition = checkPageBreak(pdf, yPosition, 60, proposal, logoBase64, customerLogoBase64);
+      yPosition = addQuotationSection(pdf, proposal.quotation_data, yPosition, proposal, logoBase64, customerLogoBase64);
     }
 
     // About Us
     if (proposal.company_bio) {
-      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64);
+      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64, customerLogoBase64);
       yPosition = addSectionHeader(pdf, 'About Us', yPosition);
       
       pdf.setTextColor(...COLORS.black);
@@ -484,7 +526,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
 
     // Terms & Conditions
     if (proposal.terms_conditions) {
-      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64);
+      yPosition = checkPageBreak(pdf, yPosition, 40, proposal, logoBase64, customerLogoBase64);
       yPosition = addSectionHeader(pdf, 'Terms & Conditions', yPosition);
       
       pdf.setTextColor(...COLORS.black);
@@ -496,7 +538,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
 
     // Call to Action
     if (proposal.call_to_action) {
-      yPosition = checkPageBreak(pdf, yPosition, 50, proposal, logoBase64);
+      yPosition = checkPageBreak(pdf, yPosition, 50, proposal, logoBase64, customerLogoBase64);
       
       // CTA background
       pdf.setFillColor(...COLORS.headerBlue);
@@ -533,7 +575,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
     const fileName = `${proposal.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'proposal'}_${Date.now()}.pdf`;
     pdf.save(fileName);
     
-    fireToast('Success', 'Professional proposal PDF generated successfully');
+    fireToast('Success', 'Professional proposal PDF with quotation generated successfully');
     
   } catch (error) {
     console.error('Error generating proposal PDF:', error);
