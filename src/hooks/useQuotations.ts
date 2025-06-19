@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +39,7 @@ export const useQuotations = () => {
         discountPercent: q.discount_percent ? parseFloat(q.discount_percent.toString()) : undefined,
         vat: parseFloat(q.vat.toString()),
         total: parseFloat(q.total.toString()),
-        currency: q.currency,
+        currency: (q.currency === 'SAR' || q.currency === 'USD') ? q.currency : 'SAR',
         customTerms: q.custom_terms || '',
         notes: q.notes || ''
       }));
