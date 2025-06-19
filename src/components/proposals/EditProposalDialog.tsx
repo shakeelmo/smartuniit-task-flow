@@ -8,6 +8,9 @@ import { ProposalTimelineForm } from './forms/ProposalTimelineForm';
 import { ProposalBudgetForm } from './forms/ProposalBudgetForm';
 import { ProposalCaseStudiesForm } from './forms/ProposalCaseStudiesForm';
 import { ProposalQuotationForm } from './forms/ProposalQuotationForm';
+import { ProposalDocumentControlForm } from './forms/ProposalDocumentControlForm';
+import { ProposalCommercialForm } from './forms/ProposalCommercialForm';
+import { ProposalSignatureForm } from './forms/ProposalSignatureForm';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -88,18 +91,30 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
         
         <div className="flex-1 flex flex-col overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-6 flex-shrink-0 mx-6 mt-4">
+            <TabsList className="grid w-full grid-cols-9 flex-shrink-0 mx-6 mt-4">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="document-control">Document Control</TabsTrigger>
               <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="commercial">Commercial</TabsTrigger>
               <TabsTrigger value="budget">Budget</TabsTrigger>
               <TabsTrigger value="quotation">Quotation</TabsTrigger>
               <TabsTrigger value="case-studies">Case Studies</TabsTrigger>
+              <TabsTrigger value="signatures">Signatures</TabsTrigger>
             </TabsList>
             
             <div className="flex-1 overflow-hidden px-6">
               <TabsContent value="basic" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
                 <ProposalBasicForm
+                  proposal={proposalData}
+                  onUpdate={handleUpdateProposal}
+                  loading={loading}
+                />
+              </TabsContent>
+
+              <TabsContent value="document-control" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
+                <ProposalDocumentControlForm
+                  proposalId={proposal?.id}
                   proposal={proposalData}
                   onUpdate={handleUpdateProposal}
                   loading={loading}
@@ -112,6 +127,15 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
               
               <TabsContent value="timeline" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
                 <ProposalTimelineForm proposalId={proposal?.id} />
+              </TabsContent>
+
+              <TabsContent value="commercial" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
+                <ProposalCommercialForm
+                  proposalId={proposal?.id}
+                  proposal={proposalData}
+                  onUpdate={handleUpdateProposal}
+                  loading={loading}
+                />
               </TabsContent>
               
               <TabsContent value="budget" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
@@ -131,6 +155,15 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
               
               <TabsContent value="case-studies" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
                 <ProposalCaseStudiesForm proposalId={proposal?.id} />
+              </TabsContent>
+
+              <TabsContent value="signatures" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
+                <ProposalSignatureForm
+                  proposalId={proposal?.id}
+                  proposal={proposalData}
+                  onUpdate={handleUpdateProposal}
+                  loading={loading}
+                />
               </TabsContent>
             </div>
           </Tabs>

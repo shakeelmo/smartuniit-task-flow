@@ -124,29 +124,85 @@ export type Database = {
           },
         ]
       }
-      proposal_deliverables: {
+      proposal_commercial_items: {
         Row: {
           created_at: string
-          description: string | null
+          description: string
           id: string
-          proposal_id: string
+          proposal_id: string | null
+          quantity: number
+          serial_number: number
           sort_order: number | null
-          title: string
+          total_price: number | null
+          unit: string | null
+          unit_price: number
         }
         Insert: {
           created_at?: string
-          description?: string | null
+          description: string
           id?: string
-          proposal_id: string
+          proposal_id?: string | null
+          quantity?: number
+          serial_number: number
           sort_order?: number | null
-          title: string
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number
         }
         Update: {
           created_at?: string
+          description?: string
+          id?: string
+          proposal_id?: string | null
+          quantity?: number
+          serial_number?: number
+          sort_order?: number | null
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_commercial_items_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_deliverables: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_collapsible: boolean | null
+          proposal_id: string
+          sort_order: number | null
+          sub_tasks: Json | null
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
           description?: string | null
           id?: string
+          is_collapsible?: boolean | null
+          proposal_id: string
+          sort_order?: number | null
+          sub_tasks?: Json | null
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_collapsible?: boolean | null
           proposal_id?: string
           sort_order?: number | null
+          sub_tasks?: Json | null
           title?: string
         }
         Relationships: [
@@ -200,11 +256,50 @@ export type Database = {
           },
         ]
       }
+      proposal_versions: {
+        Row: {
+          change_summary: string | null
+          created_at: string
+          id: string
+          proposal_id: string | null
+          review_date: string | null
+          reviewer_name: string | null
+          version_number: string
+        }
+        Insert: {
+          change_summary?: string | null
+          created_at?: string
+          id?: string
+          proposal_id?: string | null
+          review_date?: string | null
+          reviewer_name?: string | null
+          version_number: string
+        }
+        Update: {
+          change_summary?: string | null
+          created_at?: string
+          id?: string
+          proposal_id?: string | null
+          review_date?: string | null
+          reviewer_name?: string | null
+          version_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_versions_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposals: {
         Row: {
           abstract: string | null
           appendix: string | null
           background_context: string | null
+          bank_details: Json | null
           call_to_action: string | null
           client_address: string | null
           client_company_name: string | null
@@ -212,36 +307,49 @@ export type Database = {
           client_email: string | null
           client_logo_url: string | null
           client_phone: string | null
+          client_signature_data: string | null
           company_bio: string | null
           company_contact_details: string | null
           company_logo_url: string | null
           company_name: string | null
+          company_signature_data: string | null
+          confidentiality_included: boolean | null
           created_at: string
+          customer_prerequisites: string | null
+          document_reviewers: Json | null
           executive_summary: string | null
           glossary: string | null
           id: string
+          is_bilingual: boolean | null
           key_objectives: string | null
+          payment_terms: string | null
           problem_description: string | null
+          project_duration_days: number | null
           project_name: string | null
           proposed_solution: string | null
           quotation_data: Json | null
           reference_number: string | null
+          signature_date: string | null
           status: string
           strategy_method: string | null
           submission_date: string | null
           table_of_contents: boolean | null
           team_bios: Json | null
           team_photo_url: string | null
+          template_customization: Json | null
           terms_conditions: string | null
           title: string
+          understanding_requirements: string | null
           updated_at: string
           user_id: string
+          version_number: string | null
           why_choose_us: string | null
         }
         Insert: {
           abstract?: string | null
           appendix?: string | null
           background_context?: string | null
+          bank_details?: Json | null
           call_to_action?: string | null
           client_address?: string | null
           client_company_name?: string | null
@@ -249,36 +357,49 @@ export type Database = {
           client_email?: string | null
           client_logo_url?: string | null
           client_phone?: string | null
+          client_signature_data?: string | null
           company_bio?: string | null
           company_contact_details?: string | null
           company_logo_url?: string | null
           company_name?: string | null
+          company_signature_data?: string | null
+          confidentiality_included?: boolean | null
           created_at?: string
+          customer_prerequisites?: string | null
+          document_reviewers?: Json | null
           executive_summary?: string | null
           glossary?: string | null
           id?: string
+          is_bilingual?: boolean | null
           key_objectives?: string | null
+          payment_terms?: string | null
           problem_description?: string | null
+          project_duration_days?: number | null
           project_name?: string | null
           proposed_solution?: string | null
           quotation_data?: Json | null
           reference_number?: string | null
+          signature_date?: string | null
           status?: string
           strategy_method?: string | null
           submission_date?: string | null
           table_of_contents?: boolean | null
           team_bios?: Json | null
           team_photo_url?: string | null
+          template_customization?: Json | null
           terms_conditions?: string | null
           title: string
+          understanding_requirements?: string | null
           updated_at?: string
           user_id: string
+          version_number?: string | null
           why_choose_us?: string | null
         }
         Update: {
           abstract?: string | null
           appendix?: string | null
           background_context?: string | null
+          bank_details?: Json | null
           call_to_action?: string | null
           client_address?: string | null
           client_company_name?: string | null
@@ -286,30 +407,42 @@ export type Database = {
           client_email?: string | null
           client_logo_url?: string | null
           client_phone?: string | null
+          client_signature_data?: string | null
           company_bio?: string | null
           company_contact_details?: string | null
           company_logo_url?: string | null
           company_name?: string | null
+          company_signature_data?: string | null
+          confidentiality_included?: boolean | null
           created_at?: string
+          customer_prerequisites?: string | null
+          document_reviewers?: Json | null
           executive_summary?: string | null
           glossary?: string | null
           id?: string
+          is_bilingual?: boolean | null
           key_objectives?: string | null
+          payment_terms?: string | null
           problem_description?: string | null
+          project_duration_days?: number | null
           project_name?: string | null
           proposed_solution?: string | null
           quotation_data?: Json | null
           reference_number?: string | null
+          signature_date?: string | null
           status?: string
           strategy_method?: string | null
           submission_date?: string | null
           table_of_contents?: boolean | null
           team_bios?: Json | null
           team_photo_url?: string | null
+          template_customization?: Json | null
           terms_conditions?: string | null
           title?: string
+          understanding_requirements?: string | null
           updated_at?: string
           user_id?: string
+          version_number?: string | null
           why_choose_us?: string | null
         }
         Relationships: []
