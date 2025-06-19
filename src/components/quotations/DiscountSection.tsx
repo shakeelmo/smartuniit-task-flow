@@ -24,8 +24,8 @@ const DiscountSection: React.FC<DiscountSectionProps> = ({
   calculateDiscountAmount,
   getCurrencySymbol,
 }) => {
-  // Use the correct Saudi Riyal symbol
-  const displaySymbol = getCurrencySymbol() === '﷼' ? 'ر.س' : getCurrencySymbol();
+  // Use the proper Saudi Riyal symbol
+  const displaySymbol = currency === 'SAR' ? '﷼' : '$';
   
   return (
     <div className="bg-yellow-50 p-4 rounded-lg">
