@@ -71,7 +71,7 @@ const renderSubtotalRow = (
 
   // Value with proper Saudi Riyal symbol
   const subtotalText = totalsData.currencyInfo.symbol === '﷼' ? 
-    `${totalsData.subtotal.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+    `${totalsData.subtotal.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
     totalsData.subtotal.text;
   const subtotalWidth = pdf.getTextWidth(subtotalText);
   const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - CELL_PADDING;
@@ -108,7 +108,7 @@ const renderDiscountRow = (
 
   // Value with proper Saudi Riyal symbol
   const discountText = totalsData.currencyInfo.symbol === '﷼' ? 
-    `-${totalsData.discount.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+    `-${totalsData.discount.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
     totalsData.discount.text;
   const discountWidth = pdf.getTextWidth(discountText);
   const discountX = valueStartX + valueColumnWidth - discountWidth - CELL_PADDING;
@@ -143,7 +143,7 @@ const renderVATRow = (
 
   // Value with proper Saudi Riyal symbol
   const vatText = totalsData.currencyInfo.symbol === '﷼' ? 
-    `${totalsData.vat.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+    `${totalsData.vat.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
     totalsData.vat.text;
   const vatWidth = pdf.getTextWidth(vatText);
   const vatX = valueStartX + valueColumnWidth - vatWidth - CELL_PADDING;
@@ -180,7 +180,7 @@ const renderTotalRow = (
 
   // Value with proper Saudi Riyal symbol
   const totalText = totalsData.currencyInfo.symbol === '﷼' ? 
-    `${totalsData.total.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+    `${totalsData.total.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
     totalsData.total.text;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = valueStartX + valueColumnWidth - totalWidth - CELL_PADDING;
