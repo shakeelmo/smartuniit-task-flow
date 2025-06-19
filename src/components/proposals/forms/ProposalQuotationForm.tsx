@@ -145,7 +145,13 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     return quotationToSave;
   };
 
-  const handleSaveQuotation = async () => {
+  const handleSaveQuotation = async (e?: React.MouseEvent) => {
+    // Prevent any default behavior that might cause dialog to close
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     setLoading(true);
     try {
       const quotationDataToSave = prepareQuotationDataForSave();
@@ -193,7 +199,13 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     }
   };
 
-  const handleSaveAsDraft = async () => {
+  const handleSaveAsDraft = async (e?: React.MouseEvent) => {
+    // Prevent any default behavior that might cause dialog to close
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     setLoading(true);
     try {
       const quotationDataToSave = {
@@ -242,9 +254,9 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header - Fixed */}
-      <div className="flex-shrink-0 mb-6">
+    <div className="w-full max-w-full">
+      {/* Header */}
+      <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -256,8 +268,8 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
         </div>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+      {/* Form Content */}
+      <div className="space-y-6">
         {/* Quote Details */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-lg font-semibold mb-4">Quote Details / تفاصيل العرض</h3>
@@ -301,7 +313,11 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Services / الخدمات</h3>
-            <Button onClick={addItem} className="bg-smart-orange hover:bg-smart-orange/90">
+            <Button 
+              onClick={addItem} 
+              type="button"
+              className="bg-smart-orange hover:bg-smart-orange/90"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Item
             </Button>
@@ -361,6 +377,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
+                      type="button"
                       onClick={() => removeItem(item.id)}
                       className="text-red-600 hover:text-red-700 w-full md:w-auto"
                     >
@@ -488,24 +505,26 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
             />
           </div>
         </div>
-      </div>
 
-      {/* Save Buttons - Fixed at bottom */}
-      <div className="flex-shrink-0 flex justify-end gap-2 pt-4 border-t mt-6 bg-white">
-        <Button 
-          variant="outline" 
-          onClick={handleSaveAsDraft}
-          disabled={loading || externalLoading}
-        >
-          {loading ? 'Saving...' : 'Save as Draft'}
-        </Button>
-        <Button 
-          className="bg-smart-orange hover:bg-smart-orange/90"
-          onClick={handleSaveQuotation}
-          disabled={loading || externalLoading}
-        >
-          {loading ? 'Saving...' : 'Save Quotation'}
-        </Button>
+        {/* Save Buttons - Always visible at bottom */}
+        <div className="flex justify-end gap-2 pt-4 border-t bg-white sticky bottom-0">
+          <Button 
+            variant="outline" 
+            type="button"
+            onClick={handleSaveAsDraft}
+            disabled={loading || externalLoading}
+          >
+            {loading ? 'Saving...' : 'Save as Draft'}
+          </Button>
+          <Button 
+            type="button"
+            className="bg-smart-orange hover:bg-smart-orange/90"
+            onClick={handleSaveQuotation}
+            disabled={loading || externalLoading}
+          >
+            {loading ? 'Saving...' : 'Save Quotation'}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -81,14 +81,14 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl h-[95vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-7xl w-[95vw] h-[95vh] flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 px-6 py-4 border-b">
           <DialogTitle>Edit Proposal: {proposal?.title}</DialogTitle>
         </DialogHeader>
         
         <div className="flex-1 flex flex-col overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-6 flex-shrink-0">
+            <TabsList className="grid w-full grid-cols-6 flex-shrink-0 mx-6 mt-4">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -97,8 +97,8 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
               <TabsTrigger value="case-studies">Case Studies</TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="basic" className="h-full overflow-y-auto mt-4">
+            <div className="flex-1 overflow-hidden px-6">
+              <TabsContent value="basic" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
                 <ProposalBasicForm
                   proposal={proposalData}
                   onUpdate={handleUpdateProposal}
@@ -106,35 +106,37 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
                 />
               </TabsContent>
               
-              <TabsContent value="deliverables" className="h-full overflow-y-auto mt-4">
+              <TabsContent value="deliverables" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
                 <ProposalDeliverablesForm proposalId={proposal?.id} />
               </TabsContent>
               
-              <TabsContent value="timeline" className="h-full overflow-y-auto mt-4">
+              <TabsContent value="timeline" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
                 <ProposalTimelineForm proposalId={proposal?.id} />
               </TabsContent>
               
-              <TabsContent value="budget" className="h-full overflow-y-auto mt-4">
+              <TabsContent value="budget" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
                 <ProposalBudgetForm proposalId={proposal?.id} />
               </TabsContent>
               
-              <TabsContent value="quotation" className="h-full mt-4">
-                <ProposalQuotationForm 
-                  proposalId={proposal?.id} 
-                  proposal={proposalData}
-                  onUpdate={handleUpdateProposal}
-                  loading={loading}
-                />
+              <TabsContent value="quotation" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="flex-1 min-h-0">
+                  <ProposalQuotationForm 
+                    proposalId={proposal?.id} 
+                    proposal={proposalData}
+                    onUpdate={handleUpdateProposal}
+                    loading={loading}
+                  />
+                </div>
               </TabsContent>
               
-              <TabsContent value="case-studies" className="h-full overflow-y-auto mt-4">
+              <TabsContent value="case-studies" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
                 <ProposalCaseStudiesForm proposalId={proposal?.id} />
               </TabsContent>
             </div>
           </Tabs>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0 bg-white">
+        <div className="flex justify-end gap-2 p-4 border-t flex-shrink-0 bg-white">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
