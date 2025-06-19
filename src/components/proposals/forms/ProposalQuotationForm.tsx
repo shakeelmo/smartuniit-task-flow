@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Calculator, Percent } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -252,10 +253,10 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-20">
-        <div className="space-y-6 p-1">
+    <div className="flex flex-col h-full relative">
+      {/* Scrollable Content with proper height calculation */}
+      <ScrollArea className="flex-1 h-[calc(100vh-200px)]">
+        <div className="space-y-6 p-1 pb-32">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -339,7 +340,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                   لم يتم إضافة أي خدمات بعد. انقر على "إضافة خدمة" للبدء.
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                   {items.map((item, index) => (
                     <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 border rounded-lg bg-white shadow-sm">
                       <div className="lg:col-span-5">
@@ -536,7 +537,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
             </CardContent>
           </Card>
         </div>
-      </div>
+      </ScrollArea>
 
       {/* Fixed Save Buttons */}
       <div className="absolute bottom-0 left-0 right-0 bg-white border-t shadow-lg z-10">
