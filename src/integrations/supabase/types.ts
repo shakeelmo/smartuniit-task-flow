@@ -315,6 +315,7 @@ export type Database = {
           company_signature_data: string | null
           confidentiality_included: boolean | null
           created_at: string
+          customer_logo_url: string | null
           customer_prerequisites: string | null
           document_reviewers: Json | null
           executive_summary: string | null
@@ -365,6 +366,7 @@ export type Database = {
           company_signature_data?: string | null
           confidentiality_included?: boolean | null
           created_at?: string
+          customer_logo_url?: string | null
           customer_prerequisites?: string | null
           document_reviewers?: Json | null
           executive_summary?: string | null
@@ -415,6 +417,7 @@ export type Database = {
           company_signature_data?: string | null
           confidentiality_included?: boolean | null
           created_at?: string
+          customer_logo_url?: string | null
           customer_prerequisites?: string | null
           document_reviewers?: Json | null
           executive_summary?: string | null
