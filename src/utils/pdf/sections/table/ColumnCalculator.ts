@@ -19,48 +19,44 @@ export const calculateColumnConfig = (
   let columnWidths: number[] = [];
   
   if (hasPartNumbers && hasUnits) {
-    // All columns: S#, Service, Part#, Description, Qty, Unit, Unit Price, Total
+    // All columns: S#, Description, Part#, Qty, Unit, Unit Price, Total
     columnWidths = [
-      10,  // Serial number (smaller)
-      22,  // Service name (reduced significantly)
-      18,  // Part number (reduced)
-      20,  // Description (reduced)
-      10,  // Quantity (smaller)
-      10,  // Unit (smaller)
-      45,  // Unit price (increased significantly for currency)
-      50   // Total (increased significantly for currency)
+      8,   // Serial number (smaller)
+      25,  // Description (increased)
+      18,  // Part number
+      8,   // Quantity (smaller)
+      12,  // Unit
+      40,  // Unit price (reduced)
+      47   // Total (increased)
     ];
   } else if (hasPartNumbers && !hasUnits) {
-    // S#, Service, Part#, Description, Qty, Unit Price, Total
+    // S#, Description, Part#, Qty, Unit Price, Total
     columnWidths = [
-      10,  // Serial number (smaller)
-      24,  // Service name (reduced)
-      18,  // Part number (reduced)
-      22,  // Description (reduced)
-      10,  // Quantity (smaller)
-      48,  // Unit price (increased significantly)
-      52   // Total (increased significantly)
+      8,   // Serial number (smaller)
+      28,  // Description (increased)
+      20,  // Part number
+      8,   // Quantity (smaller)
+      44,  // Unit price
+      50   // Total (increased)
     ];
   } else if (!hasPartNumbers && hasUnits) {
-    // S#, Service, Description, Qty, Unit, Unit Price, Total
+    // S#, Description, Qty, Unit, Unit Price, Total
     columnWidths = [
-      10,  // Serial number (smaller)
-      28,  // Service name (reduced)
-      24,  // Description (reduced)
-      10,  // Quantity (smaller)
-      10,  // Unit (smaller)
-      48,  // Unit price (increased)
+      8,   // Serial number (smaller)
+      32,  // Description (increased)
+      8,   // Quantity (smaller)
+      12,  // Unit
+      44,  // Unit price
       54   // Total (increased)
     ];
   } else {
-    // Basic: S#, Service, Description, Qty, Unit Price, Total
+    // Basic: S#, Description, Qty, Unit Price, Total
     columnWidths = [
-      10,  // Serial number (smaller)
-      32,  // Service name (reduced)
-      28,  // Description (reduced)
-      10,  // Quantity (smaller)
-      52,  // Unit price (increased significantly)
-      56   // Total (increased significantly)
+      8,   // Serial number (smaller)
+      36,  // Description (increased)
+      8,   // Quantity (smaller)
+      48,  // Unit price
+      58   // Total (increased)
     ];
   }
 
