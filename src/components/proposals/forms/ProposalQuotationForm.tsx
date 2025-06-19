@@ -75,10 +75,13 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       total: 0
     };
     setItems([...items, newItem]);
+    console.log('Added new item, total items:', items.length + 1);
   };
 
   const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
+    const updatedItems = items.filter(item => item.id !== id);
+    setItems(updatedItems);
+    console.log('Removed item, remaining items:', updatedItems.length);
   };
 
   const updateItem = (id: string, field: keyof QuotationItem, value: string | number) => {
@@ -238,6 +241,9 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     }
   };
 
+  // Always show save buttons regardless of items count
+  const showSaveButtons = true;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -365,7 +371,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
         )}
       </div>
 
-      {/* Discount Section */}
+      {/* Discount Section - Show when items exist */}
       {items.length > 0 && (
         <div className="bg-yellow-50 p-4 rounded-lg border">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -420,7 +426,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
         </div>
       )}
 
-      {/* Totals */}
+      {/* Totals - Show when items exist */}
       {items.length > 0 && (
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-lg font-semibold mb-4">Pricing Summary / ملخص التسعير</h3>
@@ -481,22 +487,25 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4 border-t">
-        <Button 
-          variant="outline" 
-          onClick={handleSaveAsDraft}
-          disabled={loading || externalLoading}
-        >
-          {loading ? 'Saving...' : 'Save as Draft'}
-        </Button>
-        <Button 
-          className="bg-smart-orange hover:bg-smart-orange/90"
-          onClick={handleSaveQuotation}
-          disabled={loading || externalLoading}
-        >
-          {loading ? 'Saving...' : 'Save Quotation'}
-        </Button>
-      </div>
+      {/* Save Buttons - Always visible */}
+      {showSaveButtons && (
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button 
+            variant="outline" 
+            onClick={handleSaveAsDraft}
+            disabled={loading || externalLoading}
+          >
+            {loading ? 'Saving...' : 'Save as Draft'}
+          </Button>
+          <Button 
+            className="bg-smart-orange hover:bg-smart-orange/90"
+            onClick={handleSaveQuotation}
+            disabled={loading || externalLoading}
+          >
+            {loading ? 'Saving...' : 'Save Quotation'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
