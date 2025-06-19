@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -110,20 +109,33 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     }
   };
 
+  const prepareQuotationDataForSave = () => {
+    // Convert items to plain objects compatible with Json type
+    const serializedItems = items.map(item => ({
+      id: item.id,
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      total: item.total
+    }));
+
+    return {
+      ...quotationData,
+      items: serializedItems,
+      subtotal,
+      discountAmount,
+      taxAmount,
+      grandTotal
+    };
+  };
+
   const handleSaveQuotation = async () => {
     setLoading(true);
     try {
-      const quotationDataToSave = {
-        ...quotationData,
-        items,
-        subtotal,
-        discountAmount,
-        taxAmount,
-        grandTotal
-      };
+      const quotationDataToSave = prepareQuotationDataForSave();
 
       const updateData = {
-        quotation_data: quotationDataToSave
+        quotation_data: quotationDataToSave as any
       };
 
       if (onUpdate) {
@@ -159,17 +171,12 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     setLoading(true);
     try {
       const quotationDataToSave = {
-        ...quotationData,
-        items,
-        subtotal,
-        discountAmount,
-        taxAmount,
-        grandTotal,
+        ...prepareQuotationDataForSave(),
         status: 'draft'
       };
 
       const updateData = {
-        quotation_data: quotationDataToSave,
+        quotation_data: quotationDataToSave as any,
         status: 'draft'
       };
 
