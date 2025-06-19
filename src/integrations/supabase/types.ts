@@ -224,6 +224,7 @@ export type Database = {
           problem_description: string | null
           project_name: string | null
           proposed_solution: string | null
+          quotation_data: Json | null
           reference_number: string | null
           status: string
           strategy_method: string | null
@@ -260,6 +261,7 @@ export type Database = {
           problem_description?: string | null
           project_name?: string | null
           proposed_solution?: string | null
+          quotation_data?: Json | null
           reference_number?: string | null
           status?: string
           strategy_method?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           problem_description?: string | null
           project_name?: string | null
           proposed_solution?: string | null
+          quotation_data?: Json | null
           reference_number?: string | null
           status?: string
           strategy_method?: string | null
