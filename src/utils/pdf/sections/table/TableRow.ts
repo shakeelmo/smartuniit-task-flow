@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
 import { wrapText } from './TextWrapper';
@@ -156,7 +157,7 @@ export const addTableRow = (
   }
 
   // Enhanced text wrapping with optimized spacing
-  const cellPadding = 1.5; // Professional minimal padding
+  const cellPadding = 2.5; // Increased padding to prevent overlap with borders
   
   // For description column (always index 1)
   const descriptionColumnIndex = 1;
@@ -310,25 +311,27 @@ export const addTableRow = (
     colIndex++;
   }
 
-  // UNIT PRICE COLUMN - right aligned with currency, enhanced formatting
+  // UNIT PRICE COLUMN - right aligned with currency, enhanced formatting with proper spacing
   const unitPriceValue = Number(item.unitPrice) || 0;
   const maxUnitPriceWidth = columnWidths[colIndex] - (cellPadding * 2);
   const unitPriceText = formatCurrency(unitPriceValue, currency, maxUnitPriceWidth, pdf);
   const unitPriceWidth = pdf.getTextWidth(unitPriceText);
-  const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
+  // Increased spacing from right edge to prevent overlap
+  const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - (cellPadding + 1);
   
   if (!isNaN(unitPriceX) && !isNaN(textYCenter)) {
     safeText(pdf, unitPriceText, unitPriceX, textYCenter);
   }
   colIndex++;
 
-  // TOTAL PRICE COLUMN - right aligned with currency, enhanced formatting
+  // TOTAL PRICE COLUMN - right aligned with currency, enhanced formatting with proper spacing to prevent overlap
   const quantityValue = Number(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
   const maxTotalWidth = columnWidths[colIndex] - (cellPadding * 2);
   const totalText = formatCurrency(totalValue, currency, maxTotalWidth, pdf);
   const totalWidth = pdf.getTextWidth(totalText);
-  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
+  // Increased spacing from right edge to prevent overlap with table border
+  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - (cellPadding + 1.5);
   
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.medium);
