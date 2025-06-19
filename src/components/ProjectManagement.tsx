@@ -13,66 +13,14 @@ import {
   FileText
 } from 'lucide-react';
 import ProjectDialog from '@/components/ProjectDialog';
+import { useProjects, Project } from '@/hooks/useProjects';
 
 const ProjectManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: 'Website Redesign',
-      description: 'Complete overhaul of company website with modern UI/UX',
-      status: 'In Progress',
-      priority: 'High',
-      manager: 'Ahmed Al-Rashid',
-      team: ['Sara Al-Mahmoud', 'Mohammed Al-Faisal'],
-      dueDate: '2024-06-15',
-      progress: 75,
-      tasksCount: 12,
-      completedTasks: 9
-    },
-    {
-      id: 2,
-      name: 'Mobile App Development',
-      description: 'Native mobile application for iOS and Android',
-      status: 'Planning',
-      priority: 'High',
-      manager: 'Sara Al-Mahmoud',
-      team: ['Ahmed Al-Rashid', 'Fatima Al-Zahra'],
-      dueDate: '2024-07-01',
-      progress: 25,
-      tasksCount: 18,
-      completedTasks: 4
-    },
-    {
-      id: 3,
-      name: 'Database Migration',
-      description: 'Migrate legacy database to new cloud infrastructure',
-      status: 'Review',
-      priority: 'Medium',
-      manager: 'Mohammed Al-Faisal',
-      team: ['Ahmed Al-Rashid'],
-      dueDate: '2024-06-12',
-      progress: 90,
-      tasksCount: 8,
-      completedTasks: 7
-    },
-    {
-      id: 4,
-      name: 'Security Audit',
-      description: 'Comprehensive security assessment of all systems',
-      status: 'To Do',
-      priority: 'High',
-      manager: 'Fatima Al-Zahra',
-      team: ['Mohammed Al-Faisal', 'Sara Al-Mahmoud'],
-      dueDate: '2024-06-30',
-      progress: 10,
-      tasksCount: 15,
-      completedTasks: 1
-    }
-  ]);
+  const { projects, loading, createProject } = useProjects();
 
-  const handleProjectCreate = (newProject: any) => {
-    setProjects(prevProjects => [...prevProjects, newProject]);
+  const handleProjectCreate = async (newProject: Omit<Project, 'id'>) => {
+    await createProject(newProject);
   };
 
   const getStatusColor = (status: string) => {
@@ -99,6 +47,14 @@ const ProjectManagement = () => {
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">Loading projects...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

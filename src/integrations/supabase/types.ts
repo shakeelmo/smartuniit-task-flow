@@ -36,6 +36,57 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          completed_tasks: number | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          manager: string | null
+          name: string
+          priority: string
+          progress: number | null
+          status: string
+          tasks_count: number | null
+          team: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_tasks?: number | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          manager?: string | null
+          name: string
+          priority?: string
+          progress?: number | null
+          status?: string
+          tasks_count?: number | null
+          team?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_tasks?: number | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          manager?: string | null
+          name?: string
+          priority?: string
+          progress?: number | null
+          status?: string
+          tasks_count?: number | null
+          team?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       proposal_budget_items: {
         Row: {
           created_at: string
@@ -449,6 +500,134 @@ export type Database = {
           why_choose_us?: string | null
         }
         Relationships: []
+      }
+      quotations: {
+        Row: {
+          created_at: string
+          currency: string
+          custom_terms: string | null
+          customer_data: Json
+          date: string
+          discount: number
+          discount_percent: number | null
+          discount_type: string | null
+          id: string
+          line_items: Json
+          notes: string | null
+          number: string
+          sections: Json
+          status: string | null
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+          valid_until: string | null
+          vat: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          custom_terms?: string | null
+          customer_data?: Json
+          date?: string
+          discount?: number
+          discount_percent?: number | null
+          discount_type?: string | null
+          id?: string
+          line_items?: Json
+          notes?: string | null
+          number: string
+          sections?: Json
+          status?: string | null
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+          valid_until?: string | null
+          vat?: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          custom_terms?: string | null
+          customer_data?: Json
+          date?: string
+          discount?: number
+          discount_percent?: number | null
+          discount_type?: string | null
+          id?: string
+          line_items?: Json
+          notes?: string | null
+          number?: string
+          sections?: Json
+          status?: string | null
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+          valid_until?: string | null
+          vat?: number
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          actual_hours: number | null
+          assignee: string | null
+          assignee_role: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          priority: string
+          project_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_hours?: number | null
+          assignee?: string | null
+          assignee_role?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          priority?: string
+          project_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_hours?: number | null
+          assignee?: string | null
+          assignee_role?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          priority?: string
+          project_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -13,92 +13,13 @@ import {
   User,
   Flag
 } from 'lucide-react';
+import { useTasks } from '@/hooks/useTasks';
 
 const TaskManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const { tasks, loading } = useTasks();
   
-  const tasks = [
-    {
-      id: 1,
-      title: 'Update landing page design',
-      description: 'Redesign the main landing page with new branding',
-      project: 'Website Redesign',
-      status: 'In Progress',
-      priority: 'High',
-      assignee: 'Ahmed Al-Rashid',
-      assigneeRole: 'Manager',
-      dueDate: '2024-06-14',
-      estimatedHours: 8,
-      actualHours: 6
-    },
-    {
-      id: 2,
-      title: 'Setup CI/CD pipeline',
-      description: 'Configure automated deployment pipeline',
-      project: 'Mobile App Development',
-      status: 'To Do',
-      priority: 'Medium',
-      assignee: 'Sara Al-Mahmoud',
-      assigneeRole: 'Technician',
-      dueDate: '2024-06-16',
-      estimatedHours: 12,
-      actualHours: 0
-    },
-    {
-      id: 3,
-      title: 'Data backup verification',
-      description: 'Verify all data has been properly backed up',
-      project: 'Database Migration',
-      status: 'Done',
-      priority: 'High',
-      assignee: 'Mohammed Al-Faisal',
-      assigneeRole: 'Technician',
-      dueDate: '2024-06-12',
-      estimatedHours: 4,
-      actualHours: 3
-    },
-    {
-      id: 4,
-      title: 'Security vulnerability assessment',
-      description: 'Conduct comprehensive security testing',
-      project: 'Security Audit',
-      status: 'Review',
-      priority: 'High',
-      assignee: 'Fatima Al-Zahra',
-      assigneeRole: 'Manager',
-      dueDate: '2024-06-18',
-      estimatedHours: 16,
-      actualHours: 14
-    },
-    {
-      id: 5,
-      title: 'Mobile app wireframes',
-      description: 'Create wireframes for all mobile app screens',
-      project: 'Mobile App Development',
-      status: 'In Progress',
-      priority: 'Medium',
-      assignee: 'Ahmed Al-Rashid',
-      assigneeRole: 'Manager',
-      dueDate: '2024-06-15',
-      estimatedHours: 10,
-      actualHours: 7
-    },
-    {
-      id: 6,
-      title: 'API documentation',
-      description: 'Document all API endpoints and usage',
-      project: 'Website Redesign',
-      status: 'To Do',
-      priority: 'Low',
-      assignee: 'Sara Al-Mahmoud',
-      assigneeRole: 'Technician',
-      dueDate: '2024-06-20',
-      estimatedHours: 6,
-      actualHours: 0
-    }
-  ];
-
   const statusOptions = ['All', 'To Do', 'In Progress', 'Review', 'Done'];
 
   const getStatusColor = (status: string) => {
@@ -143,6 +64,14 @@ const TaskManagement = () => {
     'Review': filteredTasks.filter(task => task.status === 'Review'),
     'Done': filteredTasks.filter(task => task.status === 'Done')
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">Loading tasks...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

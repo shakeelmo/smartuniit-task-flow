@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,14 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, Calendar, DollarSign, FileText } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface QuotationItem {
-  id: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-}
+import { useQuotations } from '@/hooks/useQuotations';
 
 interface ExistingQuotation {
   number: string;
@@ -37,24 +30,39 @@ interface SelectExistingQuotationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onQuotationSelected: (quotation: ExistingQuotation) => void;
-  savedQuotations: ExistingQuotation[];
+  savedQuotations?: ExistingQuotation[];
 }
 
 export const SelectExistingQuotationDialog: React.FC<SelectExistingQuotationDialogProps> = ({
   open,
   onOpenChange,
-  onQuotationSelected,
-  savedQuotations
+  onQuotationSelected
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const { quotations, loading } = useQuotations();
 
-  const filteredQuotations = savedQuotations.filter(quotation =>
+  const filteredQuotations = quotations.filter(quotation =>
     quotation.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quotation.customer.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+    quotation.customer.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSelectQuotation = (quotation: ExistingQuotation) => {
-    onQuotationSelected(quotation);
+  const handleSelectQuotation = (quotation: any) => {
+    const formattedQuotation: ExistingQuotation = {
+      number: quotation.number,
+      date: quotation.date,
+      validUntil: quotation.validUntil,
+      currency: quotation.currency,
+      customer: quotation.customer,
+      lineItems: quotation.lineItems,
+      subtotal: quotation.subtotal,
+      discount: quotation.discount,
+      vat: quotation.vat,
+      total: quotation.total,
+      notes: quotation.notes,
+      customTerms: quotation.customTerms
+    };
+    
+    onQuotationSelected(formattedQuotation);
     onOpenChange(false);
   };
 
@@ -89,12 +97,16 @@ export const SelectExistingQuotationDialog: React.FC<SelectExistingQuotationDial
 
           {/* Quotations List */}
           <ScrollArea className="flex-1">
-            {filteredQuotations.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">
+                Loading quotations...
+              </div>
+            ) : filteredQuotations.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>No quotations found</p>
                 <p className="text-sm mt-2">
-                  {savedQuotations.length === 0 
+                  {quotations.length === 0 
                     ? "Create quotations in the Quotation module first" 
                     : "Try adjusting your search terms"}
                 </p>
