@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -135,30 +134,46 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
 
   const grandTotal = items.reduce((sum, item) => sum + Number(item.total_price), 0);
 
-  // Create quotation data format for PDF generation
+  // Enhanced quotation data format to ensure proper PDF generation with serial numbers
   const createQuotationData = () => {
     const subtotal = grandTotal;
     const vatRate = 0.15; // 15% VAT
     const vatAmount = subtotal * vatRate;
     const total = subtotal + vatAmount;
 
+    // Create properly formatted line items with serial numbers for PDF generation
+    const formattedLineItems = items.map((item, index) => ({
+      serialNumber: index + 1, // Explicit serial number
+      service: item.description || `Commercial Item ${index + 1}`, // Use description as service
+      description: item.description,
+      quantity: Number(item.quantity) || 1,
+      unitPrice: Number(item.unit_price) || 0,
+      total: Number(item.total_price) || 0,
+      unit: item.unit || 'Each'
+    }));
+
+    console.log('Creating quotation data with formatted line items:', formattedLineItems);
+
     return {
-      quotationNumber: `QUO-${proposalId.slice(-8)}`,
+      number: `QUO-${proposalId.slice(-8)}`,
+      date: new Date().toISOString(),
       validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       currency: 'SAR',
-      items: items.map(item => ({
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unit_price,
-        total: item.total_price,
-        unit: item.unit
-      })),
+      lineItems: formattedLineItems, // Use the properly formatted items
       subtotal,
+      discount: 0,
       discountAmount: 0,
-      taxAmount: vatAmount,
-      grandTotal: total,
-      terms: formData.payment_terms,
-      notes: `Project Duration: ${formData.project_duration_days} days`
+      vat: vatAmount,
+      total,
+      customTerms: formData.payment_terms,
+      notes: `Project Duration: ${formData.project_duration_days} days`,
+      customer: {
+        companyName: 'Commercial Proposal Customer', // Default value for commercial proposals
+        contactPerson: '',
+        email: '',
+        phone: '',
+        address: ''
+      }
     };
   };
 

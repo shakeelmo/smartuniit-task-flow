@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { generateQuotationPDF } from '@/utils/pdfExport';
 import { generateQuotationWord } from '@/utils/wordExport';
@@ -47,12 +46,28 @@ export const useExportQuotationPDF = ({
 
   const prepareQuotationData = (): QuotationData => {
     const discountPercent = discountType === 'percentage' ? discount : undefined;
-    const flatLineItems = sections.flatMap((section: any) => 
-      section.lineItems.map((item: any) => ({
-        ...item,
-        sectionTitle: section.title
-      }))
+    
+    // Enhanced line items processing to ensure serial numbers are included
+    const flatLineItems = sections.flatMap((section: any, sectionIndex: number) => 
+      section.lineItems.map((item: any, itemIndex: number) => {
+        // Calculate global serial number across all sections
+        const globalSerialNumber = sections.slice(0, sectionIndex).reduce((total: number, prevSection: any) => 
+          total + prevSection.lineItems.length, 0) + itemIndex + 1;
+        
+        return {
+          ...item,
+          sectionTitle: section.title,
+          serialNumber: globalSerialNumber, // Ensure each item has a serial number
+          // Ensure service field is properly populated for description
+          service: item.service || item.description || `Service Item ${globalSerialNumber}`,
+          // Ensure quantity and unit price are numbers
+          quantity: Number(item.quantity) || 1,
+          unitPrice: Number(item.unitPrice) || 0
+        };
+      })
     );
+
+    console.log('Prepared line items with serial numbers:', flatLineItems);
 
     return {
       number: generateQuoteNumber(),
