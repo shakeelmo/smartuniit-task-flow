@@ -103,7 +103,12 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
           </TabsContent>
           
           <TabsContent value="quotation" className="mt-4">
-            <ProposalQuotationForm proposalId={proposal?.id} />
+            <ProposalQuotationForm 
+              proposalId={proposal?.id} 
+              proposal={proposalData}
+              onUpdate={handleUpdateProposal}
+              loading={loading}
+            />
           </TabsContent>
           
           <TabsContent value="case-studies" className="mt-4">

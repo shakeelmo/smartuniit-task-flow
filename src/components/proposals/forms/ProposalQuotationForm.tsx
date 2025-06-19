@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Calculator, Percent } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 interface QuotationItem {
   id: string;
@@ -19,9 +21,18 @@ interface QuotationItem {
 
 interface ProposalQuotationFormProps {
   proposalId: string;
+  proposal?: any;
+  onUpdate?: (data: any) => void;
+  loading?: boolean;
 }
 
-export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({ proposalId }) => {
+export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({ 
+  proposalId, 
+  proposal,
+  onUpdate,
+  loading: externalLoading 
+}) => {
+  const [loading, setLoading] = useState(false);
   const [quotationData, setQuotationData] = useState({
     quotationNumber: '',
     validUntil: '',
@@ -34,6 +45,24 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({ pr
   });
 
   const [items, setItems] = useState<QuotationItem[]>([]);
+
+  // Load existing quotation data when component mounts
+  useEffect(() => {
+    if (proposal && proposal.quotation_data) {
+      const existingData = proposal.quotation_data;
+      setQuotationData({
+        quotationNumber: existingData.quotationNumber || '',
+        validUntil: existingData.validUntil || '',
+        currency: existingData.currency || 'USD',
+        taxRate: existingData.taxRate || 0,
+        discountType: existingData.discountType || 'percentage',
+        discountValue: existingData.discountValue || 0,
+        notes: existingData.notes || '',
+        terms: existingData.terms || ''
+      });
+      setItems(existingData.items || []);
+    }
+  }, [proposal]);
 
   const addItem = () => {
     const newItem: QuotationItem = {
@@ -78,6 +107,96 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({ pr
       case 'GBP': return '£';
       case 'SAR': return '﷼';
       default: return '$';
+    }
+  };
+
+  const handleSaveQuotation = async () => {
+    setLoading(true);
+    try {
+      const quotationDataToSave = {
+        ...quotationData,
+        items,
+        subtotal,
+        discountAmount,
+        taxAmount,
+        grandTotal
+      };
+
+      const updateData = {
+        quotation_data: quotationDataToSave
+      };
+
+      if (onUpdate) {
+        // Use the parent's update function if provided
+        await onUpdate(updateData);
+      } else {
+        // Direct database update
+        const { error } = await supabase
+          .from('proposals')
+          .update(updateData)
+          .eq('id', proposalId);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Quotation saved successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving quotation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save quotation",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    setLoading(true);
+    try {
+      const quotationDataToSave = {
+        ...quotationData,
+        items,
+        subtotal,
+        discountAmount,
+        taxAmount,
+        grandTotal,
+        status: 'draft'
+      };
+
+      const updateData = {
+        quotation_data: quotationDataToSave,
+        status: 'draft'
+      };
+
+      if (onUpdate) {
+        await onUpdate(updateData);
+      } else {
+        const { error } = await supabase
+          .from('proposals')
+          .update(updateData)
+          .eq('id', proposalId);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Quotation saved as draft",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save draft",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -325,8 +444,20 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({ pr
       </div>
 
       <div className="flex justify-end gap-2 pt-4 border-t">
-        <Button variant="outline">Save as Draft</Button>
-        <Button className="bg-smart-orange hover:bg-smart-orange/90">Save Quotation</Button>
+        <Button 
+          variant="outline" 
+          onClick={handleSaveAsDraft}
+          disabled={loading || externalLoading}
+        >
+          {loading ? 'Saving...' : 'Save as Draft'}
+        </Button>
+        <Button 
+          className="bg-smart-orange hover:bg-smart-orange/90"
+          onClick={handleSaveQuotation}
+          disabled={loading || externalLoading}
+        >
+          {loading ? 'Saving...' : 'Save Quotation'}
+        </Button>
       </div>
     </div>
   );
