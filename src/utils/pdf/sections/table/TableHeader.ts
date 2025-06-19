@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
 
@@ -35,7 +34,8 @@ const truncateHeaderText = (pdf: jsPDF, text: string, maxWidth: number): string 
     }
   }
   
-  // General truncation with ellipsis
+  // General truncation with ellipsis - properly declare and initialize truncated
+  let truncated = text;
   while (pdf.getTextWidth(truncated + '...') > maxWidth && truncated.length > 3) {
     truncated = truncated.slice(0, -1);
   }
