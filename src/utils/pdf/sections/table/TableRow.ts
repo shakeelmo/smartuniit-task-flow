@@ -168,7 +168,7 @@ export const addTableRow = (
     maximumFractionDigits: 2
   });
   // Use proper Saudi Riyal symbol formatting
-  const unitPriceText = currency === 'SAR' ? `﷼ ${unitPriceFormatted}` : `$${unitPriceFormatted}`;
+  const unitPriceText = currency === 'SAR' ? `ر.س ${unitPriceFormatted}` : `$${unitPriceFormatted}`;
   const unitPriceWidth = pdf.getTextWidth(unitPriceText);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
@@ -182,7 +182,7 @@ export const addTableRow = (
     maximumFractionDigits: 2
   });
   // Use proper Saudi Riyal symbol formatting
-  const totalText = currency === 'SAR' ? `﷼ ${totalFormatted}` : `$${totalFormatted}`;
+  const totalText = currency === 'SAR' ? `ر.س ${totalFormatted}` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - (cellPadding + 2);
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
