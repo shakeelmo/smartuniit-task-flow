@@ -42,7 +42,7 @@ export const calculateTotalsData = (quotationData: QuotationData): TotalsData =>
 
   const formatCurrency = (amount: number): string => {
     const formatted = formatAmount(amount);
-    return quotationData.currency === 'SAR' ? `${formatted} SR` : `$${formatted}`;
+    return quotationData.currency === 'SAR' ? `${formatted} SAR` : `$${formatted}`;
   };
 
   const subtotal = {
@@ -76,7 +76,7 @@ export const calculateTotalsData = (quotationData: QuotationData): TotalsData =>
       amount: quotationData.discount,
       formatted: formatAmount(quotationData.discount),
       text: quotationData.currency === 'SAR'
-        ? `-${formatAmount(quotationData.discount)} SR`
+        ? `-${formatAmount(quotationData.discount)} SAR`
         : `-$${formatAmount(quotationData.discount)}`,
       label: discountLabel
     };

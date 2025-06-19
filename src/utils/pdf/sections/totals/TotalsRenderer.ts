@@ -67,12 +67,12 @@ const renderSubtotalRow = (
   pdf.setFontSize(PDF_CONFIG.fontSize.medium);
 
   // Label - Use consistent currency name
-  const currencyName = totalsData.currencyInfo.symbol === '﷼' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
+  const currencyName = totalsData.currencyInfo.symbol === 'SAR' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
   pdf.text(`Subtotal in ${currencyName}`, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with proper Saudi Riyal symbol
-  const subtotalText = totalsData.currencyInfo.symbol === '﷼' ? 
-    `${totalsData.subtotal.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+  // Value with SAR text instead of symbol
+  const subtotalText = totalsData.currencyInfo.symbol === 'SAR' ? 
+    `${totalsData.subtotal.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
     totalsData.subtotal.text;
   const subtotalWidth = pdf.getTextWidth(subtotalText);
   const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - CELL_PADDING;
@@ -107,9 +107,9 @@ const renderDiscountRow = (
   // Label
   pdf.text(totalsData.discount.label, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with proper Saudi Riyal symbol
-  const discountText = totalsData.currencyInfo.symbol === '﷼' ? 
-    `-${totalsData.discount.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+  // Value with SAR text instead of symbol
+  const discountText = totalsData.currencyInfo.symbol === 'SAR' ? 
+    `-${totalsData.discount.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
     totalsData.discount.text;
   const discountWidth = pdf.getTextWidth(discountText);
   const discountX = valueStartX + valueColumnWidth - discountWidth - CELL_PADDING;
@@ -142,9 +142,9 @@ const renderVATRow = (
   // Label
   pdf.text('VAT 15%', labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with proper Saudi Riyal symbol
-  const vatText = totalsData.currencyInfo.symbol === '﷼' ? 
-    `${totalsData.vat.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+  // Value with SAR text instead of symbol
+  const vatText = totalsData.currencyInfo.symbol === 'SAR' ? 
+    `${totalsData.vat.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
     totalsData.vat.text;
   const vatWidth = pdf.getTextWidth(vatText);
   const vatX = valueStartX + valueColumnWidth - vatWidth - CELL_PADDING;
@@ -177,12 +177,12 @@ const renderTotalRow = (
   pdf.setFontSize(PDF_CONFIG.fontSize.large);
 
   // Label - Use consistent currency name
-  const currencyName = totalsData.currencyInfo.symbol === '﷼' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
+  const currencyName = totalsData.currencyInfo.symbol === 'SAR' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
   pdf.text(`Total Price in ${currencyName}`, labelStartX + CELL_PADDING, yPosition + 9);
 
-  // Value with proper Saudi Riyal symbol
-  const totalText = totalsData.currencyInfo.symbol === '﷼' ? 
-    `${totalsData.total.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+  // Value with SAR text instead of symbol
+  const totalText = totalsData.currencyInfo.symbol === 'SAR' ? 
+    `${totalsData.total.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
     totalsData.total.text;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = valueStartX + valueColumnWidth - totalWidth - CELL_PADDING;

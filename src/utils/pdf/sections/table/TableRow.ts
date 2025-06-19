@@ -37,7 +37,7 @@ const safeText = (pdf: jsPDF, text: string, x: number, y: number) => {
   }
 };
 
-// Enhanced function to format currency with proper Saudi Riyal symbol
+// Enhanced function to format currency with SAR text instead of symbol
 const formatCurrency = (value: number, currency: 'SAR' | 'USD', maxWidth?: number, pdf?: jsPDF): string => {
   const formatted = value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -46,7 +46,7 @@ const formatCurrency = (value: number, currency: 'SAR' | 'USD', maxWidth?: numbe
   
   let currencyText: string;
   if (currency === 'SAR') {
-    currencyText = `${formatted} ﷼`; // Use proper Saudi Riyal symbol
+    currencyText = `${formatted} SAR`; // Use SAR text instead of symbol
   } else {
     currencyText = `$${formatted}`;
   }
@@ -57,7 +57,7 @@ const formatCurrency = (value: number, currency: 'SAR' | 'USD', maxWidth?: numbe
     if (textWidth > maxWidth) {
       // Try shorter format first
       const shortFormatted = Number(value).toFixed(0);
-      const shortCurrencyText = currency === 'SAR' ? `${shortFormatted} ﷼` : `$${shortFormatted}`;
+      const shortCurrencyText = currency === 'SAR' ? `${shortFormatted} SAR` : `$${shortFormatted}`;
       
       if (pdf.getTextWidth(shortCurrencyText) <= maxWidth) {
         return shortCurrencyText;
