@@ -74,25 +74,26 @@ export const addTableRow = (
   }
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, requiredRowHeight, 'F');
 
-  // Enhanced cell borders - draw all borders consistently
+  // Enhanced cell borders - draw complete border grid
   pdf.setDrawColor(180, 180, 180);
   pdf.setLineWidth(0.3);
   
-  // Draw horizontal borders
+  // Draw horizontal borders (top and bottom)
   pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
   pdf.line(PDF_CONFIG.pageMargin, yPosition + requiredRowHeight, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
   
-  // Draw vertical borders for each column
+  // Draw all vertical borders including the rightmost border for Total Price column
   let currentX = PDF_CONFIG.pageMargin;
   columnWidths.forEach((width, colIndex) => {
-    // Left border of each column (first column uses page margin)
-    if (colIndex === 0) {
-      pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
-    }
-    currentX += width;
-    // Right border of each column
+    // Draw left border of column
     pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
+    currentX += width;
   });
+  
+  // Draw the final right border for the last column (Total Price)
+  pdf.setLineWidth(0.5); // Slightly thicker for table boundary
+  pdf.setDrawColor(...COLORS.black);
+  pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
 
   // Set text properties
   pdf.setTextColor(...COLORS.black);
@@ -165,7 +166,7 @@ export const addTableRow = (
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned with increased padding for better visibility
+  // Total Price column - right aligned with proper border spacing
   const quantityValue = parseFloat(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
   const totalFormatted = totalValue.toLocaleString('en-US', {
@@ -175,8 +176,8 @@ export const addTableRow = (
   const totalText = currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
   
-  // Increased padding to ensure text is not cut off
-  const totalPadding = 8; // Increased from 3 to 8
+  // Proper padding to ensure text doesn't touch the border
+  const totalPadding = 6;
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - totalPadding;
   
   console.log('Total price display:', { 

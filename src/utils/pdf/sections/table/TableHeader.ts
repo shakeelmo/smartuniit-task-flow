@@ -1,6 +1,7 @@
 
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
+import { wrapText } from './TextWrapper';
 
 export interface TableHeaderConfig {
   hasPartNumbers: boolean;
@@ -17,7 +18,7 @@ export const addTableHeader = (
   config: TableHeaderConfig
 ): number => {
   const { hasPartNumbers, hasUnits, currency, columnWidths, columnPositions, tableWidth } = config;
-  const headerRowHeight = 16;
+  const headerRowHeight = 20; // Increased height to accommodate wrapped text
 
   // Enhanced header with professional blue background
   pdf.setFillColor(83, 122, 166); // Medium blue background
@@ -41,9 +42,9 @@ export const addTableHeader = (
 
   pdf.setTextColor(...COLORS.white);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(PDF_CONFIG.fontSize.medium);
+  pdf.setFontSize(PDF_CONFIG.fontSize.normal); // Slightly smaller font for better fit
 
-  // Enhanced header text with better formatting - always include Total Price column
+  // Enhanced header text with text wrapping support
   let headers: string[];
   const currencyText = currency === 'SAR' ? 'SAR' : 'USD';
   
@@ -58,23 +59,34 @@ export const addTableHeader = (
   }
 
   headers.forEach((header, index) => {
-    const cellPadding = 6;
+    const cellPadding = 4;
+    const maxWidth = columnWidths[index] - (cellPadding * 2);
     
-    // Center align S# and Qty columns with improved spacing
+    // Wrap text for headers to prevent overlap
+    const wrappedLines = wrapText(pdf, header, maxWidth, PDF_CONFIG.fontSize.normal);
+    const startY = yPosition + 8 + ((headerRowHeight - 8 - (wrappedLines.length * 4)) / 2);
+    
+    // Center align S# and Qty columns
     if (header === 'S#' || header === 'Qty') {
-      const textWidth = pdf.getTextWidth(header);
-      const centeredX = columnPositions[index] + (columnWidths[index] / 2) - (textWidth / 2);
-      pdf.text(header, centeredX, yPosition + 11);
+      wrappedLines.forEach((line, lineIndex) => {
+        const textWidth = pdf.getTextWidth(line);
+        const centeredX = columnPositions[index] + (columnWidths[index] / 2) - (textWidth / 2);
+        pdf.text(line, centeredX, startY + (lineIndex * 4));
+      });
     }
-    // Right align price columns with consistent formatting
+    // Right align price columns
     else if (header.includes('Price')) {
-      const textWidth = pdf.getTextWidth(header);
-      const rightAlignedX = columnPositions[index] + columnWidths[index] - textWidth - cellPadding;
-      pdf.text(header, rightAlignedX, yPosition + 11);
+      wrappedLines.forEach((line, lineIndex) => {
+        const textWidth = pdf.getTextWidth(line);
+        const rightAlignedX = columnPositions[index] + columnWidths[index] - textWidth - cellPadding;
+        pdf.text(line, rightAlignedX, startY + (lineIndex * 4));
+      });
     }
-    // Left align other columns with proper padding
+    // Left align other columns
     else {
-      pdf.text(header, columnPositions[index] + cellPadding, yPosition + 11);
+      wrappedLines.forEach((line, lineIndex) => {
+        pdf.text(line, columnPositions[index] + cellPadding, startY + (lineIndex * 4));
+      });
     }
   });
 
