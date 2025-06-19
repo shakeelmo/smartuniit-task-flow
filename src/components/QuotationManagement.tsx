@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter, FileSpreadsheet } from 'lucide-react';
+import { Plus, Search, Filter, FileSpreadsheet, Save } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import QuotationsList from './quotations/QuotationsList';
 import CreateQuotationDialog from './quotations/CreateQuotationDialog';
@@ -18,6 +18,7 @@ const QuotationManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [importedQuotations, setImportedQuotations] = useState<QuotationData[]>([]);
+  const [savedQuotations, setSavedQuotations] = useState<QuotationData[]>([]);
   const { toast } = useToast();
 
   const handleCreateQuotation = () => {
@@ -33,15 +34,31 @@ const QuotationManagement = () => {
     setShowEditDialog(true);
   };
 
-  const handleQuotationCreated = () => {
+  const handleQuotationCreated = (quotationData?: QuotationData) => {
     setShowCreateDialog(false);
-    toast({
-      title: "Quotation Created",
-      description: "New quotation has been created successfully.",
-    });
+    if (quotationData) {
+      setSavedQuotations(prev => [...prev, quotationData]);
+      toast({
+        title: "Quotation Saved",
+        description: "New quotation has been saved successfully and can be edited anytime.",
+      });
+    } else {
+      toast({
+        title: "Quotation Created",
+        description: "New quotation has been created successfully.",
+      });
+    }
   };
 
-  const handleQuotationUpdated = () => {
+  const handleQuotationUpdated = (updatedQuotation?: QuotationData) => {
+    if (updatedQuotation && editingQuotation) {
+      setSavedQuotations(prev => 
+        prev.map(q => q.number === editingQuotation.number ? updatedQuotation : q)
+      );
+      setImportedQuotations(prev => 
+        prev.map(q => q.number === editingQuotation.number ? updatedQuotation : q)
+      );
+    }
     setShowEditDialog(false);
     setEditingQuotation(null);
     toast({
@@ -54,6 +71,8 @@ const QuotationManagement = () => {
     setImportedQuotations(prev => [...prev, ...quotations]);
     setShowImportDialog(false);
   };
+
+  const allQuotations = [...savedQuotations, ...importedQuotations];
 
   return (
     <div className="space-y-6">
@@ -104,13 +123,16 @@ const QuotationManagement = () => {
         </div>
       </div>
 
-      {/* Display imported quotations count */}
-      {importedQuotations.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-green-800">
-            <strong>{importedQuotations.length}</strong> quotation(s) imported from Excel. 
-            You can now edit, export, or manage these quotations.
-          </p>
+      {/* Display saved and imported quotations count */}
+      {allQuotations.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <Save className="h-5 w-5 text-blue-600" />
+            <p className="text-blue-800">
+              <strong>{allQuotations.length}</strong> quotation(s) available. 
+              You can edit, export, or manage these quotations. Saved quotations persist in your session.
+            </p>
+          </div>
         </div>
       )}
 
@@ -118,7 +140,7 @@ const QuotationManagement = () => {
         searchTerm={searchTerm} 
         statusFilter={statusFilter} 
         onEditQuotation={handleEditQuotation}
-        importedQuotations={importedQuotations}
+        importedQuotations={allQuotations}
       />
 
       <CreateQuotationDialog

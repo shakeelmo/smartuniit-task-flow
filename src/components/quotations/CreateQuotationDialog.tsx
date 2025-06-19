@@ -4,11 +4,12 @@ import { Dialog } from '@/components/ui/dialog';
 import CreateQuotationDialogContent from './CreateQuotationDialogContent';
 import { useCreateQuotationState } from './useCreateQuotationState';
 import { useExportQuotationPDF } from './useExportQuotationPDF';
+import { QuotationData } from '@/utils/pdfExport';
 
 interface CreateQuotationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onQuotationCreated: () => void;
+  onQuotationCreated: (quotationData?: QuotationData) => void;
 }
 
 const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: CreateQuotationDialogProps) => {
@@ -57,7 +58,27 @@ const CreateQuotationDialog = ({ open, onOpenChange, onQuotationCreated }: Creat
   const handleSave = () => {
     console.log('Quotation saved with customer type:', customerType);
     console.log('Sections:', sections);
-    onQuotationCreated();
+    
+    // Create quotation data object
+    const quotationData: QuotationData = {
+      number: generateQuoteNumber(),
+      date: new Date().toISOString(),
+      validUntil: validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      customer,
+      lineItems: getAllLineItems(),
+      sections: sections,
+      subtotal: calculateSubtotal(),
+      discount: calculateDiscountAmount(),
+      discountType,
+      vat: calculateVAT(),
+      total: calculateTotal(),
+      currency,
+      customTerms,
+      notes,
+      ...(discountType === 'percentage' && { discountPercent: discount }),
+    };
+    
+    onQuotationCreated(quotationData);
   };
 
   return (

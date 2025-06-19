@@ -8,7 +8,7 @@ import { QuotationData } from '@/utils/pdfExport';
 interface EditQuotationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onQuotationUpdated: () => void;
+  onQuotationUpdated: (updatedQuotation?: QuotationData) => void;
   quotationData?: QuotationData | null;
 }
 
@@ -52,7 +52,27 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
       notes,
       validUntil
     });
-    onQuotationUpdated();
+
+    // Create updated quotation data object
+    const updatedQuotationData: QuotationData = {
+      number: quotationData?.number || `QUO-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
+      date: quotationData?.date || new Date().toISOString(),
+      validUntil: validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      customer,
+      lineItems,
+      sections: quotationData?.sections || [],
+      subtotal: calculateSubtotal(),
+      discount: calculateDiscountAmount(),
+      discountType,
+      vat: calculateVAT(),
+      total: calculateTotal(),
+      currency,
+      customTerms,
+      notes,
+      ...(discountType === 'percentage' && { discountPercent: discount }),
+    };
+
+    onQuotationUpdated(updatedQuotationData);
   };
 
   const isEditMode = !!quotationData;

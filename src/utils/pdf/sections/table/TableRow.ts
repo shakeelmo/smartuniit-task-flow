@@ -47,7 +47,21 @@ export const addTableRow = (
   }
 
   const partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
-  const unitText = String(item.unit || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
+  
+  // Improved unit text handling - check multiple possible properties
+  let unitText = '';
+  if (item.unit && typeof item.unit === 'string' && item.unit.trim()) {
+    unitText = String(item.unit).replace(/[^\x20-\x7E]/g, '').trim();
+  } else if (item.units && typeof item.units === 'string' && item.units.trim()) {
+    unitText = String(item.units).replace(/[^\x20-\x7E]/g, '').trim();
+  } else if (item.unitType && typeof item.unitType === 'string' && item.unitType.trim()) {
+    unitText = String(item.unitType).replace(/[^\x20-\x7E]/g, '').trim();
+  }
+  
+  // If still no unit, provide a default
+  if (!unitText) {
+    unitText = 'Each';
+  }
 
   // Calculate text wrapping for description
   const descriptionColumnIndex = 1;
@@ -79,22 +93,15 @@ export const addTableRow = (
   pdf.setDrawColor(...COLORS.black);
   pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
   
-  // Draw internal column separators
+  // Draw internal column separators and right border
   columnWidths.forEach((width, colIndex) => {
     currentX += width;
     
-    // Draw internal separators with lighter color
-    if (colIndex < columnWidths.length - 1) {
-      pdf.setLineWidth(0.5);
-      pdf.setDrawColor(180, 180, 180);
-      pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
-    }
+    // Draw all vertical separators including the final right border
+    pdf.setLineWidth(0.8);
+    pdf.setDrawColor(...COLORS.black);
+    pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
   });
-  
-  // Draw the final right border for the table
-  pdf.setLineWidth(0.8);
-  pdf.setDrawColor(...COLORS.black);
-  pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
 
   // Set text properties
   pdf.setTextColor(...COLORS.black);
@@ -139,14 +146,13 @@ export const addTableRow = (
   pdf.text(qtyText, qtyX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Unit column (if present)
+  // Unit column (if present) - improved display
   if (hasUnits) {
     const maxUnitWidth = columnWidths[colIndex] - 6;
-    const wrappedUnitLines = wrapText(pdf, unitText, maxUnitWidth);
-    const unitStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedUnitLines.length * 5)) / 2 + 4);
-    wrappedUnitLines.forEach((line, lineIndex) => {
-      pdf.text(line, columnPositions[colIndex] + cellPadding, unitStartY + (lineIndex * 5));
-    });
+    // Center the unit text in the column
+    const unitWidth = pdf.getTextWidth(unitText);
+    const unitX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (unitWidth / 2);
+    pdf.text(unitText, unitX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
     colIndex++;
   }
 
@@ -162,7 +168,7 @@ export const addTableRow = (
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned
+  // Total Price column - right aligned with proper space
   const quantityValue = parseFloat(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
   const totalFormatted = totalValue.toLocaleString('en-US', {
@@ -171,7 +177,7 @@ export const addTableRow = (
   });
   const totalText = currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
-  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
+  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - (cellPadding + 2); // Extra padding for border
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
 
   return yPosition + requiredRowHeight;
