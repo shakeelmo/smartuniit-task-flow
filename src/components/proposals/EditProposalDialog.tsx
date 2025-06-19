@@ -30,30 +30,43 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
   const [proposalData, setProposalData] = useState(proposal);
 
   useEffect(() => {
+    console.log('EditProposalDialog received proposal:', proposal);
     setProposalData(proposal);
   }, [proposal]);
 
   const handleUpdateProposal = async (data: any) => {
     setLoading(true);
     try {
+      console.log('Updating proposal with data:', data);
+      
       const { error } = await supabase
         .from('proposals')
         .update(data)
         .eq('id', proposal.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating proposal:', error);
+        throw error;
+      }
 
-      setProposalData({ ...proposalData, ...data });
+      // Update local state with new data
+      const updatedProposal = { ...proposalData, ...data };
+      setProposalData(updatedProposal);
+      
+      console.log('Proposal updated successfully:', updatedProposal);
       
       toast({
         title: "Success",
         description: "Proposal updated successfully",
       });
+
+      // Refresh parent component
+      onSuccess();
     } catch (error) {
       console.error('Error updating proposal:', error);
       toast({
         title: "Error",
-        description: "Failed to update proposal",
+        description: `Failed to update proposal: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -63,6 +76,7 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
 
   const handleSaveAndClose = () => {
     onSuccess();
+    onOpenChange(false);
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,8 +48,10 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
 
   // Load existing quotation data when component mounts
   useEffect(() => {
+    console.log('Loading proposal data:', proposal);
     if (proposal && proposal.quotation_data) {
       const existingData = proposal.quotation_data;
+      console.log('Existing quotation data:', existingData);
       setQuotationData({
         quotationNumber: existingData.quotationNumber || '',
         validUntil: existingData.validUntil || '',
@@ -114,19 +117,29 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     const serializedItems = items.map(item => ({
       id: item.id,
       description: item.description,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      total: item.total
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      total: Number(item.total)
     }));
 
-    return {
-      ...quotationData,
+    const quotationToSave = {
+      quotationNumber: quotationData.quotationNumber,
+      validUntil: quotationData.validUntil,
+      currency: quotationData.currency,
+      taxRate: Number(quotationData.taxRate),
+      discountType: quotationData.discountType,
+      discountValue: Number(quotationData.discountValue),
+      notes: quotationData.notes,
+      terms: quotationData.terms,
       items: serializedItems,
-      subtotal,
-      discountAmount,
-      taxAmount,
-      grandTotal
+      subtotal: Number(subtotal),
+      discountAmount: Number(discountAmount),
+      taxAmount: Number(taxAmount),
+      grandTotal: Number(grandTotal)
     };
+
+    console.log('Prepared quotation data for save:', quotationToSave);
+    return quotationToSave;
   };
 
   const handleSaveQuotation = async () => {
@@ -135,31 +148,41 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       const quotationDataToSave = prepareQuotationDataForSave();
 
       const updateData = {
-        quotation_data: quotationDataToSave as any
+        quotation_data: quotationDataToSave,
+        status: 'completed'
       };
+
+      console.log('Updating proposal with:', updateData);
 
       if (onUpdate) {
         // Use the parent's update function if provided
         await onUpdate(updateData);
+        console.log('Updated via parent onUpdate function');
       } else {
         // Direct database update
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('proposals')
           .update(updateData)
-          .eq('id', proposalId);
+          .eq('id', proposalId)
+          .select();
 
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Quotation saved successfully",
-        });
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+        
+        console.log('Updated proposal data:', data);
       }
+
+      toast({
+        title: "Success",
+        description: "Quotation saved successfully",
+      });
     } catch (error) {
       console.error('Error saving quotation:', error);
       toast({
         title: "Error",
-        description: "Failed to save quotation",
+        description: `Failed to save quotation: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -176,30 +199,38 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       };
 
       const updateData = {
-        quotation_data: quotationDataToSave as any,
+        quotation_data: quotationDataToSave,
         status: 'draft'
       };
+
+      console.log('Saving as draft:', updateData);
 
       if (onUpdate) {
         await onUpdate(updateData);
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('proposals')
           .update(updateData)
-          .eq('id', proposalId);
+          .eq('id', proposalId)
+          .select();
 
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Quotation saved as draft",
-        });
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+        
+        console.log('Saved draft data:', data);
       }
+
+      toast({
+        title: "Success",
+        description: "Quotation saved as draft",
+      });
     } catch (error) {
       console.error('Error saving draft:', error);
       toast({
         title: "Error",
-        description: "Failed to save draft",
+        description: `Failed to save draft: ${error.message}`,
         variant: "destructive",
       });
     } finally {

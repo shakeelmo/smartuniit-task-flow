@@ -45,9 +45,10 @@ const addProposalHeader = (pdf: jsPDF, proposalData: ProposalData, logoBase64: s
   pdf.setTextColor(...COLORS.headerBlue);
   pdf.text('UNIVERSE', pageWidth - 35, yPosition + 16);
 
-  // Customer logo in top-left area (if provided)
+  // Customer logo in top-left area (if provided and it's the first page)
   if (customerLogoBase64 && pageNumber === 1) {
     try {
+      console.log('Adding customer logo to header');
       pdf.addImage(
         customerLogoBase64,
         'PNG',
@@ -57,7 +58,7 @@ const addProposalHeader = (pdf: jsPDF, proposalData: ProposalData, logoBase64: s
         PDF_CONFIG.logoSize
       );
     } catch (error) {
-      console.log('Error adding customer logo:', error);
+      console.log('Error adding customer logo to header:', error);
     }
   }
 
@@ -113,15 +114,16 @@ const addCoverPage = (pdf: jsPDF, proposalData: ProposalData, customerLogoBase64
   // Customer logo at the top if available
   if (customerLogoBase64) {
     try {
+      console.log('Adding customer logo to cover page');
       pdf.addImage(
         customerLogoBase64,
         'PNG',
-        (pageWidth - 50) / 2,
-        yPosition - 40,
-        50,
+        (pageWidth - 60) / 2, // Center the logo
+        yPosition - 50,
+        60, // Slightly larger for cover page
         50
       );
-      yPosition += 20;
+      yPosition += 30;
     } catch (error) {
       console.log('Error adding customer logo to cover:', error);
     }
@@ -344,10 +346,19 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
     let customerLogoBase64: string | null = null;
     if (proposal.customer_logo_url) {
       try {
-        customerLogoBase64 = await fetchImageBase64(proposal.customer_logo_url);
-        console.log('Customer logo loaded successfully');
+        console.log('Attempting to fetch customer logo:', proposal.customer_logo_url);
+        
+        // Check if it's a base64 string
+        if (proposal.customer_logo_url.startsWith('data:image/')) {
+          customerLogoBase64 = proposal.customer_logo_url;
+          console.log('Using base64 customer logo directly');
+        } else {
+          // Try to fetch as URL
+          customerLogoBase64 = await fetchImageBase64(proposal.customer_logo_url);
+          console.log('Customer logo fetched successfully from URL');
+        }
       } catch (error) {
-        console.log('Customer logo not found, proceeding without customer logo');
+        console.log('Customer logo not found or failed to load:', error);
       }
     }
 
