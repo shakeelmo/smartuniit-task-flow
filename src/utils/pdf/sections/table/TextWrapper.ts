@@ -31,43 +31,64 @@ export const wrapText = (
     return [''];
   }
 
-  const words = cleanText.split(' ');
-  const lines: string[] = [];
-  let currentLine = '';
+  // Handle explicit line breaks first
+  const paragraphs = cleanText.split('\n');
+  const allLines: string[] = [];
 
-  words.forEach(word => {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    
-    let testWidth;
-    try {
-      testWidth = pdf.getTextWidth(testLine);
-    } catch (error) {
-      console.warn('Error getting text width, using fallback:', error);
-      testWidth = testLine.length * 2.5; // Rough estimation
+  paragraphs.forEach(paragraph => {
+    if (!paragraph.trim()) {
+      allLines.push(''); // Preserve empty lines
+      return;
     }
-    
-    if (testWidth <= maxWidth - PDF_CONFIG.textWrapMargin) {
-      currentLine = testLine;
-    } else {
-      if (currentLine) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        // Handle very long words that exceed cell width
-        const maxChars = Math.floor((maxWidth - PDF_CONFIG.textWrapMargin) / 2.5); // Rough character estimate
-        if (word.length > maxChars && maxChars > 3) {
-          lines.push(word.substring(0, maxChars - 3) + '...');
-        } else {
-          lines.push(word);
-        }
-        currentLine = '';
+
+    const words = paragraph.split(' ');
+    let currentLine = '';
+
+    words.forEach(word => {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      
+      let testWidth;
+      try {
+        testWidth = pdf.getTextWidth(testLine);
+      } catch (error) {
+        console.warn('Error getting text width, using fallback:', error);
+        testWidth = testLine.length * 2.5; // Rough estimation
       }
+      
+      // Reduced margin to allow more text
+      if (testWidth <= maxWidth - (PDF_CONFIG.textWrapMargin / 2)) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) {
+          allLines.push(currentLine);
+          currentLine = word;
+        } else {
+          // Handle very long words that exceed cell width
+          const maxChars = Math.floor((maxWidth - (PDF_CONFIG.textWrapMargin / 2)) / 2.2); // Better character estimate
+          if (word.length > maxChars && maxChars > 5) {
+            // Split long words more intelligently
+            let remainingWord = word;
+            while (remainingWord.length > maxChars) {
+              allLines.push(remainingWord.substring(0, maxChars - 3) + '...');
+              remainingWord = remainingWord.substring(maxChars - 3);
+            }
+            if (remainingWord) {
+              currentLine = remainingWord;
+            } else {
+              currentLine = '';
+            }
+          } else {
+            allLines.push(word);
+            currentLine = '';
+          }
+        }
+      }
+    });
+    
+    if (currentLine) {
+      allLines.push(currentLine);
     }
   });
   
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-  
-  return lines.length > 0 ? lines : [''];
+  return allLines.length > 0 ? allLines : [''];
 };

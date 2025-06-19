@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
 import { wrapText } from './TextWrapper';
@@ -171,19 +172,12 @@ export const addTableRow = (
   const descriptionColumnIndex = 1;
   const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - (cellPadding * 2), 10);
   
-  // DISPLAY SERVICE INFO AS PRIMARY TEXT with description as secondary
+  // DISPLAY SERVICE INFO AS PRIMARY TEXT with description as secondary - REMOVE LINE LIMITATION
   const combinedText = descriptionText ? `${serviceText}\n${descriptionText}` : serviceText;
   const wrappedDescriptionLines = wrapText(pdf, combinedText, maxDescriptionWidth);
   
-  // Limit to maximum 2 lines
-  const limitedDescriptionLines = wrappedDescriptionLines.slice(0, 2);
-  if (wrappedDescriptionLines.length > 2) {
-    let lastLine = limitedDescriptionLines[1] || '';
-    while (pdf.getTextWidth(lastLine + '...') > maxDescriptionWidth && lastLine.length > 1) {
-      lastLine = lastLine.slice(0, -1);
-    }
-    limitedDescriptionLines[1] = lastLine + '...';
-  }
+  // REMOVED: No longer limit to maximum 2 lines - allow full text display
+  const limitedDescriptionLines = wrappedDescriptionLines; // Show all lines
 
   // Enhanced Part Number column handling
   let wrappedPartLines: string[] = [];
@@ -210,13 +204,14 @@ export const addTableRow = (
     }
   }
   
-  // Calculate required row height based on the tallest column
+  // Calculate required row height based on the tallest column - increased minimum height
   const maxLines = Math.max(
     limitedDescriptionLines.length,
     wrappedPartLines.length,
     1
   );
-  const requiredRowHeight = Math.max(baseRowHeight, maxLines * 5 + 8);
+  // Increased line spacing and minimum row height for better text display
+  const requiredRowHeight = Math.max(baseRowHeight, maxLines * 6 + 12);
 
   // Alternating row colors
   if (index % 2 === 0) {
@@ -280,8 +275,8 @@ export const addTableRow = (
   pdf.setFont('helvetica', 'normal');
   colIndex++;
 
-  // DESCRIPTION COLUMN - left aligned with controlled wrapping (combines service + description)
-  const descStartY = yPosition + Math.max(9, (requiredRowHeight - (limitedDescriptionLines.length * 5)) / 2 + 4);
+  // DESCRIPTION COLUMN - left aligned with full text display (combines service + description)
+  const descStartY = yPosition + 8; // Start closer to top for better text display
   pdf.setFont('helvetica', 'bold');
   console.log('Rendering description lines:', { limitedDescriptionLines, descStartY });
   
@@ -289,7 +284,7 @@ export const addTableRow = (
     const cleanLine = String(line || '').trim();
     if (cleanLine && cleanLine.length > 0) {
       const descX = columnPositions[colIndex] + cellPadding;
-      const descY = descStartY + (lineIndex * 5);
+      const descY = descStartY + (lineIndex * 6); // Increased line spacing
       console.log('Rendering description line:', { cleanLine, descX, descY });
       if (!isNaN(descX) && !isNaN(descY)) {
         safeText(pdf, cleanLine, descX, descY);
@@ -301,12 +296,12 @@ export const addTableRow = (
 
   // PART NUMBER COLUMN (if present) - left aligned
   if (hasPartNumbers) {
-    const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 5)) / 2 + 4);
+    const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 6)) / 2 + 4);
     wrappedPartLines.forEach((line, lineIndex) => {
       const cleanLine = String(line || '').trim();
       if (cleanLine && cleanLine.length > 0) {
         const partX = columnPositions[colIndex] + cellPadding;
-        const partY = partStartY + (lineIndex * 5);
+        const partY = partStartY + (lineIndex * 6);
         if (!isNaN(partX) && !isNaN(partY)) {
           safeText(pdf, cleanLine, partX, partY);
         }
