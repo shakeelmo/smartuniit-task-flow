@@ -37,7 +37,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     quotationNumber: '',
     validUntil: '',
     currency: 'USD',
-    taxRate: 0,
+    taxRate: 15, // Set default VAT to 15%
     discountType: 'percentage',
     discountValue: 0,
     notes: '',
@@ -134,7 +134,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       quotationNumber: String(quotationData.quotationNumber || '').trim(),
       validUntil: quotationData.validUntil,
       currency: quotationData.currency,
-      taxRate: Number(quotationData.taxRate) || 0,
+      taxRate: Number(quotationData.taxRate) || 15, // Ensure VAT rate is saved
       discountType: quotationData.discountType,
       discountValue: Number(quotationData.discountValue) || 0,
       notes: String(quotationData.notes || '').trim(),
@@ -142,7 +142,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       items: serializedItems,
       subtotal: Number(subtotal.toFixed(2)),
       discountAmount: Number(discountAmount.toFixed(2)),
-      taxAmount: Number(taxAmount.toFixed(2)),
+      taxAmount: Number(taxAmount.toFixed(2)), // Store calculated VAT amount
       grandTotal: Number(grandTotal.toFixed(2))
     };
 
@@ -446,23 +446,27 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                     />
                   </div>
                   <div>
-                    <Label>Tax Rate (%) / معدل الضريبة</Label>
+                    <Label>VAT Rate (%) / معدل ضريبة القيمة المضافة</Label>
                     <Input
                       type="number"
                       value={quotationData.taxRate}
-                      onChange={(e) => setQuotationData({...quotationData, taxRate: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setQuotationData({...quotationData, taxRate: parseFloat(e.target.value) || 15})}
                       min="0"
                       max="100"
                       step="0.01"
                       className="text-sm"
+                      placeholder="15"
                     />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Default: 15% (Saudi Arabia VAT rate)
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Totals */}
+          {/* Enhanced Totals with proper VAT display */}
           {items.length > 0 && (
             <Card className="bg-blue-50 border-blue-200">
               <CardHeader>
@@ -484,12 +488,10 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                     <span>After Discount / بعد الخصم:</span>
                     <span className="font-medium">{getCurrencySymbol()} {taxableAmount.toLocaleString()}</span>
                   </div>
-                  {taxAmount > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span>Tax ({quotationData.taxRate}%) / الضريبة:</span>
-                      <span className="font-medium">{getCurrencySymbol()} {taxAmount.toLocaleString()}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-sm">
+                    <span>VAT ({quotationData.taxRate}%) / ضريبة القيمة المضافة:</span>
+                    <span className="font-medium">{getCurrencySymbol()} {taxAmount.toLocaleString()}</span>
+                  </div>
                   <div className="flex justify-between text-xl font-bold border-t pt-3">
                     <span>Grand Total / المجموع الكلي:</span>
                     <Badge variant="default" className="text-xl px-4 py-2">

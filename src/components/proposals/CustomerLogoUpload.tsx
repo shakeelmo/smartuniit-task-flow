@@ -65,7 +65,7 @@ export const CustomerLogoUpload: React.FC<CustomerLogoUploadProps> = ({
         
         toast({
           title: "Success",
-          description: "Customer logo uploaded successfully",
+          description: "Customer logo uploaded successfully - it will appear in the PDF",
         });
       };
       
@@ -110,12 +110,12 @@ export const CustomerLogoUpload: React.FC<CustomerLogoUploadProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Image className="h-5 w-5" />
-          Customer Logo
+          Customer Logo for PDF
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-sm text-gray-600">
-          Upload your customer's logo to include it in the proposal PDF. The SmartUniverse logo will always appear as the main branding.
+          Upload your customer's logo to include it in the proposal PDF. The SmartUniverse logo will always appear as the main branding in the top-right corner.
         </div>
         
         {previewUrl ? (
@@ -149,7 +149,7 @@ export const CustomerLogoUpload: React.FC<CustomerLogoUploadProps> = ({
               </Button>
             </div>
             <div className="text-center text-sm text-green-600 font-medium">
-              ✓ Logo uploaded successfully
+              ✓ Logo uploaded successfully - will appear in PDF
             </div>
           </div>
         ) : (
@@ -158,7 +158,7 @@ export const CustomerLogoUpload: React.FC<CustomerLogoUploadProps> = ({
               <div className="text-center">
                 <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                 <Label htmlFor="logo-upload" className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-800">
-                  Click to upload customer logo
+                  Click to upload customer logo for PDF
                 </Label>
                 <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
               </div>

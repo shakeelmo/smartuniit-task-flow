@@ -58,13 +58,37 @@ const addProposalHeader = (pdf: jsPDF, proposalData: ProposalData, logoBase64: s
   pdf.setFillColor(...COLORS.headerBlue);
   pdf.triangle(0, 0, 40, 0, 0, 25, 'F');
 
-  // SmartUniverse logo in top-right (always use default)
-  pdf.setTextColor(...COLORS.orange);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(PDF_CONFIG.fontSize.title);
-  pdf.text('SMART', pageWidth - 35, yPosition + 8);
-  pdf.setTextColor(...COLORS.headerBlue);
-  pdf.text('UNIVERSE', pageWidth - 35, yPosition + 16);
+  // SmartUniverse logo in top-right (always show)
+  if (logoBase64) {
+    try {
+      console.log('Adding SmartUniverse logo to header');
+      pdf.addImage(
+        logoBase64,
+        'PNG',
+        pageWidth - PDF_CONFIG.logoSize - PDF_CONFIG.pageMargin,
+        yPosition,
+        PDF_CONFIG.logoSize,
+        PDF_CONFIG.logoSize
+      );
+    } catch (error) {
+      console.log('Error adding SmartUniverse logo, using text fallback:', error);
+      // Text fallback for SmartUniverse
+      pdf.setTextColor(...COLORS.orange);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(PDF_CONFIG.fontSize.title);
+      pdf.text('SMART', pageWidth - 35, yPosition + 8);
+      pdf.setTextColor(...COLORS.headerBlue);
+      pdf.text('UNIVERSE', pageWidth - 35, yPosition + 16);
+    }
+  } else {
+    // Text fallback for SmartUniverse
+    pdf.setTextColor(...COLORS.orange);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(PDF_CONFIG.fontSize.title);
+    pdf.text('SMART', pageWidth - 35, yPosition + 8);
+    pdf.setTextColor(...COLORS.headerBlue);
+    pdf.text('UNIVERSE', pageWidth - 35, yPosition + 16);
+  }
 
   // Customer logo in top-left area (if provided and it's the first page)
   if (customerLogoBase64 && pageNumber === 1) {
@@ -341,35 +365,48 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
     yPosition += 20;
   });
 
-  // Totals section
+  // Enhanced Totals section with proper VAT calculation
   yPosition += 10;
-  yPosition = checkPageBreak(pdf, yPosition, 80, proposalData, logoBase64, customerLogoBase64);
+  yPosition = checkPageBreak(pdf, yPosition, 100, proposalData, logoBase64, customerLogoBase64);
   
   const totalsStartX = pageWidth - 100;
   
   // Background for totals
   pdf.setFillColor(245, 245, 245);
-  pdf.rect(totalsStartX - 10, yPosition - 5, 110, 70, 'F');
+  pdf.rect(totalsStartX - 10, yPosition - 5, 110, 90, 'F');
   
-  if (quotationData.subtotal !== undefined) {
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Subtotal:', totalsStartX, yPosition);
-    pdf.text(`${quotationData.currency} ${(Number(quotationData.subtotal) || 0).toFixed(2)}`, totalsStartX + 50, yPosition);
-    yPosition += 10;
-  }
+  // Calculate proper financial values
+  const subtotal = Number(quotationData.subtotal) || 0;
+  const discountAmount = Number(quotationData.discountAmount) || 0;
+  const afterDiscount = subtotal - discountAmount;
   
-  if (quotationData.discountAmount && Number(quotationData.discountAmount) > 0) {
+  // VAT calculation (15% of after discount amount)
+  const vatRate = 0.15; // 15% VAT
+  const vatAmount = afterDiscount * vatRate;
+  const grandTotal = afterDiscount + vatAmount;
+  
+  // Display calculations
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...COLORS.black);
+  pdf.text('Subtotal:', totalsStartX, yPosition);
+  pdf.text(`${quotationData.currency} ${subtotal.toFixed(2)}`, totalsStartX + 50, yPosition);
+  yPosition += 10;
+  
+  if (discountAmount > 0) {
     pdf.setTextColor(...COLORS.black);
     pdf.text('Discount:', totalsStartX, yPosition);
-    pdf.text(`-${quotationData.currency} ${(Number(quotationData.discountAmount) || 0).toFixed(2)}`, totalsStartX + 50, yPosition);
+    pdf.text(`-${quotationData.currency} ${discountAmount.toFixed(2)}`, totalsStartX + 50, yPosition);
+    yPosition += 10;
+    
+    pdf.text('After Discount:', totalsStartX, yPosition);
+    pdf.text(`${quotationData.currency} ${afterDiscount.toFixed(2)}`, totalsStartX + 50, yPosition);
     yPosition += 10;
   }
   
-  if (quotationData.taxAmount && Number(quotationData.taxAmount) > 0) {
-    pdf.text('Tax:', totalsStartX, yPosition);
-    pdf.text(`${quotationData.currency} ${(Number(quotationData.taxAmount) || 0).toFixed(2)}`, totalsStartX + 50, yPosition);
-    yPosition += 10;
-  }
+  // VAT (always show, even if 0)
+  pdf.text('VAT (15%):', totalsStartX, yPosition);
+  pdf.text(`${quotationData.currency} ${vatAmount.toFixed(2)}`, totalsStartX + 50, yPosition);
+  yPosition += 10;
   
   // Grand total
   yPosition += 5;
@@ -377,7 +414,7 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
   pdf.setFontSize(PDF_CONFIG.fontSize.medium);
   pdf.setTextColor(...COLORS.headerBlue);
   pdf.text('Grand Total:', totalsStartX, yPosition);
-  pdf.text(`${quotationData.currency} ${(Number(quotationData.grandTotal) || 0).toFixed(2)}`, totalsStartX + 50, yPosition);
+  pdf.text(`${quotationData.currency} ${grandTotal.toFixed(2)}`, totalsStartX + 50, yPosition);
   
   // Terms and notes
   yPosition += 20;
@@ -422,8 +459,15 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
     const pageHeight = pdf.internal.pageSize.getHeight();
     let yPosition = PDF_CONFIG.pageMargin;
 
-    // Always use SmartUniverse default logo (no need to fetch)
+    // Always try to fetch SmartUniverse logo
     let logoBase64: string | null = null;
+    try {
+      console.log('Attempting to fetch SmartUniverse logo...');
+      logoBase64 = await fetchImageBase64('/lovable-uploads/7a5c909f-0a1b-464c-9ae5-87fb578584b4.png');
+      console.log('SmartUniverse logo loaded successfully');
+    } catch (error) {
+      console.log('SmartUniverse logo not found, will use text fallback:', error);
+    }
 
     // Fetch customer logo if provided
     let customerLogoBase64: string | null = null;
@@ -624,7 +668,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
     const fileName = `${sanitizedTitle.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}.pdf`;
     pdf.save(fileName);
     
-    fireToast('Success', 'Professional proposal PDF generated successfully');
+    fireToast('Success', 'Professional proposal PDF generated successfully with logos and VAT included');
     
   } catch (error) {
     console.error('Error generating proposal PDF:', error);
