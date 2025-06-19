@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 
 export const generateProposalPDF = async (proposal: any) => {
@@ -251,3 +250,6 @@ export const generateProposalPDF = async (proposal: any) => {
   const fileName = `${proposal.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'proposal'}_${Date.now()}.pdf`;
   pdf.save(fileName);
 };
+
+// Re-export the enhanced version as the main export
+export { generateEnhancedProposalPDF as generateProposalPDF } from './pdf/proposalPdfExport';

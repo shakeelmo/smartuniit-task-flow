@@ -28,10 +28,11 @@ export const PreviewProposalDialog: React.FC<PreviewProposalDialogProps> = ({
     
     setGenerating(true);
     try {
+      // Use the enhanced PDF generation
       await generateProposalPDF(proposal);
       toast({
         title: "Success",
-        description: "PDF downloaded successfully",
+        description: "Professional proposal PDF downloaded successfully",
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
