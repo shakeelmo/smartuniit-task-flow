@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { 
   Home, 
   Users, 
@@ -6,7 +7,7 @@ import {
   CheckSquare, 
   FileText, 
   Receipt, 
-  PresentationChart,
+  Presentation,
   Menu,
   X,
   LogOut,
@@ -34,6 +35,48 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
   const { user, signOut } = useAuth();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+      } else if (data) {
+        setProfile(data);
+      } else {
+        // Create profile if it doesn't exist
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            first_name: user.user_metadata?.first_name || null,
+            last_name: user.user_metadata?.last_name || null,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+        } else {
+          setProfile(newProfile);
+        }
+      }
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+    }
+  };
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/', component: Dashboard },
@@ -42,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
     { icon: CheckSquare, label: 'Task Management', path: '/tasks', component: TaskManagement },
     { icon: FileText, label: 'Quotation Management', path: '/quotations', component: QuotationManagement },
     { icon: Receipt, label: 'Invoice Management', path: '/invoices', component: InvoiceManagement },
-    { icon: PresentationChart, label: 'Proposal Management', path: '/proposals', component: ProposalManagement },
+    { icon: Presentation, label: 'Proposal Management', path: '/proposals', component: ProposalManagement },
   ];
 
   const handleSignOut = async () => {
@@ -102,7 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
               <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
             </Avatar>
             {!isCollapsed && <div>
-              <div className="font-medium">{user?.user_metadata?.first_name} {user?.user_metadata?.last_name}</div>
+              <div className="font-medium">{profile?.first_name} {profile?.last_name}</div>
               <div className="text-sm text-muted-foreground">{user?.email}</div>
             </div>}
           </div>
@@ -115,7 +158,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
         </Button>
       </div>
 
-      <EditProfileDialog open={editProfileOpen} onOpenChange={setEditProfileOpen} />
+      {profile && (
+        <EditProfileDialog 
+          open={editProfileOpen} 
+          onOpenChange={setEditProfileOpen}
+          profile={profile}
+          onProfileUpdated={fetchProfile}
+        />
+      )}
     </div>
   );
 };

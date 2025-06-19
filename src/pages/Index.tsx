@@ -14,7 +14,7 @@ import { LogOut, Menu } from "lucide-react";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { user, signOut } = useAuth();
 
   const handleLogout = async () => {
@@ -22,7 +22,7 @@ const Index = () => {
   };
 
   const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   if (!user) {
@@ -65,10 +65,8 @@ const Index = () => {
     <ProtectedRoute>
       <div className="flex h-screen bg-gray-100">
         <Sidebar 
-          isOpen={isSidebarOpen}
+          isCollapsed={isSidebarCollapsed}
           toggleSidebar={toggleSidebar}
-          activeTab={activeSection}
-          setActiveTab={setActiveSection}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
