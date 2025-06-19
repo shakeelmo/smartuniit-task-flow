@@ -1,15 +1,41 @@
-
-import React, { useState } from 'react';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { CustomerLogoUpload } from '../CustomerLogoUpload';
+
+const proposalBasicSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  project_name: z.string().optional(),
+  client_company_name: z.string().optional(),
+  client_contact_person: z.string().optional(),
+  client_email: z.string().email().optional().or(z.literal('')),
+  client_phone: z.string().optional(),
+  client_address: z.string().optional(),
+  company_name: z.string().optional(),
+  company_contact_details: z.string().optional(),
+  reference_number: z.string().optional(),
+  submission_date: z.string().optional(),
+  executive_summary: z.string().optional(),
+  key_objectives: z.string().optional(),
+  why_choose_us: z.string().optional(),
+  problem_description: z.string().optional(),
+  background_context: z.string().optional(),
+  proposed_solution: z.string().optional(),
+  strategy_method: z.string().optional(),
+  company_bio: z.string().optional(),
+  terms_conditions: z.string().optional(),
+  call_to_action: z.string().optional(),
+  customer_logo_url: z.string().optional(),
+});
 
 interface ProposalBasicFormProps {
   proposal: any;
-  onUpdate: (data: any) => Promise<void>;
+  onUpdate: (data: any) => void;
   loading: boolean;
 }
 
@@ -18,290 +44,380 @@ export const ProposalBasicForm: React.FC<ProposalBasicFormProps> = ({
   onUpdate,
   loading
 }) => {
-  const [formData, setFormData] = useState({
-    title: proposal?.title || '',
-    status: proposal?.status || 'draft',
-    project_name: proposal?.project_name || '',
-    reference_number: proposal?.reference_number || '',
-    client_company_name: proposal?.client_company_name || '',
-    client_address: proposal?.client_address || '',
-    client_contact_person: proposal?.client_contact_person || '',
-    client_email: proposal?.client_email || '',
-    client_phone: proposal?.client_phone || '',
-    company_name: proposal?.company_name || '',
-    company_contact_details: proposal?.company_contact_details || '',
-    submission_date: proposal?.submission_date || '',
-    executive_summary: proposal?.executive_summary || '',
-    key_objectives: proposal?.key_objectives || '',
-    why_choose_us: proposal?.why_choose_us || '',
-    problem_description: proposal?.problem_description || '',
-    background_context: proposal?.background_context || '',
-    proposed_solution: proposal?.proposed_solution || '',
-    strategy_method: proposal?.strategy_method || '',
-    company_bio: proposal?.company_bio || '',
-    terms_conditions: proposal?.terms_conditions || '',
-    call_to_action: proposal?.call_to_action || 'Contact Us'
+  const form = useForm<z.infer<typeof proposalBasicSchema>>({
+    resolver: zodResolver(proposalBasicSchema),
+    defaultValues: {
+      title: proposal?.title || '',
+      project_name: proposal?.project_name || '',
+      client_company_name: proposal?.client_company_name || '',
+      client_contact_person: proposal?.client_contact_person || '',
+      client_email: proposal?.client_email || '',
+      client_phone: proposal?.client_phone || '',
+      client_address: proposal?.client_address || '',
+      company_name: proposal?.company_name || '',
+      company_contact_details: proposal?.company_contact_details || '',
+      reference_number: proposal?.reference_number || '',
+      submission_date: proposal?.submission_date || '',
+      executive_summary: proposal?.executive_summary || '',
+      key_objectives: proposal?.key_objectives || '',
+      why_choose_us: proposal?.why_choose_us || '',
+      problem_description: proposal?.problem_description || '',
+      background_context: proposal?.background_context || '',
+      proposed_solution: proposal?.proposed_solution || '',
+      strategy_method: proposal?.strategy_method || '',
+      company_bio: proposal?.company_bio || '',
+      terms_conditions: proposal?.terms_conditions || '',
+      call_to_action: proposal?.call_to_action || '',
+      customer_logo_url: proposal?.customer_logo_url || '',
+    }
   });
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const onSubmit = (data: z.infer<typeof proposalBasicSchema>) => {
+    onUpdate(data);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onUpdate(formData);
+  const handleLogoChange = (logoUrl: string | null) => {
+    form.setValue('customer_logo_url', logoUrl || '');
   };
 
   return (
-    <ScrollArea className="max-h-[60vh]">
-      <form onSubmit={handleSubmit} className="space-y-6 pr-4">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Customer Logo Upload Section */}
+        <CustomerLogoUpload
+          currentLogoUrl={form.watch('customer_logo_url')}
+          onLogoChange={handleLogoChange}
+        />
+
         {/* Basic Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Basic Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="title">Proposal Title *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => handleChange('title', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleChange('status', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="project_name">Project Name</Label>
-              <Input
-                id="project_name"
-                value={formData.project_name}
-                onChange={(e) => handleChange('project_name', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="reference_number">Reference Number</Label>
-              <Input
-                id="reference_number"
-                value={formData.reference_number}
-                onChange={(e) => handleChange('reference_number', e.target.value)}
-              />
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Proposal Title *</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter proposal title" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="project_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Project Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter project name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
-        {/* Client Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Client Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="client_company_name">Client Company Name</Label>
-              <Input
-                id="client_company_name"
-                value={formData.client_company_name}
-                onChange={(e) => handleChange('client_company_name', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="client_contact_person">Contact Person</Label>
-              <Input
-                id="client_contact_person"
-                value={formData.client_contact_person}
-                onChange={(e) => handleChange('client_contact_person', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="client_email">Client Email</Label>
-              <Input
-                id="client_email"
-                type="email"
-                value={formData.client_email}
-                onChange={(e) => handleChange('client_email', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="client_phone">Client Phone</Label>
-              <Input
-                id="client_phone"
-                value={formData.client_phone}
-                onChange={(e) => handleChange('client_phone', e.target.value)}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="client_address">Client Address</Label>
-              <Textarea
-                id="client_address"
-                value={formData.client_address}
-                onChange={(e) => handleChange('client_address', e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
+        {/* Contact Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="client_company_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Client Company Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter client company name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="client_contact_person"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Client Contact Person</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter client contact person" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
+
+        {/* Client Details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="client_email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Client Email</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter client email" type="email" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="client_phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Client Phone</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter client phone" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Client Address */}
+        <FormField
+          control={form.control}
+          name="client_address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Client Address</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter client address" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Company Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Your Company Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="company_name">Company Name</Label>
-              <Input
-                id="company_name"
-                value={formData.company_name}
-                onChange={(e) => handleChange('company_name', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="submission_date">Submission Date</Label>
-              <Input
-                id="submission_date"
-                type="date"
-                value={formData.submission_date}
-                onChange={(e) => handleChange('submission_date', e.target.value)}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="company_contact_details">Company Contact Details</Label>
-              <Textarea
-                id="company_contact_details"
-                value={formData.company_contact_details}
-                onChange={(e) => handleChange('company_contact_details', e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="company_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Your Company Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter your company name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="company_contact_details"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company Contact Details</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter company contact details" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Proposal Details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="reference_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reference Number</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter reference number" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="submission_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Submission Date</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="date"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* Executive Summary */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Executive Summary</h3>
-          <div>
-            <Label htmlFor="executive_summary">Executive Summary</Label>
-            <Textarea
-              id="executive_summary"
-              value={formData.executive_summary}
-              onChange={(e) => handleChange('executive_summary', e.target.value)}
-              rows={4}
-            />
-          </div>
-          <div>
-            <Label htmlFor="key_objectives">Key Objectives</Label>
-            <Textarea
-              id="key_objectives"
-              value={formData.key_objectives}
-              onChange={(e) => handleChange('key_objectives', e.target.value)}
-              rows={3}
-            />
-          </div>
-          <div>
-            <Label htmlFor="why_choose_us">Why Choose Us</Label>
-            <Textarea
-              id="why_choose_us"
-              value={formData.why_choose_us}
-              onChange={(e) => handleChange('why_choose_us', e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="executive_summary"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Executive Summary</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter executive summary" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        {/* Problem Statement */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Problem Statement</h3>
-          <div>
-            <Label htmlFor="problem_description">Problem Description</Label>
-            <Textarea
-              id="problem_description"
-              value={formData.problem_description}
-              onChange={(e) => handleChange('problem_description', e.target.value)}
-              rows={4}
-            />
-          </div>
-          <div>
-            <Label htmlFor="background_context">Background Context</Label>
-            <Textarea
-              id="background_context"
-              value={formData.background_context}
-              onChange={(e) => handleChange('background_context', e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
+        {/* Key Objectives */}
+        <FormField
+          control={form.control}
+          name="key_objectives"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Key Objectives</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter key objectives" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        {/* Approach/Solution */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Approach & Solution</h3>
-          <div>
-            <Label htmlFor="proposed_solution">Proposed Solution</Label>
-            <Textarea
-              id="proposed_solution"
-              value={formData.proposed_solution}
-              onChange={(e) => handleChange('proposed_solution', e.target.value)}
-              rows={4}
-            />
-          </div>
-          <div>
-            <Label htmlFor="strategy_method">Strategy & Method</Label>
-            <Textarea
-              id="strategy_method"
-              value={formData.strategy_method}
-              onChange={(e) => handleChange('strategy_method', e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
+        {/* Why Choose Us */}
+        <FormField
+          control={form.control}
+          name="why_choose_us"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Why Choose Us</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter why choose us" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        {/* About Us */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">About Us</h3>
-          <div>
-            <Label htmlFor="company_bio">Company Bio</Label>
-            <Textarea
-              id="company_bio"
-              value={formData.company_bio}
-              onChange={(e) => handleChange('company_bio', e.target.value)}
-              rows={4}
-            />
-          </div>
-        </div>
+        {/* Problem Description */}
+        <FormField
+          control={form.control}
+          name="problem_description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Problem Description</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter problem description" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Background Context */}
+        <FormField
+          control={form.control}
+          name="background_context"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Background Context</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter background context" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Proposed Solution */}
+        <FormField
+          control={form.control}
+          name="proposed_solution"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Proposed Solution</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter proposed solution" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Strategy & Method */}
+        <FormField
+          control={form.control}
+          name="strategy_method"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Strategy & Method</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter strategy & method" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Company Bio */}
+        <FormField
+          control={form.control}
+          name="company_bio"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Company Bio</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter company bio" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Terms & Conditions */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Terms & Conditions</h3>
-          <div>
-            <Label htmlFor="terms_conditions">Terms & Conditions</Label>
-            <Textarea
-              id="terms_conditions"
-              value={formData.terms_conditions}
-              onChange={(e) => handleChange('terms_conditions', e.target.value)}
-              rows={4}
-            />
-          </div>
-          <div>
-            <Label htmlFor="call_to_action">Call to Action</Label>
-            <Input
-              id="call_to_action"
-              value={formData.call_to_action}
-              onChange={(e) => handleChange('call_to_action', e.target.value)}
-            />
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="terms_conditions"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Terms & Conditions</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter terms & conditions" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div className="flex justify-end pt-4">
+        {/* Call to Action */}
+        <FormField
+          control={form.control}
+          name="call_to_action"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Call to Action</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter call to action" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end">
           <Button type="submit" disabled={loading}>
             {loading ? 'Updating...' : 'Update Proposal'}
           </Button>
         </div>
       </form>
-    </ScrollArea>
+    </Form>
   );
 };

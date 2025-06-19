@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { fetchImageBase64, fireToast } from './helpers';
 import { COLORS, PDF_CONFIG } from './constants';
@@ -27,9 +26,10 @@ interface ProposalData {
   terms_conditions?: string;
   call_to_action?: string;
   quotation_data?: any;
+  customer_logo_url?: string;
 }
 
-const addProposalHeader = (pdf: jsPDF, proposalData: ProposalData, logoBase64: string | null, pageNumber: number) => {
+const addProposalHeader = (pdf: jsPDF, proposalData: ProposalData, logoBase64: string | null, customerLogoBase64: string | null, pageNumber: number) => {
   const pageWidth = pdf.internal.pageSize.getWidth();
   let yPosition = PDF_CONFIG.pageMargin;
 
@@ -37,23 +37,28 @@ const addProposalHeader = (pdf: jsPDF, proposalData: ProposalData, logoBase64: s
   pdf.setFillColor(...COLORS.headerBlue);
   pdf.triangle(0, 0, 40, 0, 0, 25, 'F');
 
-  // SmartUniverse logo in top-right
-  if (logoBase64) {
-    pdf.addImage(
-      logoBase64,
-      'PNG',
-      pageWidth - PDF_CONFIG.logoSize - PDF_CONFIG.pageMargin,
-      yPosition,
-      PDF_CONFIG.logoSize,
-      PDF_CONFIG.logoSize
-    );
-  } else {
-    pdf.setTextColor(...COLORS.orange);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(PDF_CONFIG.fontSize.title);
-    pdf.text('SMART', pageWidth - 35, yPosition + 8);
-    pdf.setTextColor(...COLORS.headerBlue);
-    pdf.text('UNIVERSE', pageWidth - 35, yPosition + 16);
+  // SmartUniverse logo in top-right (always use default)
+  pdf.setTextColor(...COLORS.orange);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(PDF_CONFIG.fontSize.title);
+  pdf.text('SMART', pageWidth - 35, yPosition + 8);
+  pdf.setTextColor(...COLORS.headerBlue);
+  pdf.text('UNIVERSE', pageWidth - 35, yPosition + 16);
+
+  // Customer logo in top-left area (if provided)
+  if (customerLogoBase64 && pageNumber === 1) {
+    try {
+      pdf.addImage(
+        customerLogoBase64,
+        'PNG',
+        45,
+        yPosition,
+        PDF_CONFIG.logoSize,
+        PDF_CONFIG.logoSize
+      );
+    } catch (error) {
+      console.log('Error adding customer logo:', error);
+    }
   }
 
   yPosition += 35;
@@ -101,9 +106,26 @@ const addProposalFooter = (pdf: jsPDF, pageNumber: number, totalPages: number) =
   pdf.text(`Page ${pageNumber} of ${totalPages}`, pageWidth - 30, footerY);
 };
 
-const addCoverPage = (pdf: jsPDF, proposalData: ProposalData) => {
+const addCoverPage = (pdf: jsPDF, proposalData: ProposalData, customerLogoBase64: string | null) => {
   const pageWidth = pdf.internal.pageSize.getWidth();
   let yPosition = 80;
+
+  // Customer logo at the top if available
+  if (customerLogoBase64) {
+    try {
+      pdf.addImage(
+        customerLogoBase64,
+        'PNG',
+        (pageWidth - 50) / 2,
+        yPosition - 40,
+        50,
+        50
+      );
+      yPosition += 20;
+    } catch (error) {
+      console.log('Error adding customer logo to cover:', error);
+    }
+  }
 
   // Title
   pdf.setFontSize(28);
@@ -178,7 +200,7 @@ const checkPageBreak = (pdf: jsPDF, yPosition: number, requiredSpace: number, pr
   if (yPosition + requiredSpace > pageHeight - 50) {
     pdf.addPage();
     const pageNumber = pdf.internal.pages.length - 1;
-    return addProposalHeader(pdf, proposalData, logoBase64, pageNumber);
+    return addProposalHeader(pdf, proposalData, logoBase64, null, pageNumber);
   }
   return yPosition;
 };
@@ -315,23 +337,29 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
     const pageHeight = pdf.internal.pageSize.getHeight();
     let yPosition = PDF_CONFIG.pageMargin;
 
-    // Try to fetch SmartUniverse logo
+    // Always use SmartUniverse default logo (no need to fetch)
     let logoBase64: string | null = null;
-    try {
-      logoBase64 = await fetchImageBase64('/placeholder.svg');
-    } catch (error) {
-      console.log('Logo not found, proceeding without logo');
+
+    // Fetch customer logo if provided
+    let customerLogoBase64: string | null = null;
+    if (proposal.customer_logo_url) {
+      try {
+        customerLogoBase64 = await fetchImageBase64(proposal.customer_logo_url);
+        console.log('Customer logo loaded successfully');
+      } catch (error) {
+        console.log('Customer logo not found, proceeding without customer logo');
+      }
     }
 
     // Add header to first page
-    yPosition = addProposalHeader(pdf, proposal, logoBase64, 1);
+    yPosition = addProposalHeader(pdf, proposal, logoBase64, customerLogoBase64, 1);
 
     // Cover page
-    addCoverPage(pdf, proposal);
+    addCoverPage(pdf, proposal, customerLogoBase64);
 
     // Start content on new page
     pdf.addPage();
-    yPosition = addProposalHeader(pdf, proposal, logoBase64, 2);
+    yPosition = addProposalHeader(pdf, proposal, logoBase64, customerLogoBase64, 2);
 
     // Executive Summary
     if (proposal.executive_summary) {

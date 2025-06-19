@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -28,11 +27,17 @@ export const PreviewProposalDialog: React.FC<PreviewProposalDialogProps> = ({
     
     setGenerating(true);
     try {
-      // Use the enhanced PDF generation
-      await generateProposalPDF(proposal);
+      // Include customer logo URL in the proposal data
+      const proposalWithLogo = {
+        ...proposal,
+        customer_logo_url: proposal.customer_logo_url
+      };
+      
+      // Use the enhanced PDF generation with customer logo support
+      await generateProposalPDF(proposalWithLogo);
       toast({
         title: "Success",
-        description: "Professional proposal PDF downloaded successfully",
+        description: "Professional proposal PDF with branding downloaded successfully",
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -69,6 +74,17 @@ export const PreviewProposalDialog: React.FC<PreviewProposalDialogProps> = ({
         
         <ScrollArea className="max-h-[calc(90vh-120px)]">
           <div className="space-y-8 p-6 bg-white">
+            {/* Customer Logo Preview */}
+            {proposal.customer_logo_url && (
+              <div className="text-center border-b pb-4">
+                <img 
+                  src={proposal.customer_logo_url} 
+                  alt="Customer Logo" 
+                  className="h-16 mx-auto object-contain"
+                />
+              </div>
+            )}
+
             {/* Cover Page */}
             <div className="text-center space-y-4 border-b pb-8">
               <h1 className="text-4xl font-bold text-primary">{proposal.title}</h1>
