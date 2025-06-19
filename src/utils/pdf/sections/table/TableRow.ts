@@ -48,45 +48,45 @@ export const addTableRow = (
   const { hasPartNumbers, hasUnits, columnWidths, columnPositions, tableWidth, currency } = config;
   const baseRowHeight = 14;
 
-  // Enhanced service text extraction with priority for service name
+  console.log('Processing item for row:', { item, index });
+
+  // FIXED: Enhanced service text extraction with better field mapping
   let serviceText = '';
   
-  // First priority: service field (this is the actual service name)
-  if (item.service && typeof item.service === 'string' && item.service.trim()) {
-    serviceText = item.service.trim();
+  // Check multiple possible field names for service
+  const serviceFields = ['service', 'name', 'title', 'serviceName', 'itemName'];
+  for (const field of serviceFields) {
+    if (item[field] && typeof item[field] === 'string' && item[field].trim()) {
+      serviceText = String(item[field]).trim();
+      break;
+    }
   }
-  // Second priority: name field
-  else if (item.name && typeof item.name === 'string' && item.name.trim()) {
-    serviceText = item.name.trim();
-  }
-  // Third priority: title field
-  else if (item.title && typeof item.title === 'string' && item.title.trim()) {
-    serviceText = item.title.trim();
-  }
-  // Fallback: create a default service name
-  else {
+
+  // If still no service text found, create a meaningful fallback
+  if (!serviceText || serviceText.length < 1) {
     serviceText = `Service Item ${index + 1}`;
   }
 
+  console.log('Extracted service text:', serviceText);
+
   // Clean the service text thoroughly
-  serviceText = String(serviceText || '')
+  serviceText = String(serviceText)
     .trim()
     .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '') // Keep printable characters
     .replace(/\s+/g, ' ') // Replace multiple spaces with single space
     .trim();
 
-  // If text is still empty or too short, provide a meaningful fallback
-  if (!serviceText || serviceText.length < 2) {
-    serviceText = `Service Item ${index + 1}`;
-  }
-
   // Enhanced description text handling - separate from service name
   let descriptionText = '';
-  if (item.description && typeof item.description === 'string' && item.description.trim()) {
-    descriptionText = String(item.description).trim()
-      .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+  const descriptionFields = ['description', 'desc', 'details'];
+  for (const field of descriptionFields) {
+    if (item[field] && typeof item[field] === 'string' && item[field].trim()) {
+      descriptionText = String(item[field]).trim()
+        .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      break;
+    }
   }
 
   // Enhanced part number text handling
@@ -100,12 +100,12 @@ export const addTableRow = (
   
   // Improved unit text handling
   let unitText = '';
-  if (item.unit && typeof item.unit === 'string' && item.unit.trim()) {
-    unitText = String(item.unit).replace(/[^\x20-\x7E]/g, '').trim();
-  } else if (item.units && typeof item.units === 'string' && item.units.trim()) {
-    unitText = String(item.units).replace(/[^\x20-\x7E]/g, '').trim();
-  } else if (item.unitType && typeof item.unitType === 'string' && item.unitType.trim()) {
-    unitText = String(item.unitType).replace(/[^\x20-\x7E]/g, '').trim();
+  const unitFields = ['unit', 'units', 'unitType'];
+  for (const field of unitFields) {
+    if (item[field] && typeof item[field] === 'string' && item[field].trim()) {
+      unitText = String(item[field]).replace(/[^\x20-\x7E]/g, '').trim();
+      break;
+    }
   }
   
   // Provide default unit if still empty
@@ -113,9 +113,9 @@ export const addTableRow = (
     unitText = 'Each';
   }
 
-  // Calculate text wrapping for both service and description
+  // FIXED: Calculate text wrapping with proper column widths
   const serviceColumnIndex = 1; // Service column
-  const maxServiceWidth = columnWidths[serviceColumnIndex] - 8;
+  const maxServiceWidth = Math.max(columnWidths[serviceColumnIndex] - 6, 20); // Ensure minimum width
   const wrappedServiceLines = wrapText(pdf, serviceText, maxServiceWidth);
   
   // Limit service name to maximum 2 lines
@@ -132,7 +132,7 @@ export const addTableRow = (
   let wrappedDescriptionLines: string[] = [];
   if (descriptionText) {
     const descriptionColumnIndex = hasPartNumbers ? 3 : 2; // Description column position
-    const maxDescriptionWidth = columnWidths[descriptionColumnIndex] - 8;
+    const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - 6, 20);
     const rawDescriptionLines = wrapText(pdf, descriptionText, maxDescriptionWidth);
     wrappedDescriptionLines = rawDescriptionLines.slice(0, 2); // Limit to 2 lines
     
@@ -150,8 +150,7 @@ export const addTableRow = (
   let partColumnIndex = -1;
   if (hasPartNumbers) {
     partColumnIndex = 2; // Part number is the 3rd column (index 2)
-    const cellPadding = 3;
-    const maxPartWidth = columnWidths[partColumnIndex] - (cellPadding * 2);
+    const maxPartWidth = Math.max(columnWidths[partColumnIndex] - 6, 15);
     
     const partNumberWidth = pdf.getTextWidth(partNumberText);
     
@@ -196,7 +195,7 @@ export const addTableRow = (
   pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
   pdf.line(PDF_CONFIG.pageMargin, yPosition + requiredRowHeight, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
   
-  // Draw vertical borders
+  // Draw vertical borders with proper positioning
   let currentXPosition = PDF_CONFIG.pageMargin;
   
   // Left border of table
@@ -233,7 +232,7 @@ export const addTableRow = (
   const serialX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (serialWidth / 2);
   const textY = yPosition + Math.max(9, (requiredRowHeight / 2) + 1);
   
-  // Validate coordinates before rendering
+  console.log('Rendering serial number:', { serialText, serialX, textY });
   if (!isNaN(serialX) && !isNaN(textY)) {
     safeText(pdf, serialText, serialX, textY);
   }
@@ -243,11 +242,14 @@ export const addTableRow = (
   // SERVICE NAME COLUMN - left aligned with controlled wrapping
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (limitedServiceLines.length * 5)) / 2 + 4);
   pdf.setFont('helvetica', 'bold'); // Make service name bold
+  console.log('Rendering service lines:', { limitedServiceLines, serviceStartY });
+  
   limitedServiceLines.forEach((line, lineIndex) => {
     const cleanLine = String(line || '').trim();
     if (cleanLine && cleanLine.length > 0) {
       const serviceX = columnPositions[colIndex] + cellPadding;
       const serviceY = serviceStartY + (lineIndex * 5);
+      console.log('Rendering service line:', { cleanLine, serviceX, serviceY });
       if (!isNaN(serviceX) && !isNaN(serviceY)) {
         safeText(pdf, cleanLine, serviceX, serviceY);
       }
