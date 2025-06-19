@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -199,217 +200,223 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <DollarSign className="h-6 w-6" />
-            Commercial Proposal
-          </h2>
-          <p className="text-gray-600">Detailed pricing, terms, and commercial information</p>
-        </div>
-      </div>
-
-      {/* Commercial Items */}
-      <Card>
-        <CardHeader>
+    <div className="flex flex-col h-full">
+      {/* Main content with proper scrolling */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-6 p-1">
           <div className="flex items-center justify-between">
-            <CardTitle>Commercial Items</CardTitle>
-            <Button onClick={addItem}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {items.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-              No commercial items added yet. Click "Add Item" to get started.
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <DollarSign className="h-6 w-6" />
+                Commercial Proposal
+              </h2>
+              <p className="text-gray-600">Detailed pricing, terms, and commercial information</p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-12 gap-2 text-sm font-medium text-gray-500 border-b pb-2">
-                <div className="col-span-1">S.No</div>
-                <div className="col-span-4">Description</div>
-                <div className="col-span-1">Qty</div>
-                <div className="col-span-1">Unit</div>
-                <div className="col-span-2">Unit Price</div>
-                <div className="col-span-2">Total</div>
-                <div className="col-span-1">Action</div>
-              </div>
-              
-              {items.map((item, index) => (
-                <div key={item.id} className="grid grid-cols-12 gap-2 p-2 border rounded">
-                  <div className="col-span-1 flex items-center">
-                    <Badge variant="outline">{index + 1}</Badge>
-                  </div>
-                  <div className="col-span-4">
-                    <Textarea
-                      value={item.description}
-                      onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                      placeholder="Item description..."
-                      rows={2}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                      min="0"
-                      step="0.01"
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Select value={item.unit} onValueChange={(value) => updateItem(item.id, 'unit', value)}>
-                      <SelectTrigger className="text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border shadow-lg z-50">
-                        <SelectItem value="Each">Each</SelectItem>
-                        <SelectItem value="Hours">Hours</SelectItem>
-                        <SelectItem value="Days">Days</SelectItem>
-                        <SelectItem value="Months">Months</SelectItem>
-                        <SelectItem value="Years">Years</SelectItem>
-                        <SelectItem value="Pieces">Pieces</SelectItem>
-                        <SelectItem value="Units">Units</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-2">
-                    <Input
-                      type="number"
-                      value={item.unit_price}
-                      onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
-                      min="0"
-                      step="0.01"
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input
-                      value={item.total_price.toFixed(2)}
-                      readOnly
-                      className="bg-gray-50 text-sm font-medium"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeItem(item.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+          </div>
 
-              {/* Grand Total */}
-              <div className="border-t pt-4">
-                <div className="flex justify-end">
-                  <div className="text-right">
-                    <div className="text-lg font-bold">
-                      Grand Total: SAR {grandTotal.toLocaleString()}
+          {/* Commercial Items */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Commercial Items ({items.length} items)</CardTitle>
+                <Button onClick={addItem}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {items.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                  No commercial items added yet. Click "Add Item" to get started.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-12 gap-2 text-sm font-medium text-gray-500 border-b pb-2">
+                    <div className="col-span-1">S.No</div>
+                    <div className="col-span-4">Description</div>
+                    <div className="col-span-1">Qty</div>
+                    <div className="col-span-1">Unit</div>
+                    <div className="col-span-2">Unit Price</div>
+                    <div className="col-span-2">Total</div>
+                    <div className="col-span-1">Action</div>
+                  </div>
+                  
+                  {items.map((item, index) => (
+                    <div key={item.id} className="grid grid-cols-12 gap-2 p-2 border rounded">
+                      <div className="col-span-1 flex items-center">
+                        <Badge variant="outline">{index + 1}</Badge>
+                      </div>
+                      <div className="col-span-4">
+                        <Textarea
+                          value={item.description}
+                          onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                          placeholder="Item description..."
+                          rows={2}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          min="0"
+                          step="0.01"
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Select value={item.unit} onValueChange={(value) => updateItem(item.id, 'unit', value)}>
+                          <SelectTrigger className="text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white border shadow-lg z-50">
+                            <SelectItem value="Each">Each</SelectItem>
+                            <SelectItem value="Hours">Hours</SelectItem>
+                            <SelectItem value="Days">Days</SelectItem>
+                            <SelectItem value="Months">Months</SelectItem>
+                            <SelectItem value="Years">Years</SelectItem>
+                            <SelectItem value="Pieces">Pieces</SelectItem>
+                            <SelectItem value="Units">Units</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="col-span-2">
+                        <Input
+                          type="number"
+                          value={item.unit_price}
+                          onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
+                          min="0"
+                          step="0.01"
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Input
+                          value={item.total_price.toFixed(2)}
+                          readOnly
+                          className="bg-gray-50 text-sm font-medium"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeItem(item.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Grand Total */}
+                  <div className="border-t pt-4">
+                    <div className="flex justify-end">
+                      <div className="text-right">
+                        <div className="text-lg font-bold">
+                          Grand Total: SAR {grandTotal.toLocaleString()}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Payment Terms & Project Duration */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              Terms & Duration
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="project_duration_days">Project Duration (Days)</Label>
-                <Input
-                  id="project_duration_days"
-                  type="number"
-                  value={formData.project_duration_days}
-                  onChange={(e) => setFormData({...formData, project_duration_days: e.target.value})}
-                  placeholder="e.g., 90"
-                  min="1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="payment_terms">Payment Terms</Label>
-                <Textarea
-                  id="payment_terms"
-                  value={formData.payment_terms}
-                  onChange={(e) => setFormData({...formData, payment_terms: e.target.value})}
-                  placeholder="Describe payment terms, milestones, etc..."
-                  rows={4}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Payment Terms & Project Duration */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Terms & Duration
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="project_duration_days">Project Duration (Days)</Label>
+                    <Input
+                      id="project_duration_days"
+                      type="number"
+                      value={formData.project_duration_days}
+                      onChange={(e) => setFormData({...formData, project_duration_days: e.target.value})}
+                      placeholder="e.g., 90"
+                      min="1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="payment_terms">Payment Terms</Label>
+                    <Textarea
+                      id="payment_terms"
+                      value={formData.payment_terms}
+                      onChange={(e) => setFormData({...formData, payment_terms: e.target.value})}
+                      placeholder="Describe payment terms, milestones, etc..."
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Bank Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label>Bank Name</Label>
-                <Input
-                  value={formData.bank_details.bank_name}
-                  onChange={(e) => updateBankDetails('bank_name', e.target.value)}
-                  placeholder="Bank name"
-                />
-              </div>
-              <div>
-                <Label>Account Name</Label>
-                <Input
-                  value={formData.bank_details.account_name}
-                  onChange={(e) => updateBankDetails('account_name', e.target.value)}
-                  placeholder="Account holder name"
-                />
-              </div>
-              <div>
-                <Label>Account Number</Label>
-                <Input
-                  value={formData.bank_details.account_number}
-                  onChange={(e) => updateBankDetails('account_number', e.target.value)}
-                  placeholder="Account number"
-                />
-              </div>
-              <div>
-                <Label>IBAN</Label>
-                <Input
-                  value={formData.bank_details.iban}
-                  onChange={(e) => updateBankDetails('iban', e.target.value)}
-                  placeholder="International Bank Account Number"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Bank Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Bank Name</Label>
+                    <Input
+                      value={formData.bank_details.bank_name}
+                      onChange={(e) => updateBankDetails('bank_name', e.target.value)}
+                      placeholder="Bank name"
+                    />
+                  </div>
+                  <div>
+                    <Label>Account Name</Label>
+                    <Input
+                      value={formData.bank_details.account_name}
+                      onChange={(e) => updateBankDetails('account_name', e.target.value)}
+                      placeholder="Account holder name"
+                    />
+                  </div>
+                  <div>
+                    <Label>Account Number</Label>
+                    <Input
+                      value={formData.bank_details.account_number}
+                      onChange={(e) => updateBankDetails('account_number', e.target.value)}
+                      placeholder="Account number"
+                    />
+                  </div>
+                  <div>
+                    <Label>IBAN</Label>
+                    <Input
+                      value={formData.bank_details.iban}
+                      onChange={(e) => updateBankDetails('iban', e.target.value)}
+                      placeholder="International Bank Account Number"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button 
-          onClick={handleSave}
-          disabled={loading || externalLoading}
-        >
-          {loading ? 'Saving...' : 'Save Commercial Proposal'}
-        </Button>
+          {/* Save Button - now included in scrollable area */}
+          <div className="flex justify-end p-4 border-t bg-gray-50 rounded-lg">
+            <Button 
+              onClick={handleSave}
+              disabled={loading || externalLoading}
+              className="min-w-[200px]"
+            >
+              {loading ? 'Saving...' : 'Save Commercial Proposal'}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
