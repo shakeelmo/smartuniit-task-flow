@@ -39,7 +39,7 @@ export const useProjects = () => {
         status: p.status,
         priority: p.priority,
         manager: p.manager || '',
-        team: p.team || [],
+        team: Array.isArray(p.team) ? p.team as string[] : [],
         dueDate: p.due_date || '',
         progress: p.progress || 0,
         tasksCount: p.tasks_count || 0,
