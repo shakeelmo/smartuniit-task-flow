@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, Filter, FileSpreadsheet, Save } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,42 @@ const QuotationManagement = () => {
   const [savedQuotations, setSavedQuotations] = useState<QuotationData[]>([]);
   const { toast } = useToast();
 
+  // Load saved quotations from sessionStorage on mount
+  useEffect(() => {
+    const stored = sessionStorage.getItem('savedQuotations');
+    if (stored) {
+      try {
+        const quotations = JSON.parse(stored);
+        setSavedQuotations(quotations);
+      } catch (error) {
+        console.error('Error loading saved quotations:', error);
+      }
+    }
+
+    const storedImported = sessionStorage.getItem('importedQuotations');
+    if (storedImported) {
+      try {
+        const quotations = JSON.parse(storedImported);
+        setImportedQuotations(quotations);
+      } catch (error) {
+        console.error('Error loading imported quotations:', error);
+      }
+    }
+  }, []);
+
+  // Save quotations to sessionStorage whenever they change
+  useEffect(() => {
+    if (savedQuotations.length > 0) {
+      sessionStorage.setItem('savedQuotations', JSON.stringify(savedQuotations));
+    }
+  }, [savedQuotations]);
+
+  useEffect(() => {
+    if (importedQuotations.length > 0) {
+      sessionStorage.setItem('importedQuotations', JSON.stringify(importedQuotations));
+    }
+  }, [importedQuotations]);
+
   const handleCreateQuotation = () => {
     setShowCreateDialog(true);
   };
@@ -37,10 +73,16 @@ const QuotationManagement = () => {
   const handleQuotationCreated = (quotationData?: QuotationData) => {
     setShowCreateDialog(false);
     if (quotationData) {
-      setSavedQuotations(prev => [...prev, quotationData]);
+      const updatedSavedQuotations = [...savedQuotations, quotationData];
+      setSavedQuotations(updatedSavedQuotations);
+      
+      // Also update the combined list for proposal module access
+      const allQuotations = [...updatedSavedQuotations, ...importedQuotations];
+      sessionStorage.setItem('allQuotations', JSON.stringify(allQuotations));
+      
       toast({
         title: "Quotation Saved",
-        description: "New quotation has been saved successfully and can be edited anytime.",
+        description: "New quotation has been saved successfully and is available for use in proposals.",
       });
     } else {
       toast({
@@ -52,23 +94,36 @@ const QuotationManagement = () => {
 
   const handleQuotationUpdated = (updatedQuotation?: QuotationData) => {
     if (updatedQuotation && editingQuotation) {
-      setSavedQuotations(prev => 
-        prev.map(q => q.number === editingQuotation.number ? updatedQuotation : q)
+      const updatedSavedQuotations = savedQuotations.map(q => 
+        q.number === editingQuotation.number ? updatedQuotation : q
       );
-      setImportedQuotations(prev => 
-        prev.map(q => q.number === editingQuotation.number ? updatedQuotation : q)
+      setSavedQuotations(updatedSavedQuotations);
+      
+      const updatedImportedQuotations = importedQuotations.map(q => 
+        q.number === editingQuotation.number ? updatedQuotation : q
       );
+      setImportedQuotations(updatedImportedQuotations);
+      
+      // Update combined list for proposal module access
+      const allQuotations = [...updatedSavedQuotations, ...updatedImportedQuotations];
+      sessionStorage.setItem('allQuotations', JSON.stringify(allQuotations));
     }
     setShowEditDialog(false);
     setEditingQuotation(null);
     toast({
       title: "Quotation Updated",
-      description: "Quotation has been updated successfully.",
+      description: "Quotation has been updated successfully and changes are reflected in proposals.",
     });
   };
 
   const handleQuotationsImported = (quotations: QuotationData[]) => {
-    setImportedQuotations(prev => [...prev, ...quotations]);
+    const updatedImportedQuotations = [...importedQuotations, ...quotations];
+    setImportedQuotations(updatedImportedQuotations);
+    
+    // Update combined list for proposal module access
+    const allQuotations = [...savedQuotations, ...updatedImportedQuotations];
+    sessionStorage.setItem('allQuotations', JSON.stringify(allQuotations));
+    
     setShowImportDialog(false);
   };
 
@@ -130,7 +185,7 @@ const QuotationManagement = () => {
             <Save className="h-5 w-5 text-blue-600" />
             <p className="text-blue-800">
               <strong>{allQuotations.length}</strong> quotation(s) available. 
-              You can edit, export, or manage these quotations. Saved quotations persist in your session.
+              You can edit, export, or manage these quotations. These quotations are also available for import in the Proposal module.
             </p>
           </div>
         </div>

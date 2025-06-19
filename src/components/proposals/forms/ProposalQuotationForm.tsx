@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Calculator, Percent } from 'lucide-react';
+import { Plus, Trash2, Calculator, Percent, FileText, Import } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { SelectExistingQuotationDialog } from './SelectExistingQuotationDialog';
 
 interface QuotationItem {
   id: string;
@@ -34,11 +34,15 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   loading: externalLoading 
 }) => {
   const [loading, setLoading] = useState(false);
+  const [showSelectQuotationDialog, setShowSelectQuotationDialog] = useState(false);
+  const [savedQuotations, setSavedQuotations] = useState<any[]>([]);
+  const [importedQuotationNumber, setImportedQuotationNumber] = useState<string>('');
+  
   const [quotationData, setQuotationData] = useState({
     quotationNumber: '',
     validUntil: '',
     currency: 'USD',
-    taxRate: 15, // Set default VAT to 15%
+    taxRate: 15,
     discountType: 'percentage',
     discountValue: 0,
     notes: '',
@@ -46,6 +50,20 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   });
 
   const [items, setItems] = useState<QuotationItem[]>([]);
+
+  // Load saved quotations from QuotationManagement component's state
+  useEffect(() => {
+    // Try to get saved quotations from sessionStorage or other global state
+    const stored = sessionStorage.getItem('savedQuotations');
+    if (stored) {
+      try {
+        const quotations = JSON.parse(stored);
+        setSavedQuotations(quotations);
+      } catch (error) {
+        console.error('Error parsing saved quotations:', error);
+      }
+    }
+  }, []);
 
   // Load existing quotation data when component mounts
   useEffect(() => {
@@ -57,15 +75,55 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
         quotationNumber: existingData.quotationNumber || '',
         validUntil: existingData.validUntil || '',
         currency: existingData.currency || 'USD',
-        taxRate: existingData.taxRate !== undefined ? existingData.taxRate : 15, // Preserve existing or default to 15
+        taxRate: existingData.taxRate !== undefined ? existingData.taxRate : 15,
         discountType: existingData.discountType || 'percentage',
         discountValue: existingData.discountValue || 0,
         notes: existingData.notes || '',
         terms: existingData.terms || ''
       });
       setItems(existingData.items || []);
+      
+      // Check if this was imported from an existing quotation
+      if (existingData.importedFrom) {
+        setImportedQuotationNumber(existingData.importedFrom);
+      }
     }
   }, [proposal]);
+
+  const handleImportQuotation = (selectedQuotation: any) => {
+    console.log('Importing quotation:', selectedQuotation);
+    
+    // Convert quotation data to proposal quotation format
+    const importedItems = selectedQuotation.lineItems.map((item: any, index: number) => ({
+      id: `imported_${Date.now()}_${index}`,
+      description: item.service || item.description || '',
+      quantity: Number(item.quantity) || 1,
+      unitPrice: Number(item.unitPrice) || 0,
+      total: Number(item.quantity || 1) * Number(item.unitPrice || 0)
+    }));
+
+    const vatRate = selectedQuotation.vat && selectedQuotation.subtotal ? 
+      (selectedQuotation.vat / selectedQuotation.subtotal) * 100 : 15;
+
+    setQuotationData({
+      quotationNumber: selectedQuotation.number || '',
+      validUntil: selectedQuotation.validUntil ? selectedQuotation.validUntil.split('T')[0] : '',
+      currency: selectedQuotation.currency || 'USD',
+      taxRate: Math.round(vatRate),
+      discountType: selectedQuotation.discountType || 'percentage',
+      discountValue: selectedQuotation.discount || 0,
+      notes: selectedQuotation.notes || '',
+      terms: selectedQuotation.customTerms || ''
+    });
+    
+    setItems(importedItems);
+    setImportedQuotationNumber(selectedQuotation.number);
+    
+    toast({
+      title: "Quotation Imported",
+      description: `Successfully imported quotation ${selectedQuotation.number}`,
+    });
+  };
 
   const addItem = () => {
     const newItem: QuotationItem = {
@@ -135,7 +193,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       quotationNumber: String(quotationData.quotationNumber || '').trim(),
       validUntil: quotationData.validUntil,
       currency: quotationData.currency,
-      taxRate: Number(quotationData.taxRate) || 15, // Ensure VAT rate is saved
+      taxRate: Number(quotationData.taxRate) || 15,
       discountType: quotationData.discountType,
       discountValue: Number(quotationData.discountValue) || 0,
       notes: String(quotationData.notes || '').trim(),
@@ -143,8 +201,10 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       items: serializedItems,
       subtotal: Number(subtotal.toFixed(2)),
       discountAmount: Number(discountAmount.toFixed(2)),
-      taxAmount: Number(taxAmount.toFixed(2)), // Store calculated VAT amount
-      grandTotal: Number(grandTotal.toFixed(2))
+      taxAmount: Number(taxAmount.toFixed(2)),
+      grandTotal: Number(grandTotal.toFixed(2)),
+      // Track if this was imported from an existing quotation
+      importedFrom: importedQuotationNumber || undefined
     };
 
     console.log('Prepared quotation data for save:', quotationToSave);
@@ -266,7 +326,6 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Main content with proper scrolling */}
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-6 p-1">
           {/* Header */}
@@ -279,6 +338,42 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
               <p className="text-gray-600">معلومات عرض الأسعار - Add pricing and quotation details to your proposal</p>
             </div>
           </div>
+
+          {/* Import Options */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Import className="h-5 w-5" />
+                Import from Existing Quotation
+              </CardTitle>
+              <CardDescription>
+                Use an existing quotation from the Quotation module or create a new one from scratch
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  onClick={() => setShowSelectQuotationDialog(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  disabled={savedQuotations.length === 0}
+                >
+                  <FileText className="h-4 w-4" />
+                  Select Existing Quotation ({savedQuotations.length} available)
+                </Button>
+                {importedQuotationNumber && (
+                  <Badge variant="secondary" className="self-start">
+                    Imported from: {importedQuotationNumber}
+                  </Badge>
+                )}
+              </div>
+              {savedQuotations.length === 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  No saved quotations found. Create quotations in the Quotation module first to import them here.
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Quote Details */}
           <Card>
@@ -347,9 +442,9 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
             <CardContent>
               {items.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                  No services added yet. Click "Add Service" to get started.
+                  No services added yet. Click "Add Service" to get started or import from an existing quotation.
                   <br />
-                  لم يتم إضافة أي خدمات بعد. انقر على "إضافة خدمة" للبدء.
+                  لم يتم إضافة أي خدمات بعد. انقر على "إضافة خدمة" للبدء أو استيراد من عرض أسعار موجود.
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -549,7 +644,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
             </CardContent>
           </Card>
 
-          {/* Save Buttons Section - now included in scrollable area */}
+          {/* Save Buttons Section */}
           <div className="flex justify-end gap-3 p-4 border-t bg-gray-50 rounded-lg">
             <Button 
               variant="outline" 
@@ -571,6 +666,14 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Select Existing Quotation Dialog */}
+      <SelectExistingQuotationDialog
+        open={showSelectQuotationDialog}
+        onOpenChange={setShowSelectQuotationDialog}
+        onQuotationSelected={handleImportQuotation}
+        savedQuotations={savedQuotations}
+      />
     </div>
   );
 };
