@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { QuotationData } from '../types';
 import { COLORS, PDF_CONFIG } from '../constants';
@@ -87,9 +86,8 @@ export const addTermsAndBanking = (
   bankingDetails.forEach((detail, index) => {
     // Check if banking detail fits on current page
     if (bankingY + PDF_CONFIG.lineHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
-      // If terms created a new page, we need to adjust banking position
-      const currentPageNum = pdf.internal.getCurrentPageInfo().pageNumber;
-      pdf.setPage(currentPageNum);
+      // If we're on a new page, adjust banking position accordingly
+      const totalPages = pdf.internal.pages.length - 1; // Get current page count
       
       // Find the right Y position on the current page
       bankingY = PDF_CONFIG.pageMargin + 25; // Standard position after headers
