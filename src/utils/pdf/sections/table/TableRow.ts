@@ -46,8 +46,8 @@ export const addTableRow = (
     serviceText = 'Service Item';
   }
 
-  // Enhanced part number text handling with proper wrapping
-  const partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
+  // Enhanced part number text handling with strict width control
+  let partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
   
   // Improved unit text handling - check multiple possible properties
   let unitText = '';
@@ -69,13 +69,51 @@ export const addTableRow = (
   const maxServiceWidth = columnWidths[descriptionColumnIndex] - 8;
   const wrappedServiceLines = wrapText(pdf, serviceText, maxServiceWidth);
   
-  // Calculate text wrapping for part number (if column exists)
+  // Enhanced Part Number column handling with strict overflow prevention
   let wrappedPartLines: string[] = [];
   let partColumnIndex = -1;
   if (hasPartNumbers) {
     partColumnIndex = 2; // Part number is the 3rd column (index 2)
-    const maxPartWidth = columnWidths[partColumnIndex] - 8; // 4px padding on each side
-    wrappedPartLines = wrapText(pdf, partNumberText, maxPartWidth);
+    const cellPadding = 3;
+    const maxPartWidth = columnWidths[partColumnIndex] - (cellPadding * 2); // Account for padding on both sides
+    
+    // First, check if the part number fits on a single line
+    const partNumberWidth = pdf.getTextWidth(partNumberText);
+    
+    if (partNumberWidth <= maxPartWidth) {
+      // Part number fits on one line
+      wrappedPartLines = [partNumberText];
+    } else {
+      // Part number is too long, use text wrapping with strict width control
+      const roughWrappedLines = wrapText(pdf, partNumberText, maxPartWidth);
+      
+      // Double-check each wrapped line and truncate if necessary
+      wrappedPartLines = roughWrappedLines.map(line => {
+        const lineWidth = pdf.getTextWidth(line);
+        if (lineWidth <= maxPartWidth) {
+          return line;
+        } else {
+          // Truncate the line character by character until it fits
+          let truncatedLine = line;
+          while (pdf.getTextWidth(truncatedLine + '...') > maxPartWidth && truncatedLine.length > 1) {
+            truncatedLine = truncatedLine.slice(0, -1);
+          }
+          return truncatedLine + (truncatedLine.length < line.length ? '...' : '');
+        }
+      });
+      
+      // Limit to maximum 3 lines for part numbers to prevent excessive row height
+      if (wrappedPartLines.length > 3) {
+        wrappedPartLines = wrappedPartLines.slice(0, 2);
+        // Add ellipsis to the last line to indicate truncation
+        const lastLine = wrappedPartLines[1];
+        let truncatedLastLine = lastLine;
+        while (pdf.getTextWidth(truncatedLastLine + '...') > maxPartWidth && truncatedLastLine.length > 1) {
+          truncatedLastLine = truncatedLastLine.slice(0, -1);
+        }
+        wrappedPartLines[1] = truncatedLastLine + '...';
+      }
+    }
   }
   
   // Calculate required row height based on the tallest column
@@ -150,22 +188,25 @@ export const addTableRow = (
   });
   colIndex++;
 
-  // Part Number column (if present) - left aligned with proper wrapping and positioning
+  // Part Number column (if present) - left aligned with guaranteed no overflow
   if (hasPartNumbers) {
     const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 5)) / 2 + 4);
     wrappedPartLines.forEach((line, lineIndex) => {
       const cleanLine = line.trim();
       if (cleanLine) {
-        // Ensure text stays within column boundaries
-        const maxLineWidth = columnWidths[colIndex] - (cellPadding * 2);
+        // Final safety check - ensure this line absolutely fits
+        const safeLineWidth = columnWidths[colIndex] - (cellPadding * 2);
         const actualLineWidth = pdf.getTextWidth(cleanLine);
         
-        if (actualLineWidth <= maxLineWidth) {
+        if (actualLineWidth <= safeLineWidth) {
           pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
         } else {
-          // If somehow the line is still too long, truncate it
-          const truncatedLine = pdf.splitTextToSize(cleanLine, maxLineWidth)[0];
-          pdf.text(truncatedLine, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
+          // Emergency truncation - this should rarely happen with our improved logic
+          let emergencyTruncated = cleanLine;
+          while (pdf.getTextWidth(emergencyTruncated) > safeLineWidth && emergencyTruncated.length > 1) {
+            emergencyTruncated = emergencyTruncated.slice(0, -1);
+          }
+          pdf.text(emergencyTruncated, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
         }
       }
     });
