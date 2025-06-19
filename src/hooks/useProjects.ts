@@ -101,6 +101,45 @@ export const useProjects = () => {
     }
   };
 
+  const updateProject = async (projectData: Project) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          name: projectData.name,
+          description: projectData.description,
+          status: projectData.status,
+          priority: projectData.priority,
+          manager: projectData.manager,
+          team: projectData.team,
+          due_date: projectData.dueDate || null,
+          progress: projectData.progress,
+          tasks_count: projectData.tasksCount,
+          completed_tasks: projectData.completedTasks
+        })
+        .eq('id', projectData.id);
+
+      if (error) throw error;
+
+      await fetchProjects();
+      
+      toast({
+        title: "Success",
+        description: "Project updated successfully",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update project",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -109,6 +148,7 @@ export const useProjects = () => {
     projects,
     loading,
     createProject,
+    updateProject,
     refetch: fetchProjects
   };
 };

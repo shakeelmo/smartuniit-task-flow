@@ -10,17 +10,33 @@ import {
   FolderOpen,
   Calendar,
   User,
-  FileText
+  FileText,
+  Edit
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import ProjectDialog from '@/components/ProjectDialog';
+import EditProjectDialog from '@/components/projects/EditProjectDialog';
 import { useProjects, Project } from '@/hooks/useProjects';
 
 const ProjectManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { projects, loading, createProject } = useProjects();
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const { projects, loading, createProject, updateProject } = useProjects();
 
   const handleProjectCreate = async (newProject: Omit<Project, 'id'>) => {
     await createProject(newProject);
+  };
+
+  const handleProjectUpdate = async (updatedProject: Project) => {
+    const success = await updateProject(updatedProject);
+    if (success) {
+      setEditingProject(null);
+    }
+    return success;
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
   };
 
   const getStatusColor = (status: string) => {
@@ -89,9 +105,19 @@ const ProjectManagement = () => {
                   <FolderOpen className="h-5 w-5 text-blue-600" />
                   <CardTitle className="text-lg">{project.name}</CardTitle>
                 </div>
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleEditProject(project)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Project
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <p className="text-sm text-gray-600 mt-2">{project.description}</p>
             </CardHeader>
@@ -159,6 +185,16 @@ const ProjectManagement = () => {
           </Card>
         ))}
       </div>
+
+      {/* Edit Project Dialog */}
+      {editingProject && (
+        <EditProjectDialog
+          project={editingProject}
+          open={!!editingProject}
+          onOpenChange={(open) => !open && setEditingProject(null)}
+          onProjectUpdated={handleProjectUpdate}
+        />
+      )}
     </div>
   );
 };
