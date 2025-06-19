@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Calculator, ChevronDown, ChevronUp, Percent } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -75,6 +75,16 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
   const taxAmount = (taxableAmount * quotationData.taxRate) / 100;
   const grandTotal = taxableAmount + taxAmount;
 
+  const getCurrencySymbol = () => {
+    switch (quotationData.currency) {
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      case 'SAR': return '﷼';
+      default: return '$';
+    }
+  };
+
   React.useEffect(() => {
     if (onQuotationDataChange) {
       onQuotationDataChange({
@@ -99,14 +109,14 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
                 <div>
                   <CardTitle>Quotation Information (Optional)</CardTitle>
                   <CardDescription>
-                    Add pricing and quotation details to your proposal
+                    معلومات عرض الأسعار - Add pricing and quotation details to your proposal
                   </CardDescription>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {grandTotal > 0 && (
                   <Badge variant="secondary">
-                    Total: {quotationData.currency} {grandTotal.toFixed(2)}
+                    Total: {getCurrencySymbol()} {grandTotal.toLocaleString()}
                   </Badge>
                 )}
                 {isOpen ? (
@@ -121,48 +131,51 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
         
         <CollapsibleContent>
           <CardContent className="space-y-6">
-            {/* Quotation Details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
-              <div>
-                <Label htmlFor="quotationNumber">Quotation Number</Label>
-                <Input
-                  id="quotationNumber"
-                  value={quotationData.quotationNumber}
-                  onChange={(e) => setQuotationData({...quotationData, quotationNumber: e.target.value})}
-                  placeholder="Q-2024-001"
-                />
-              </div>
-              <div>
-                <Label htmlFor="validUntil">Valid Until</Label>
-                <Input
-                  id="validUntil"
-                  type="date"
-                  value={quotationData.validUntil}
-                  onChange={(e) => setQuotationData({...quotationData, validUntil: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="currency">Currency</Label>
-                <Select value={quotationData.currency} onValueChange={(value) => setQuotationData({...quotationData, currency: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                    <SelectItem value="SAR">SAR (﷼)</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Quote Details */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Quote Details / تفاصيل العرض</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="quotationNumber">Quotation Number / رقم العرض</Label>
+                  <Input
+                    id="quotationNumber"
+                    value={quotationData.quotationNumber}
+                    onChange={(e) => setQuotationData({...quotationData, quotationNumber: e.target.value})}
+                    placeholder="Q-2024-001"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="validUntil">Valid Until / صالح حتى</Label>
+                  <Input
+                    id="validUntil"
+                    type="date"
+                    value={quotationData.validUntil}
+                    onChange={(e) => setQuotationData({...quotationData, validUntil: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="currency">Currency / العملة</Label>
+                  <Select value={quotationData.currency} onValueChange={(value) => setQuotationData({...quotationData, currency: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
+                      <SelectItem value="EUR">EUR (€) - Euro</SelectItem>
+                      <SelectItem value="GBP">GBP (£) - British Pound</SelectItem>
+                      <SelectItem value="SAR">SAR (﷼) - Saudi Riyal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
             {/* Line Items */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h4 className="font-medium">Line Items</h4>
-                <Button onClick={addItem} size="sm" className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
+                <h3 className="text-lg font-semibold">Services / الخدمات</h3>
+                <Button onClick={addItem} className="bg-smart-orange hover:bg-smart-orange/90">
+                  <Plus className="h-4 w-4 mr-2" />
                   Add Item
                 </Button>
               </div>
@@ -170,23 +183,25 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
               {items.length === 0 ? (
                 <div className="text-center py-6 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
                   No items added yet. Click "Add Item" to get started.
+                  <br />
+                  لم يتم إضافة أي عناصر بعد. انقر على "إضافة عنصر" للبدء.
                 </div>
               ) : (
                 <div className="space-y-3">
                   {items.map((item, index) => (
-                    <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end p-3 border rounded-lg">
+                    <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end p-3 border rounded-lg bg-white">
                       <div className="md:col-span-5">
-                        <Label className="text-xs">Description</Label>
+                        <Label className="text-xs">Description / الوصف</Label>
                         <Textarea
                           value={item.description}
                           onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                          placeholder={`Item ${index + 1} description...`}
+                          placeholder={`Item ${index + 1} description... / وصف العنصر ${index + 1}`}
                           rows={2}
                           className="text-sm"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <Label className="text-xs">Quantity</Label>
+                        <Label className="text-xs">Quantity / الكمية</Label>
                         <Input
                           type="number"
                           value={item.quantity}
@@ -197,7 +212,7 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <Label className="text-xs">Unit Price</Label>
+                        <Label className="text-xs">Unit Price / سعر الوحدة</Label>
                         <Input
                           type="number"
                           value={item.unitPrice}
@@ -208,7 +223,7 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <Label className="text-xs">Total</Label>
+                        <Label className="text-xs">Total / المجموع</Label>
                         <Input
                           value={item.total.toFixed(2)}
                           readOnly
@@ -231,15 +246,16 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
               )}
             </div>
 
-            {/* Pricing Summary */}
+            {/* Discount Section */}
             {items.length > 0 && (
-              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium">Pricing Summary</h4>
-                
-                {/* Discount and Tax */}
+              <div className="bg-yellow-50 p-4 rounded-lg border">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <Percent className="h-5 w-5 mr-2" />
+                  Discount / الخصم
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Discount Type</Label>
+                    <Label>Discount Type / نوع الخصم</Label>
                     <Select 
                       value={quotationData.discountType} 
                       onValueChange={(value) => setQuotationData({...quotationData, discountType: value})}
@@ -247,25 +263,30 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
                       <SelectTrigger className="text-sm">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="percentage">Percentage (%)</SelectItem>
-                        <SelectItem value="fixed">Fixed Amount</SelectItem>
+                      <SelectContent className="bg-white border shadow-lg z-50">
+                        <SelectItem value="percentage">Percentage (%) / نسبة مئوية</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount / مبلغ ثابت</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Discount Value</Label>
+                    <Label>
+                      {quotationData.discountType === 'percentage' 
+                        ? 'Discount (%) / نسبة الخصم' 
+                        : `Discount Amount (${quotationData.currency}) / مبلغ الخصم`}
+                    </Label>
                     <Input
                       type="number"
                       value={quotationData.discountValue}
                       onChange={(e) => setQuotationData({...quotationData, discountValue: parseFloat(e.target.value) || 0})}
                       min="0"
-                      step="0.01"
+                      max={quotationData.discountType === 'percentage' ? 100 : undefined}
+                      step={quotationData.discountType === 'percentage' ? 0.1 : 0.01}
                       className="text-sm"
                     />
                   </div>
                   <div>
-                    <Label>Tax Rate (%)</Label>
+                    <Label>Tax Rate (%) / معدل الضريبة</Label>
                     <Input
                       type="number"
                       value={quotationData.taxRate}
@@ -277,29 +298,38 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
                     />
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Totals */}
-                <div className="space-y-2 border-t pt-4">
+            {/* Totals */}
+            {items.length > 0 && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">Pricing Summary / ملخص التسعير</h3>
+                <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Subtotal:</span>
-                    <span className="font-medium">{quotationData.currency} {subtotal.toFixed(2)}</span>
+                    <span>Subtotal / المجموع الفرعي:</span>
+                    <span className="font-medium">{getCurrencySymbol()} {subtotal.toLocaleString()}</span>
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span>Discount:</span>
-                      <span className="font-medium">-{quotationData.currency} {discountAmount.toFixed(2)}</span>
+                      <span>Discount / الخصم:</span>
+                      <span className="font-medium">-{getCurrencySymbol()} {discountAmount.toLocaleString()}</span>
                     </div>
                   )}
+                  <div className="flex justify-between text-sm">
+                    <span>After Discount / بعد الخصم:</span>
+                    <span className="font-medium">{getCurrencySymbol()} {taxableAmount.toLocaleString()}</span>
+                  </div>
                   {taxAmount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span>Tax ({quotationData.taxRate}%):</span>
-                      <span className="font-medium">{quotationData.currency} {taxAmount.toFixed(2)}</span>
+                      <span>Tax ({quotationData.taxRate}%) / الضريبة:</span>
+                      <span className="font-medium">{getCurrencySymbol()} {taxAmount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-base font-bold border-t pt-2">
-                    <span>Grand Total:</span>
-                    <Badge variant="default" className="text-base px-3 py-1">
-                      {quotationData.currency} {grandTotal.toFixed(2)}
+                  <div className="flex justify-between text-lg font-bold border-t pt-2">
+                    <span>Grand Total / المجموع الكلي:</span>
+                    <Badge variant="default" className="text-lg px-3 py-1">
+                      {getCurrencySymbol()} {grandTotal.toLocaleString()}
                     </Badge>
                   </div>
                 </div>
@@ -309,23 +339,23 @@ export const CreateProposalQuotationSection: React.FC<CreateProposalQuotationSec
             {/* Additional Notes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="quotationNotes">Quotation Notes</Label>
+                <Label htmlFor="quotationNotes">Quotation Notes / ملاحظات العرض</Label>
                 <Textarea
                   id="quotationNotes"
                   value={quotationData.notes}
                   onChange={(e) => setQuotationData({...quotationData, notes: e.target.value})}
-                  placeholder="Any additional notes for this quotation..."
+                  placeholder="Any additional notes for this quotation... / أي ملاحظات إضافية لهذا العرض"
                   rows={3}
                   className="text-sm"
                 />
               </div>
               <div>
-                <Label htmlFor="quotationTerms">Payment Terms</Label>
+                <Label htmlFor="quotationTerms">Payment Terms / شروط الدفع</Label>
                 <Textarea
                   id="quotationTerms"
                   value={quotationData.terms}
                   onChange={(e) => setQuotationData({...quotationData, terms: e.target.value})}
-                  placeholder="Payment terms, delivery conditions, etc..."
+                  placeholder="Payment terms, delivery conditions, etc... / شروط الدفع وشروط التسليم"
                   rows={3}
                   className="text-sm"
                 />
