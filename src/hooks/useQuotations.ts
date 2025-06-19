@@ -82,12 +82,46 @@ export const useQuotations = () => {
         status: 'draft'
       };
 
-      const { error } = await supabase
+      console.log('Attempting to save/update quotation:', quotationRecord);
+
+      // First check if quotation with this number already exists
+      const { data: existingQuotation, error: checkError } = await supabase
         .from('quotations')
-        .upsert(quotationRecord, { onConflict: 'number' });
+        .select('id, user_id')
+        .eq('number', quotationData.number)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (checkError) {
+        console.error('Error checking existing quotation:', checkError);
+        throw checkError;
+      }
 
+      let result;
+      if (existingQuotation) {
+        // Update existing quotation
+        console.log('Updating existing quotation');
+        const { data, error } = await supabase
+          .from('quotations')
+          .update(quotationRecord)
+          .eq('number', quotationData.number)
+          .eq('user_id', userData.user.id)
+          .select();
+        
+        if (error) throw error;
+        result = data;
+      } else {
+        // Insert new quotation
+        console.log('Inserting new quotation');
+        const { data, error } = await supabase
+          .from('quotations')
+          .insert(quotationRecord)
+          .select();
+        
+        if (error) throw error;
+        result = data;
+      }
+
+      console.log('Quotation save result:', result);
       await fetchQuotations();
       
       toast({
@@ -109,6 +143,9 @@ export const useQuotations = () => {
 
   const updateQuotation = async (quotationData: QuotationData) => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('Not authenticated');
+
       const quotationRecord = {
         date: quotationData.date,
         valid_until: quotationData.validUntil,
@@ -129,7 +166,8 @@ export const useQuotations = () => {
       const { error } = await supabase
         .from('quotations')
         .update(quotationRecord)
-        .eq('number', quotationData.number);
+        .eq('number', quotationData.number)
+        .eq('user_id', userData.user.id);
 
       if (error) throw error;
 
