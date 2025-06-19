@@ -84,13 +84,13 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl w-[95vw] h-[95vh] flex flex-col p-0">
+      <DialogContent className="max-w-7xl w-[95vw] h-[95vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="flex-shrink-0 px-6 py-4 border-b">
           <DialogTitle>Edit Proposal: {proposal?.title}</DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
             <TabsList className="grid w-full grid-cols-9 flex-shrink-0 mx-6 mt-4">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="document-control">Document Control</TabsTrigger>
@@ -103,47 +103,59 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
               <TabsTrigger value="signatures">Signatures</TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 overflow-hidden px-6">
-              <TabsContent value="basic" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <ProposalBasicForm
-                  proposal={proposalData}
-                  onUpdate={handleUpdateProposal}
-                  loading={loading}
-                />
+            <div className="flex-1 min-h-0 px-6">
+              <TabsContent value="basic" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
+                  <ProposalBasicForm
+                    proposal={proposalData}
+                    onUpdate={handleUpdateProposal}
+                    loading={loading}
+                  />
+                </div>
               </TabsContent>
 
-              <TabsContent value="document-control" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <ProposalDocumentControlForm
-                  proposalId={proposal?.id}
-                  proposal={proposalData}
-                  onUpdate={handleUpdateProposal}
-                  loading={loading}
-                />
+              <TabsContent value="document-control" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
+                  <ProposalDocumentControlForm
+                    proposalId={proposal?.id}
+                    proposal={proposalData}
+                    onUpdate={handleUpdateProposal}
+                    loading={loading}
+                  />
+                </div>
               </TabsContent>
               
-              <TabsContent value="deliverables" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <ProposalDeliverablesForm proposalId={proposal?.id} />
+              <TabsContent value="deliverables" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
+                  <ProposalDeliverablesForm proposalId={proposal?.id} />
+                </div>
               </TabsContent>
               
-              <TabsContent value="timeline" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <ProposalTimelineForm proposalId={proposal?.id} />
+              <TabsContent value="timeline" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
+                  <ProposalTimelineForm proposalId={proposal?.id} />
+                </div>
               </TabsContent>
 
-              <TabsContent value="commercial" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <ProposalCommercialForm
-                  proposalId={proposal?.id}
-                  proposal={proposalData}
-                  onUpdate={handleUpdateProposal}
-                  loading={loading}
-                />
+              <TabsContent value="commercial" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
+                  <ProposalCommercialForm
+                    proposalId={proposal?.id}
+                    proposal={proposalData}
+                    onUpdate={handleUpdateProposal}
+                    loading={loading}
+                  />
+                </div>
               </TabsContent>
               
-              <TabsContent value="budget" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <ProposalBudgetForm proposalId={proposal?.id} />
+              <TabsContent value="budget" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
+                  <ProposalBudgetForm proposalId={proposal?.id} />
+                </div>
               </TabsContent>
               
-              <TabsContent value="quotation" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <div className="flex-1 min-h-0">
+              <TabsContent value="quotation" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
                   <ProposalQuotationForm 
                     proposalId={proposal?.id} 
                     proposal={proposalData}
@@ -153,17 +165,21 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
                 </div>
               </TabsContent>
               
-              <TabsContent value="case-studies" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <ProposalCaseStudiesForm proposalId={proposal?.id} />
+              <TabsContent value="case-studies" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
+                  <ProposalCaseStudiesForm proposalId={proposal?.id} />
+                </div>
               </TabsContent>
 
-              <TabsContent value="signatures" className="h-full overflow-y-auto mt-4 data-[state=active]:flex data-[state=active]:flex-col">
-                <ProposalSignatureForm
-                  proposalId={proposal?.id}
-                  proposal={proposalData}
-                  onUpdate={handleUpdateProposal}
-                  loading={loading}
-                />
+              <TabsContent value="signatures" className="h-full overflow-y-auto mt-4 pr-2 data-[state=active]:flex data-[state=active]:flex-col">
+                <div className="min-h-0 flex-1">
+                  <ProposalSignatureForm
+                    proposalId={proposal?.id}
+                    proposal={proposalData}
+                    onUpdate={handleUpdateProposal}
+                    loading={loading}
+                  />
+                </div>
               </TabsContent>
             </div>
           </Tabs>
