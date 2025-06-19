@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
         quotationNumber: existingData.quotationNumber || '',
         validUntil: existingData.validUntil || '',
         currency: existingData.currency || 'USD',
-        taxRate: existingData.taxRate || 0,
+        taxRate: existingData.taxRate !== undefined ? existingData.taxRate : 15, // Preserve existing or default to 15
         discountType: existingData.discountType || 'percentage',
         discountValue: existingData.discountValue || 0,
         notes: existingData.notes || '',
@@ -156,21 +157,27 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       e.stopPropagation();
     }
     
+    console.log('Starting save quotation process...');
     setLoading(true);
+    
     try {
       const quotationDataToSave = prepareQuotationDataForSave();
+      console.log('Quotation data prepared for save:', quotationDataToSave);
 
       const updateData = {
         quotation_data: quotationDataToSave,
-        status: 'completed'
+        status: 'completed',
+        updated_at: new Date().toISOString()
       };
 
-      console.log('Updating proposal with:', updateData);
+      console.log('Final update data being sent:', updateData);
 
       if (onUpdate) {
+        console.log('Using parent onUpdate function');
         await onUpdate(updateData);
-        console.log('Updated via parent onUpdate function');
+        console.log('Updated via parent onUpdate function successfully');
       } else {
+        console.log('Using direct Supabase update');
         const { data, error } = await supabase
           .from('proposals')
           .update(updateData)
@@ -182,7 +189,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
           throw error;
         }
         
-        console.log('Updated proposal data:', data);
+        console.log('Updated proposal data from Supabase:', data);
       }
 
       toast({
@@ -207,20 +214,26 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
       e.stopPropagation();
     }
     
+    console.log('Starting save as draft process...');
     setLoading(true);
+    
     try {
       const quotationDataToSave = prepareQuotationDataForSave();
+      console.log('Draft data prepared for save:', quotationDataToSave);
 
       const updateData = {
         quotation_data: quotationDataToSave,
-        status: 'draft'
+        status: 'draft',
+        updated_at: new Date().toISOString()
       };
 
-      console.log('Saving as draft:', updateData);
+      console.log('Draft update data being sent:', updateData);
 
       if (onUpdate) {
+        console.log('Using parent onUpdate function for draft');
         await onUpdate(updateData);
       } else {
+        console.log('Using direct Supabase update for draft');
         const { data, error } = await supabase
           .from('proposals')
           .update(updateData)
@@ -228,11 +241,11 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
           .select();
 
         if (error) {
-          console.error('Supabase error:', error);
+          console.error('Supabase error saving draft:', error);
           throw error;
         }
         
-        console.log('Saved draft data:', data);
+        console.log('Saved draft data from Supabase:', data);
       }
 
       toast({
