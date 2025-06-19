@@ -81,56 +81,60 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl h-[95vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Proposal: {proposal?.title}</DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="basic">Basic Info</TabsTrigger>
-            <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
-            <TabsTrigger value="timeline">Timeline</TabsTrigger>
-            <TabsTrigger value="budget">Budget</TabsTrigger>
-            <TabsTrigger value="quotation">Quotation</TabsTrigger>
-            <TabsTrigger value="case-studies">Case Studies</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="basic" className="mt-4">
-            <ProposalBasicForm
-              proposal={proposalData}
-              onUpdate={handleUpdateProposal}
-              loading={loading}
-            />
-          </TabsContent>
-          
-          <TabsContent value="deliverables" className="mt-4">
-            <ProposalDeliverablesForm proposalId={proposal?.id} />
-          </TabsContent>
-          
-          <TabsContent value="timeline" className="mt-4">
-            <ProposalTimelineForm proposalId={proposal?.id} />
-          </TabsContent>
-          
-          <TabsContent value="budget" className="mt-4">
-            <ProposalBudgetForm proposalId={proposal?.id} />
-          </TabsContent>
-          
-          <TabsContent value="quotation" className="mt-4">
-            <ProposalQuotationForm 
-              proposalId={proposal?.id} 
-              proposal={proposalData}
-              onUpdate={handleUpdateProposal}
-              loading={loading}
-            />
-          </TabsContent>
-          
-          <TabsContent value="case-studies" className="mt-4">
-            <ProposalCaseStudiesForm proposalId={proposal?.id} />
-          </TabsContent>
-        </Tabs>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <TabsList className="grid w-full grid-cols-6 flex-shrink-0">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
+              <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="budget">Budget</TabsTrigger>
+              <TabsTrigger value="quotation">Quotation</TabsTrigger>
+              <TabsTrigger value="case-studies">Case Studies</TabsTrigger>
+            </TabsList>
+            
+            <div className="flex-1 overflow-hidden">
+              <TabsContent value="basic" className="h-full overflow-y-auto mt-4">
+                <ProposalBasicForm
+                  proposal={proposalData}
+                  onUpdate={handleUpdateProposal}
+                  loading={loading}
+                />
+              </TabsContent>
+              
+              <TabsContent value="deliverables" className="h-full overflow-y-auto mt-4">
+                <ProposalDeliverablesForm proposalId={proposal?.id} />
+              </TabsContent>
+              
+              <TabsContent value="timeline" className="h-full overflow-y-auto mt-4">
+                <ProposalTimelineForm proposalId={proposal?.id} />
+              </TabsContent>
+              
+              <TabsContent value="budget" className="h-full overflow-y-auto mt-4">
+                <ProposalBudgetForm proposalId={proposal?.id} />
+              </TabsContent>
+              
+              <TabsContent value="quotation" className="h-full mt-4">
+                <ProposalQuotationForm 
+                  proposalId={proposal?.id} 
+                  proposal={proposalData}
+                  onUpdate={handleUpdateProposal}
+                  loading={loading}
+                />
+              </TabsContent>
+              
+              <TabsContent value="case-studies" className="h-full overflow-y-auto mt-4">
+                <ProposalCaseStudiesForm proposalId={proposal?.id} />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0 bg-white">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
