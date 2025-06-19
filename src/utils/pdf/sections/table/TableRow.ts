@@ -22,10 +22,9 @@ export const addTableRow = (
   const { hasPartNumbers, hasUnits, columnWidths, columnPositions, tableWidth, currency } = config;
   const baseRowHeight = 14;
 
-  // Improved service text extraction with better cleaning and fallback logic
+  // Improved service text extraction with better cleaning
   let serviceText = '';
   
-  // Try multiple fields to get the service description
   if (item.service && typeof item.service === 'string') {
     serviceText = item.service;
   } else if (item.description && typeof item.description === 'string') {
@@ -36,29 +35,19 @@ export const addTableRow = (
     serviceText = item.title;
   }
 
-  // Clean the text thoroughly to remove encoding issues
+  // Clean the text thoroughly
   serviceText = String(serviceText || '')
     .trim()
-    .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '') // Keep only printable ASCII and Latin extended
-    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 
-  // If still empty or contains garbage, provide a fallback
-  if (!serviceText || serviceText.length < 2 || /^[^\w\s]*$/.test(serviceText)) {
+  if (!serviceText || serviceText.length < 2) {
     serviceText = 'Service Item';
   }
 
   const partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
   const unitText = String(item.unit || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
-
-  console.log('Processing item:', { 
-    originalService: item.service, 
-    cleanedService: serviceText, 
-    partNumber: partNumberText, 
-    unit: unitText, 
-    quantity: item.quantity, 
-    unitPrice: item.unitPrice 
-  });
 
   // Calculate text wrapping for description
   const descriptionColumnIndex = 1;
@@ -74,24 +63,36 @@ export const addTableRow = (
   }
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, requiredRowHeight, 'F');
 
-  // Enhanced cell borders - draw complete border grid
+  // Enhanced cell borders - complete grid system
   pdf.setDrawColor(180, 180, 180);
-  pdf.setLineWidth(0.3);
+  pdf.setLineWidth(0.5);
   
   // Draw horizontal borders (top and bottom)
   pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
   pdf.line(PDF_CONFIG.pageMargin, yPosition + requiredRowHeight, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
   
-  // Draw all vertical borders including the rightmost border for Total Price column
+  // Draw complete vertical border grid
   let currentX = PDF_CONFIG.pageMargin;
+  
+  // Draw left border of table
+  pdf.setLineWidth(0.8);
+  pdf.setDrawColor(...COLORS.black);
+  pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
+  
+  // Draw internal column separators
   columnWidths.forEach((width, colIndex) => {
-    // Draw left border of column
-    pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
     currentX += width;
+    
+    // Draw internal separators with lighter color
+    if (colIndex < columnWidths.length - 1) {
+      pdf.setLineWidth(0.5);
+      pdf.setDrawColor(180, 180, 180);
+      pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
+    }
   });
   
-  // Draw the final right border for the last column (Total Price)
-  pdf.setLineWidth(0.5); // Slightly thicker for table boundary
+  // Draw the final right border for the table
+  pdf.setLineWidth(0.8);
   pdf.setDrawColor(...COLORS.black);
   pdf.line(currentX, yPosition, currentX, yPosition + requiredRowHeight);
 
@@ -110,19 +111,14 @@ export const addTableRow = (
   pdf.text(serialText, serialX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Service/Description column - ensure clean text is displayed
+  // Service/Description column
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedServiceLines.length * 5)) / 2 + 4);
-  if (wrappedServiceLines.length > 0 && wrappedServiceLines[0] && wrappedServiceLines[0].trim()) {
-    wrappedServiceLines.forEach((line, lineIndex) => {
-      const cleanLine = line.trim();
-      if (cleanLine) {
-        pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, serviceStartY + (lineIndex * 5));
-      }
-    });
-  } else {
-    // Direct fallback if wrapping fails
-    pdf.text(serviceText, columnPositions[colIndex] + cellPadding, serviceStartY);
-  }
+  wrappedServiceLines.forEach((line, lineIndex) => {
+    const cleanLine = line.trim();
+    if (cleanLine) {
+      pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, serviceStartY + (lineIndex * 5));
+    }
+  });
   colIndex++;
 
   // Part Number column (if present)
@@ -154,7 +150,7 @@ export const addTableRow = (
     colIndex++;
   }
 
-  // Unit Price column - right aligned with proper spacing
+  // Unit Price column - right aligned
   const unitPriceValue = parseFloat(item.unitPrice) || 0;
   const unitPriceFormatted = unitPriceValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -166,7 +162,7 @@ export const addTableRow = (
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned with proper border spacing
+  // Total Price column - right aligned
   const quantityValue = parseFloat(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
   const totalFormatted = totalValue.toLocaleString('en-US', {
@@ -175,21 +171,7 @@ export const addTableRow = (
   });
   const totalText = currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
-  
-  // Proper padding to ensure text doesn't touch the border
-  const totalPadding = 6;
-  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - totalPadding;
-  
-  console.log('Total price display:', { 
-    totalValue, 
-    totalFormatted, 
-    totalText, 
-    totalX, 
-    columnWidth: columnWidths[colIndex],
-    textWidth: totalWidth,
-    padding: totalPadding
-  });
-  
+  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
 
   return yPosition + requiredRowHeight;
