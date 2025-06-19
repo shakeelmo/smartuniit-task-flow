@@ -46,6 +46,7 @@ export const addTableRow = (
     serviceText = 'Service Item';
   }
 
+  // Enhanced part number text handling with proper wrapping
   const partNumberText = String(item.partNumber || '').replace(/[^\x20-\x7E]/g, '').trim() || '-';
   
   // Improved unit text handling - check multiple possible properties
@@ -67,7 +68,23 @@ export const addTableRow = (
   const descriptionColumnIndex = 1;
   const maxServiceWidth = columnWidths[descriptionColumnIndex] - 8;
   const wrappedServiceLines = wrapText(pdf, serviceText, maxServiceWidth);
-  const requiredRowHeight = Math.max(baseRowHeight, wrappedServiceLines.length * 5 + 8);
+  
+  // Calculate text wrapping for part number (if column exists)
+  let wrappedPartLines: string[] = [];
+  let partColumnIndex = -1;
+  if (hasPartNumbers) {
+    partColumnIndex = 2; // Part number is the 3rd column (index 2)
+    const maxPartWidth = columnWidths[partColumnIndex] - 8; // 4px padding on each side
+    wrappedPartLines = wrapText(pdf, partNumberText, maxPartWidth);
+  }
+  
+  // Calculate required row height based on the tallest column
+  const maxLines = Math.max(
+    wrappedServiceLines.length,
+    wrappedPartLines.length,
+    1 // Minimum 1 line
+  );
+  const requiredRowHeight = Math.max(baseRowHeight, maxLines * 5 + 8);
 
   // Alternating row colors
   if (index % 2 === 0) {
@@ -123,7 +140,7 @@ export const addTableRow = (
   pdf.text(serialText, serialX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Service/Description column - left aligned
+  // Service/Description column - left aligned with proper wrapping
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedServiceLines.length * 5)) / 2 + 4);
   wrappedServiceLines.forEach((line, lineIndex) => {
     const cleanLine = line.trim();
@@ -133,15 +150,23 @@ export const addTableRow = (
   });
   colIndex++;
 
-  // Part Number column (if present) - left aligned and properly positioned
+  // Part Number column (if present) - left aligned with proper wrapping and positioning
   if (hasPartNumbers) {
-    const maxPartWidth = columnWidths[colIndex] - (cellPadding * 2);
-    const wrappedPartLines = wrapText(pdf, partNumberText, maxPartWidth);
     const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 5)) / 2 + 4);
     wrappedPartLines.forEach((line, lineIndex) => {
       const cleanLine = line.trim();
       if (cleanLine) {
-        pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
+        // Ensure text stays within column boundaries
+        const maxLineWidth = columnWidths[colIndex] - (cellPadding * 2);
+        const actualLineWidth = pdf.getTextWidth(cleanLine);
+        
+        if (actualLineWidth <= maxLineWidth) {
+          pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
+        } else {
+          // If somehow the line is still too long, truncate it
+          const truncatedLine = pdf.splitTextToSize(cleanLine, maxLineWidth)[0];
+          pdf.text(truncatedLine, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
+        }
       }
     });
     colIndex++;
