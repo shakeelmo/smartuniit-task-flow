@@ -47,9 +47,9 @@ export const addTableHeader = (
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
-  // Define header text based on configuration with FIXED currency labels
+  // Define header text based on configuration with PROPER currency symbols
   let headers: string[];
-  const currencyText = currency === 'SAR' ? 'SAR' : 'USD'; // Use SAR instead of ﷼
+  const currencyText = currency === 'SAR' ? '﷼' : 'USD'; // Use proper Saudi Riyal symbol
   
   if (hasPartNumbers && hasUnits) {
     headers = ['S#', 'Item Description', 'Part Number', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
