@@ -162,7 +162,7 @@ export const addTableRow = (
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  const unitPriceText = currency === 'SAR' ? `${unitPriceFormatted} SR` : `$${unitPriceFormatted}`;
+  const unitPriceText = currency === 'SAR' ? `${unitPriceFormatted} ﷼` : `$${unitPriceFormatted}`;
   const unitPriceWidth = pdf.getTextWidth(unitPriceText);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
@@ -175,7 +175,7 @@ export const addTableRow = (
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  const totalText = currency === 'SAR' ? `${totalFormatted} SR` : `$${totalFormatted}`;
+  const totalText = currency === 'SAR' ? `${totalFormatted} ﷼` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - (cellPadding + 2); // Extra padding for border
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));

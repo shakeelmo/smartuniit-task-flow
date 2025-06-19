@@ -69,10 +69,13 @@ const renderSubtotalRow = (
   // Label
   pdf.text(`Subtotal in ${totalsData.currencyInfo.name}`, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value
-  const subtotalWidth = pdf.getTextWidth(totalsData.subtotal.text);
+  // Value with proper Saudi Riyal symbol
+  const subtotalText = totalsData.currencyInfo.symbol === '﷼' ? 
+    `${totalsData.subtotal.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+    totalsData.subtotal.text;
+  const subtotalWidth = pdf.getTextWidth(subtotalText);
   const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - CELL_PADDING;
-  pdf.text(totalsData.subtotal.text, subtotalX, yPosition + 8);
+  pdf.text(subtotalText, subtotalX, yPosition + 8);
 
   return yPosition + ENHANCED_ROW_HEIGHT;
 };
@@ -103,10 +106,13 @@ const renderDiscountRow = (
   // Label
   pdf.text(totalsData.discount.label, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value
-  const discountWidth = pdf.getTextWidth(totalsData.discount.text);
+  // Value with proper Saudi Riyal symbol
+  const discountText = totalsData.currencyInfo.symbol === '﷼' ? 
+    `-${totalsData.discount.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+    totalsData.discount.text;
+  const discountWidth = pdf.getTextWidth(discountText);
   const discountX = valueStartX + valueColumnWidth - discountWidth - CELL_PADDING;
-  pdf.text(totalsData.discount.text, discountX, yPosition + 8);
+  pdf.text(discountText, discountX, yPosition + 8);
 
   return yPosition + ENHANCED_ROW_HEIGHT;
 };
@@ -135,10 +141,13 @@ const renderVATRow = (
   // Label
   pdf.text('VAT 15%', labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value
-  const vatWidth = pdf.getTextWidth(totalsData.vat.text);
+  // Value with proper Saudi Riyal symbol
+  const vatText = totalsData.currencyInfo.symbol === '﷼' ? 
+    `${totalsData.vat.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+    totalsData.vat.text;
+  const vatWidth = pdf.getTextWidth(vatText);
   const vatX = valueStartX + valueColumnWidth - vatWidth - CELL_PADDING;
-  pdf.text(totalsData.vat.text, vatX, yPosition + 8);
+  pdf.text(vatText, vatX, yPosition + 8);
 
   return yPosition + ENHANCED_ROW_HEIGHT;
 };
@@ -169,10 +178,13 @@ const renderTotalRow = (
   // Label
   pdf.text(`Total Price in ${totalsData.currencyInfo.name}`, labelStartX + CELL_PADDING, yPosition + 9);
 
-  // Value
-  const totalWidth = pdf.getTextWidth(totalsData.total.text);
+  // Value with proper Saudi Riyal symbol
+  const totalText = totalsData.currencyInfo.symbol === '﷼' ? 
+    `${totalsData.total.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ﷼` :
+    totalsData.total.text;
+  const totalWidth = pdf.getTextWidth(totalText);
   const totalX = valueStartX + valueColumnWidth - totalWidth - CELL_PADDING;
-  pdf.text(totalsData.total.text, totalX, yPosition + 9);
+  pdf.text(totalText, totalX, yPosition + 9);
 
   return yPosition + ENHANCED_ROW_HEIGHT + 2;
 };
