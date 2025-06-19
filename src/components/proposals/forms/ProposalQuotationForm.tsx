@@ -247,295 +247,302 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-full space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Calculator className="h-6 w-6" />
-            Quotation Information
-          </h2>
-          <p className="text-gray-600">معلومات عرض الأسعار - Add pricing and quotation details to your proposal</p>
+    <div className="flex flex-col h-full">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pb-20">
+        <div className="space-y-6 p-1">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Calculator className="h-6 w-6" />
+                Quotation Information
+              </h2>
+              <p className="text-gray-600">معلومات عرض الأسعار - Add pricing and quotation details to your proposal</p>
+            </div>
+          </div>
+
+          {/* Quote Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quote Details / تفاصيل العرض</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="quotationNumber">Quotation Number / رقم العرض</Label>
+                  <Input
+                    id="quotationNumber"
+                    value={quotationData.quotationNumber}
+                    onChange={(e) => setQuotationData({...quotationData, quotationNumber: e.target.value})}
+                    placeholder="Q-2024-001"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="validUntil">Valid Until / صالح حتى</Label>
+                  <Input
+                    id="validUntil"
+                    type="date"
+                    value={quotationData.validUntil}
+                    onChange={(e) => setQuotationData({...quotationData, validUntil: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="currency">Currency / العملة</Label>
+                  <Select value={quotationData.currency} onValueChange={(value) => setQuotationData({...quotationData, currency: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
+                      <SelectItem value="EUR">EUR (€) - Euro</SelectItem>
+                      <SelectItem value="GBP">GBP (£) - British Pound</SelectItem>
+                      <SelectItem value="SAR">SAR (﷼) - Saudi Riyal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Line Items */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Services / الخدمات</CardTitle>
+                <Button 
+                  onClick={addItem} 
+                  type="button"
+                  className="bg-smart-orange hover:bg-smart-orange/90"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Service
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {items.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                  No services added yet. Click "Add Service" to get started.
+                  <br />
+                  لم يتم إضافة أي خدمات بعد. انقر على "إضافة خدمة" للبدء.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {items.map((item, index) => (
+                    <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 border rounded-lg bg-white shadow-sm">
+                      <div className="lg:col-span-5">
+                        <Label className="text-xs font-medium">Description / الوصف</Label>
+                        <Textarea
+                          value={item.description}
+                          onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                          placeholder={`Service ${index + 1} description... / وصف الخدمة ${index + 1}`}
+                          rows={3}
+                          className="text-sm mt-1"
+                        />
+                      </div>
+                      <div className="lg:col-span-2">
+                        <Label className="text-xs font-medium">Quantity / الكمية</Label>
+                        <Input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                          min="0"
+                          step="0.01"
+                          className="text-sm mt-1"
+                        />
+                      </div>
+                      <div className="lg:col-span-2">
+                        <Label className="text-xs font-medium">Unit Price / سعر الوحدة</Label>
+                        <Input
+                          type="number"
+                          value={item.unitPrice}
+                          onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          min="0"
+                          step="0.01"
+                          className="text-sm mt-1"
+                        />
+                      </div>
+                      <div className="lg:col-span-2">
+                        <Label className="text-xs font-medium">Total / المجموع</Label>
+                        <Input
+                          value={item.total.toFixed(2)}
+                          readOnly
+                          className="bg-gray-50 text-sm font-medium mt-1"
+                        />
+                      </div>
+                      <div className="lg:col-span-1 flex items-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          className="text-red-600 hover:text-red-700 w-full"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Discount Section */}
+          {items.length > 0 && (
+            <Card className="bg-yellow-50 border-yellow-200">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Percent className="h-5 w-5 mr-2" />
+                  Discount & Tax / الخصم والضريبة
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Discount Type / نوع الخصم</Label>
+                    <Select 
+                      value={quotationData.discountType} 
+                      onValueChange={(value) => setQuotationData({...quotationData, discountType: value})}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border shadow-lg z-50">
+                        <SelectItem value="percentage">Percentage (%) / نسبة مئوية</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount / مبلغ ثابت</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>
+                      {quotationData.discountType === 'percentage' 
+                        ? 'Discount (%) / نسبة الخصم' 
+                        : `Discount Amount (${quotationData.currency}) / مبلغ الخصم`}
+                    </Label>
+                    <Input
+                      type="number"
+                      value={quotationData.discountValue}
+                      onChange={(e) => setQuotationData({...quotationData, discountValue: parseFloat(e.target.value) || 0})}
+                      min="0"
+                      max={quotationData.discountType === 'percentage' ? 100 : undefined}
+                      step={quotationData.discountType === 'percentage' ? 0.1 : 0.01}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label>Tax Rate (%) / معدل الضريبة</Label>
+                    <Input
+                      type="number"
+                      value={quotationData.taxRate}
+                      onChange={(e) => setQuotationData({...quotationData, taxRate: parseFloat(e.target.value) || 0})}
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Totals */}
+          {items.length > 0 && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardHeader>
+                <CardTitle>Pricing Summary / ملخص التسعير</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal / المجموع الفرعي:</span>
+                    <span className="font-medium">{getCurrencySymbol()} {subtotal.toLocaleString()}</span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Discount / الخصم:</span>
+                      <span className="font-medium">-{getCurrencySymbol()} {discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span>After Discount / بعد الخصم:</span>
+                    <span className="font-medium">{getCurrencySymbol()} {taxableAmount.toLocaleString()}</span>
+                  </div>
+                  {taxAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Tax ({quotationData.taxRate}%) / الضريبة:</span>
+                      <span className="font-medium">{getCurrencySymbol()} {taxAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xl font-bold border-t pt-3">
+                    <span>Grand Total / المجموع الكلي:</span>
+                    <Badge variant="default" className="text-xl px-4 py-2">
+                      {getCurrencySymbol()} {grandTotal.toLocaleString()}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Terms and Conditions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Additional Information / معلومات إضافية</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="notes">Quotation Notes / ملاحظات العرض</Label>
+                  <Textarea
+                    id="notes"
+                    value={quotationData.notes}
+                    onChange={(e) => setQuotationData({...quotationData, notes: e.target.value})}
+                    placeholder="Any additional notes for this quotation... / أي ملاحظات إضافية لهذا العرض"
+                    rows={4}
+                    className="text-sm mt-2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="terms">Payment Terms / شروط الدفع</Label>
+                  <Textarea
+                    id="terms"
+                    value={quotationData.terms}
+                    onChange={(e) => setQuotationData({...quotationData, terms: e.target.value})}
+                    placeholder="Payment terms, delivery conditions, etc... / شروط الدفع وشروط التسليم"
+                    rows={4}
+                    className="text-sm mt-2"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Quote Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quote Details / تفاصيل العرض</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="quotationNumber">Quotation Number / رقم العرض</Label>
-              <Input
-                id="quotationNumber"
-                value={quotationData.quotationNumber}
-                onChange={(e) => setQuotationData({...quotationData, quotationNumber: e.target.value})}
-                placeholder="Q-2024-001"
-              />
-            </div>
-            <div>
-              <Label htmlFor="validUntil">Valid Until / صالح حتى</Label>
-              <Input
-                id="validUntil"
-                type="date"
-                value={quotationData.validUntil}
-                onChange={(e) => setQuotationData({...quotationData, validUntil: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="currency">Currency / العملة</Label>
-              <Select value={quotationData.currency} onValueChange={(value) => setQuotationData({...quotationData, currency: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border shadow-lg z-50">
-                  <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
-                  <SelectItem value="EUR">EUR (€) - Euro</SelectItem>
-                  <SelectItem value="GBP">GBP (£) - British Pound</SelectItem>
-                  <SelectItem value="SAR">SAR (﷼) - Saudi Riyal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Line Items */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Services / الخدمات</CardTitle>
-            <Button 
-              onClick={addItem} 
-              type="button"
-              className="bg-smart-orange hover:bg-smart-orange/90"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Service
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {items.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-              No services added yet. Click "Add Service" to get started.
-              <br />
-              لم يتم إضافة أي خدمات بعد. انقر على "إضافة خدمة" للبدء.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {items.map((item, index) => (
-                <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 border rounded-lg bg-white shadow-sm">
-                  <div className="lg:col-span-5">
-                    <Label className="text-xs font-medium">Description / الوصف</Label>
-                    <Textarea
-                      value={item.description}
-                      onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                      placeholder={`Service ${index + 1} description... / وصف الخدمة ${index + 1}`}
-                      rows={3}
-                      className="text-sm mt-1"
-                    />
-                  </div>
-                  <div className="lg:col-span-2">
-                    <Label className="text-xs font-medium">Quantity / الكمية</Label>
-                    <Input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                      min="0"
-                      step="0.01"
-                      className="text-sm mt-1"
-                    />
-                  </div>
-                  <div className="lg:col-span-2">
-                    <Label className="text-xs font-medium">Unit Price / سعر الوحدة</Label>
-                    <Input
-                      type="number"
-                      value={item.unitPrice}
-                      onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                      min="0"
-                      step="0.01"
-                      className="text-sm mt-1"
-                    />
-                  </div>
-                  <div className="lg:col-span-2">
-                    <Label className="text-xs font-medium">Total / المجموع</Label>
-                    <Input
-                      value={item.total.toFixed(2)}
-                      readOnly
-                      className="bg-gray-50 text-sm font-medium mt-1"
-                    />
-                  </div>
-                  <div className="lg:col-span-1 flex items-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={() => removeItem(item.id)}
-                      className="text-red-600 hover:text-red-700 w-full"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Discount Section */}
-      {items.length > 0 && (
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Percent className="h-5 w-5 mr-2" />
-              Discount & Tax / الخصم والضريبة
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label>Discount Type / نوع الخصم</Label>
-                <Select 
-                  value={quotationData.discountType} 
-                  onValueChange={(value) => setQuotationData({...quotationData, discountType: value})}
-                >
-                  <SelectTrigger className="text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="percentage">Percentage (%) / نسبة مئوية</SelectItem>
-                    <SelectItem value="fixed">Fixed Amount / مبلغ ثابت</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>
-                  {quotationData.discountType === 'percentage' 
-                    ? 'Discount (%) / نسبة الخصم' 
-                    : `Discount Amount (${quotationData.currency}) / مبلغ الخصم`}
-                </Label>
-                <Input
-                  type="number"
-                  value={quotationData.discountValue}
-                  onChange={(e) => setQuotationData({...quotationData, discountValue: parseFloat(e.target.value) || 0})}
-                  min="0"
-                  max={quotationData.discountType === 'percentage' ? 100 : undefined}
-                  step={quotationData.discountType === 'percentage' ? 0.1 : 0.01}
-                  className="text-sm"
-                />
-              </div>
-              <div>
-                <Label>Tax Rate (%) / معدل الضريبة</Label>
-                <Input
-                  type="number"
-                  value={quotationData.taxRate}
-                  onChange={(e) => setQuotationData({...quotationData, taxRate: parseFloat(e.target.value) || 0})}
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  className="text-sm"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Totals */}
-      {items.length > 0 && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle>Pricing Summary / ملخص التسعير</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal / المجموع الفرعي:</span>
-                <span className="font-medium">{getCurrencySymbol()} {subtotal.toLocaleString()}</span>
-              </div>
-              {discountAmount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount / الخصم:</span>
-                  <span className="font-medium">-{getCurrencySymbol()} {discountAmount.toLocaleString()}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span>After Discount / بعد الخصم:</span>
-                <span className="font-medium">{getCurrencySymbol()} {taxableAmount.toLocaleString()}</span>
-              </div>
-              {taxAmount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Tax ({quotationData.taxRate}%) / الضريبة:</span>
-                  <span className="font-medium">{getCurrencySymbol()} {taxAmount.toLocaleString()}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-xl font-bold border-t pt-3">
-                <span>Grand Total / المجموع الكلي:</span>
-                <Badge variant="default" className="text-xl px-4 py-2">
-                  {getCurrencySymbol()} {grandTotal.toLocaleString()}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Terms and Conditions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Additional Information / معلومات إضافية</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label htmlFor="notes">Quotation Notes / ملاحظات العرض</Label>
-              <Textarea
-                id="notes"
-                value={quotationData.notes}
-                onChange={(e) => setQuotationData({...quotationData, notes: e.target.value})}
-                placeholder="Any additional notes for this quotation... / أي ملاحظات إضافية لهذا العرض"
-                rows={4}
-                className="text-sm mt-2"
-              />
-            </div>
-            <div>
-              <Label htmlFor="terms">Payment Terms / شروط الدفع</Label>
-              <Textarea
-                id="terms"
-                value={quotationData.terms}
-                onChange={(e) => setQuotationData({...quotationData, terms: e.target.value})}
-                placeholder="Payment terms, delivery conditions, etc... / شروط الدفع وشروط التسليم"
-                rows={4}
-                className="text-sm mt-2"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Save Buttons */}
-      <div className="flex justify-end gap-3 pt-6 border-t bg-white sticky bottom-0 pb-4">
-        <Button 
-          variant="outline" 
-          type="button"
-          onClick={handleSaveAsDraft}
-          disabled={loading || externalLoading}
-          className="min-w-[120px]"
-        >
-          {loading ? 'Saving...' : 'Save as Draft'}
-        </Button>
-        <Button 
-          type="button"
-          className="bg-smart-orange hover:bg-smart-orange/90 min-w-[120px]"
-          onClick={handleSaveQuotation}
-          disabled={loading || externalLoading}
-        >
-          {loading ? 'Saving...' : 'Save Quotation'}
-        </Button>
+      {/* Fixed Save Buttons */}
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t shadow-lg z-10">
+        <div className="flex justify-end gap-3 p-4">
+          <Button 
+            variant="outline" 
+            type="button"
+            onClick={handleSaveAsDraft}
+            disabled={loading || externalLoading}
+            className="min-w-[120px]"
+          >
+            {loading ? 'Saving...' : 'Save as Draft'}
+          </Button>
+          <Button 
+            type="button"
+            className="bg-smart-orange hover:bg-smart-orange/90 min-w-[120px]"
+            onClick={handleSaveQuotation}
+            disabled={loading || externalLoading}
+          >
+            {loading ? 'Saving...' : 'Save Quotation'}
+          </Button>
+        </div>
       </div>
     </div>
   );
