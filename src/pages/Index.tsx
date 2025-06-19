@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import Dashboard from "@/components/Dashboard";
 import ProjectManagement from "@/components/ProjectManagement";
@@ -7,15 +8,16 @@ import TaskManagement from "@/components/TaskManagement";
 import UserManagement from "@/components/UserManagement";
 import QuotationManagement from "@/components/QuotationManagement";
 import InvoiceManagement from "@/components/InvoiceManagement";
+import ProposalManagement from "@/components/ProposalManagement";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu } from "lucide-react";
 
 const Index = () => {
-  const [activeSection, setActiveSection] = useState("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { user, signOut } = useAuth();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await signOut();
@@ -43,21 +45,44 @@ const Index = () => {
   }
 
   const renderContent = () => {
-    switch (activeSection) {
-      case "dashboard":
+    switch (location.pathname) {
+      case "/":
         return <Dashboard />;
-      case "projects":
+      case "/projects":
         return <ProjectManagement />;
-      case "tasks":
+      case "/tasks":
         return <TaskManagement />;
-      case "users":
+      case "/users":
         return <UserManagement />;
-      case "quotations":
+      case "/quotations":
         return <QuotationManagement />;
-      case "invoices":
+      case "/invoices":
         return <InvoiceManagement />;
+      case "/proposals":
+        return <ProposalManagement />;
       default:
         return <Dashboard />;
+    }
+  };
+
+  const getPageTitle = () => {
+    switch (location.pathname) {
+      case "/":
+        return "Dashboard";
+      case "/projects":
+        return "Project Management";
+      case "/tasks":
+        return "Task Management";
+      case "/users":
+        return "User Management";
+      case "/quotations":
+        return "Quotation Management";
+      case "/invoices":
+        return "Invoice Management";
+      case "/proposals":
+        return "Proposal Management";
+      default:
+        return "Dashboard";
     }
   };
 
@@ -81,7 +106,7 @@ const Index = () => {
                   <Menu className="h-4 w-4" />
                 </Button>
                 <h1 className="text-2xl font-semibold text-gray-900">
-                  SmartUni IT Management System
+                  {getPageTitle()}
                 </h1>
               </div>
               <div className="flex items-center space-x-4">

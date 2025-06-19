@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Users, 
@@ -34,6 +35,8 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [profile, setProfile] = useState(null);
 
@@ -101,6 +104,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
     }
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   return (
     <div
       className={`flex flex-col h-screen bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 ${
@@ -122,11 +129,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
             <li key={item.label} className="mb-2">
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2"
-                onClick={() => {
-                  // Implement navigation logic here, e.g., using react-router-dom
-                  console.log(`Navigating to ${item.path}`);
-                }}
+                className={`w-full justify-start gap-2 ${
+                  location.pathname === item.path ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+                }`}
+                onClick={() => handleNavigation(item.path)}
               >
                 <item.icon className="h-4 w-4" />
                 {!isCollapsed && <span>{item.label}</span>}
