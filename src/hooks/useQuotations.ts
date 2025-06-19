@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { QuotationData } from '@/utils/pdfExport';
+import { QuotationData } from '@/utils/pdf/types';
 
 export const useQuotations = () => {
   const [quotations, setQuotations] = useState<QuotationData[]>([]);
@@ -35,7 +34,7 @@ export const useQuotations = () => {
         sections: Array.isArray(q.sections) ? q.sections as any[] : [],
         subtotal: parseFloat(q.subtotal.toString()),
         discount: parseFloat(q.discount.toString()),
-        discountType: q.discount_type || 'percentage',
+        discountType: (q.discount_type === 'fixed' || q.discount_type === 'percentage') ? q.discount_type : 'percentage',
         discountPercent: q.discount_percent ? parseFloat(q.discount_percent.toString()) : undefined,
         vat: parseFloat(q.vat.toString()),
         total: parseFloat(q.total.toString()),
