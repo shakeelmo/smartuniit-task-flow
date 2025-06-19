@@ -133,55 +133,55 @@ const QuotationsList = ({ searchTerm, statusFilter, onEditQuotation, importedQuo
   };
 
   return (
-    <div className="bg-white rounded-lg border">
+    <div className="bg-white rounded-lg border shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Quote Number</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Total (SAR)</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Sales Rep</TableHead>
-            <TableHead className="w-[50px]">Actions</TableHead>
+          <TableRow className="border-b border-gray-200">
+            <TableHead className="bg-gray-50 font-semibold text-gray-900">Quote Number</TableHead>
+            <TableHead className="bg-gray-50 font-semibold text-gray-900">Customer</TableHead>
+            <TableHead className="bg-gray-50 font-semibold text-gray-900">Date</TableHead>
+            <TableHead className="bg-gray-50 font-semibold text-gray-900">Total (SAR)</TableHead>
+            <TableHead className="bg-gray-50 font-semibold text-gray-900">Status</TableHead>
+            <TableHead className="bg-gray-50 font-semibold text-gray-900">Sales Rep</TableHead>
+            <TableHead className="bg-gray-50 font-semibold text-gray-900 w-[50px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredQuotations.map((quotation) => (
-            <TableRow key={quotation.id}>
-              <TableCell className="font-medium">{quotation.number}</TableCell>
-              <TableCell>{quotation.customerName}</TableCell>
-              <TableCell>{new Date(quotation.date).toLocaleDateString()}</TableCell>
-              <TableCell className="font-medium">
+            <TableRow key={quotation.id} className="border-b border-gray-100 hover:bg-gray-50/50">
+              <TableCell className="font-medium text-gray-900 bg-white">{quotation.number}</TableCell>
+              <TableCell className="text-gray-900 bg-white">{quotation.customerName}</TableCell>
+              <TableCell className="text-gray-900 bg-white">{new Date(quotation.date).toLocaleDateString()}</TableCell>
+              <TableCell className="font-medium text-gray-900 bg-white">
                 ﷼ {quotation.total.toLocaleString()}
               </TableCell>
-              <TableCell>{getStatusBadge(quotation.status)}</TableCell>
-              <TableCell>{quotation.salesRep}</TableCell>
-              <TableCell>
+              <TableCell className="bg-white">{getStatusBadge(quotation.status)}</TableCell>
+              <TableCell className="text-gray-900 bg-white">{quotation.salesRep}</TableCell>
+              <TableCell className="bg-white">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-white">
-                    <DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="bg-white border shadow-lg z-50">
+                    <DropdownMenuItem className="hover:bg-gray-50">
                       <Eye className="h-4 w-4 mr-2" />
                       View
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEdit(quotation)}>
+                    <DropdownMenuItem onClick={() => handleEdit(quotation)} className="hover:bg-gray-50">
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-gray-50">
                       <Copy className="h-4 w-4 mr-2" />
                       Duplicate
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-gray-50">
                       <Download className="h-4 w-4 mr-2" />
                       Export PDF
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem className="text-red-600 hover:bg-red-50">
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
                     </DropdownMenuItem>

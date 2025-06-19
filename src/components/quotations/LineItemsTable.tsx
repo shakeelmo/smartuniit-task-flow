@@ -138,40 +138,40 @@ const LineItemsTable = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-200 rounded-lg">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left p-3 border-b border-gray-200 min-w-[200px]">
+      <div className="overflow-x-auto bg-white rounded-lg border shadow-sm">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="text-left p-3 font-semibold text-gray-900 border-r border-gray-200 min-w-[200px]">
                 Service / الخدمة
               </th>
-              <th className="text-left p-3 border-b border-gray-200 min-w-[120px]">
+              <th className="text-left p-3 font-semibold text-gray-900 border-r border-gray-200 min-w-[120px]">
                 Part Number / رقم الجزء
               </th>
-              <th className="text-left p-3 border-b border-gray-200 min-w-[250px]">
+              <th className="text-left p-3 font-semibold text-gray-900 border-r border-gray-200 min-w-[250px]">
                 Description / الوصف
               </th>
-              <th className="text-left p-3 border-b border-gray-200 w-24">
+              <th className="text-left p-3 font-semibold text-gray-900 border-r border-gray-200 w-24">
                 Qty / الكمية
               </th>
               {showUnitColumn && (
-                <th className="text-left p-3 border-b border-gray-200 w-24">
+                <th className="text-left p-3 font-semibold text-gray-900 border-r border-gray-200 w-24">
                   Unit / الوحدة
                 </th>
               )}
-              <th className="text-left p-3 border-b border-gray-200 w-32">
+              <th className="text-left p-3 font-semibold text-gray-900 border-r border-gray-200 w-32">
                 Unit Price (SAR) / سعر الوحدة
               </th>
-              <th className="text-left p-3 border-b border-gray-200 w-32">
+              <th className="text-left p-3 font-semibold text-gray-900 border-r border-gray-200 w-32">
                 Total / المجموع
               </th>
-              <th className="w-12 p-3 border-b border-gray-200"></th>
+              <th className="w-12 p-3 font-semibold text-gray-900"></th>
             </tr>
           </thead>
           <tbody>
             {lineItems.map((item, index) => (
-              <tr key={item.id} className="border-b border-gray-100">
-                <td className="p-3">
+              <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50/50">
+                <td className="p-3 border-r border-gray-100 bg-white">
                   {showAddService === item.id ? (
                     <div className="space-y-2">
                       <Input
@@ -210,7 +210,7 @@ const LineItemsTable = ({
                     <select
                       value={item.service}
                       onChange={(e) => handleServiceChange(item.id, e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white"
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-smart-orange focus:border-smart-orange"
                     >
                       <option value="">Select service...</option>
                       {allServices.map((service) => (
@@ -224,7 +224,7 @@ const LineItemsTable = ({
                     </select>
                   )}
                 </td>
-                <td className="p-3">
+                <td className="p-3 border-r border-gray-100 bg-white">
                   <Input
                     value={item.partNumber || ''}
                     onChange={(e) => updateLineItem(item.id, 'partNumber', e.target.value)}
@@ -232,7 +232,7 @@ const LineItemsTable = ({
                     className="text-sm"
                   />
                 </td>
-                <td className="p-3">
+                <td className="p-3 border-r border-gray-100 bg-white">
                   <Textarea
                     value={item.description}
                     onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
@@ -241,7 +241,7 @@ const LineItemsTable = ({
                     className="text-sm"
                   />
                 </td>
-                <td className="p-3">
+                <td className="p-3 border-r border-gray-100 bg-white">
                   <Input
                     type="number"
                     value={item.quantity}
@@ -251,11 +251,11 @@ const LineItemsTable = ({
                   />
                 </td>
                 {showUnitColumn && (
-                  <td className="p-3">
+                  <td className="p-3 border-r border-gray-100 bg-white">
                     <select
                       value={item.unit || ''}
                       onChange={(e) => updateLineItem(item.id, 'unit', e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white"
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-smart-orange focus:border-smart-orange"
                     >
                       <option value="">Select unit...</option>
                       <option value="Each">Each / كل</option>
@@ -283,7 +283,7 @@ const LineItemsTable = ({
                     </select>
                   </td>
                 )}
-                <td className="p-3">
+                <td className="p-3 border-r border-gray-100 bg-white">
                   <Input
                     type="number"
                     value={item.unitPrice}
@@ -293,10 +293,10 @@ const LineItemsTable = ({
                     placeholder="0.00"
                   />
                 </td>
-                <td className="p-3 font-medium">
+                <td className="p-3 border-r border-gray-100 bg-white font-medium">
                   ﷼ {(item.quantity * item.unitPrice).toLocaleString()}
                 </td>
-                <td className="p-3">
+                <td className="p-3 bg-white">
                   {lineItems.length > 1 && (
                     <Button
                       variant="ghost"
@@ -314,7 +314,7 @@ const LineItemsTable = ({
         </table>
         
         {customServices.length > 0 && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <div className="m-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="text-sm font-semibold text-blue-800 mb-2">
               Custom Services Added / الخدمات المخصصة المضافة:
             </h4>

@@ -22,20 +22,27 @@ export const addTableRow = (
   const { hasPartNumbers, hasUnits, columnWidths, columnPositions, tableWidth, currency } = config;
   const baseRowHeight = 14;
 
-  // Improved service text extraction with better cleaning and fallback
+  // Enhanced service text extraction with priority for service name
   let serviceText = '';
   
+  // First priority: service field (this is the actual service name)
   if (item.service && typeof item.service === 'string' && item.service.trim()) {
     serviceText = item.service.trim();
-  } else if (item.description && typeof item.description === 'string' && item.description.trim()) {
-    serviceText = item.description.trim();
-  } else if (item.name && typeof item.name === 'string' && item.name.trim()) {
+  }
+  // Second priority: name field
+  else if (item.name && typeof item.name === 'string' && item.name.trim()) {
     serviceText = item.name.trim();
-  } else if (item.title && typeof item.title === 'string' && item.title.trim()) {
+  }
+  // Third priority: title field
+  else if (item.title && typeof item.title === 'string' && item.title.trim()) {
     serviceText = item.title.trim();
   }
+  // Fallback: create a default service name
+  else {
+    serviceText = `Service Item ${index + 1}`;
+  }
 
-  // Clean the text thoroughly and provide fallback
+  // Clean the service text thoroughly
   serviceText = String(serviceText || '')
     .trim()
     .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '') // Keep printable characters
@@ -45,6 +52,15 @@ export const addTableRow = (
   // If text is still empty or too short, provide a meaningful fallback
   if (!serviceText || serviceText.length < 2) {
     serviceText = `Service Item ${index + 1}`;
+  }
+
+  // Enhanced description text handling - separate from service name
+  let descriptionText = '';
+  if (item.description && typeof item.description === 'string' && item.description.trim()) {
+    descriptionText = String(item.description).trim()
+      .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   // Enhanced part number text handling
@@ -71,15 +87,14 @@ export const addTableRow = (
     unitText = 'Each';
   }
 
-  // Calculate text wrapping for description with controlled width
-  const descriptionColumnIndex = 1;
-  const maxServiceWidth = columnWidths[descriptionColumnIndex] - 8; // More padding
+  // Calculate text wrapping for both service and description
+  const serviceColumnIndex = 1; // Service column
+  const maxServiceWidth = columnWidths[serviceColumnIndex] - 8;
   const wrappedServiceLines = wrapText(pdf, serviceText, maxServiceWidth);
   
-  // Limit description to maximum 2 lines to prevent excessive row height
+  // Limit service name to maximum 2 lines
   const limitedServiceLines = wrappedServiceLines.slice(0, 2);
   if (wrappedServiceLines.length > 2) {
-    // Truncate the second line and add ellipsis
     let lastLine = limitedServiceLines[1] || '';
     while (pdf.getTextWidth(lastLine + '...') > maxServiceWidth && lastLine.length > 1) {
       lastLine = lastLine.slice(0, -1);
@@ -87,7 +102,24 @@ export const addTableRow = (
     limitedServiceLines[1] = lastLine + '...';
   }
 
-  // Enhanced Part Number column handling with strict overflow prevention
+  // Handle description wrapping if we have description text
+  let wrappedDescriptionLines: string[] = [];
+  if (descriptionText) {
+    const descriptionColumnIndex = hasPartNumbers ? 3 : 2; // Description column position
+    const maxDescriptionWidth = columnWidths[descriptionColumnIndex] - 8;
+    const rawDescriptionLines = wrapText(pdf, descriptionText, maxDescriptionWidth);
+    wrappedDescriptionLines = rawDescriptionLines.slice(0, 2); // Limit to 2 lines
+    
+    if (rawDescriptionLines.length > 2) {
+      let lastLine = wrappedDescriptionLines[1] || '';
+      while (pdf.getTextWidth(lastLine + '...') > maxDescriptionWidth && lastLine.length > 1) {
+        lastLine = lastLine.slice(0, -1);
+      }
+      wrappedDescriptionLines[1] = lastLine + '...';
+    }
+  }
+
+  // Enhanced Part Number column handling
   let wrappedPartLines: string[] = [];
   let partColumnIndex = -1;
   if (hasPartNumbers) {
@@ -95,17 +127,14 @@ export const addTableRow = (
     const cellPadding = 3;
     const maxPartWidth = columnWidths[partColumnIndex] - (cellPadding * 2);
     
-    // Check if the part number fits on a single line
     const partNumberWidth = pdf.getTextWidth(partNumberText);
     
     if (partNumberWidth <= maxPartWidth) {
       wrappedPartLines = [partNumberText];
     } else {
-      // Part number is too long, wrap with truncation
       const roughWrappedLines = wrapText(pdf, partNumberText, maxPartWidth);
-      wrappedPartLines = roughWrappedLines.slice(0, 1); // Limit to 1 line for part numbers
+      wrappedPartLines = roughWrappedLines.slice(0, 1);
       
-      // Ensure it fits with ellipsis if needed
       if (roughWrappedLines.length > 1) {
         let truncatedLine = wrappedPartLines[0];
         while (pdf.getTextWidth(truncatedLine + '...') > maxPartWidth && truncatedLine.length > 1) {
@@ -116,9 +145,10 @@ export const addTableRow = (
     }
   }
   
-  // Calculate required row height based on the tallest column (max 2 lines for descriptions)
+  // Calculate required row height based on the tallest column
   const maxLines = Math.max(
     limitedServiceLines.length,
+    wrappedDescriptionLines.length,
     wrappedPartLines.length,
     1
   );
@@ -133,8 +163,8 @@ export const addTableRow = (
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, requiredRowHeight, 'F');
 
   // Enhanced border system - Draw complete grid
-  pdf.setDrawColor(180, 180, 180);
-  pdf.setLineWidth(0.5);
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(0.3);
   
   // Draw horizontal borders
   pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
@@ -144,20 +174,20 @@ export const addTableRow = (
   let currentXPosition = PDF_CONFIG.pageMargin;
   
   // Left border of table
-  pdf.setLineWidth(0.8);
+  pdf.setLineWidth(0.5);
   pdf.setDrawColor(...COLORS.black);
   pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
   
   // Internal column separators
   columnWidths.forEach((width, colIndex) => {
     currentXPosition += width;
-    pdf.setLineWidth(0.5);
-    pdf.setDrawColor(180, 180, 180);
+    pdf.setLineWidth(0.3);
+    pdf.setDrawColor(200, 200, 200);
     pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
   });
   
   // Right border of table
-  pdf.setLineWidth(0.8);
+  pdf.setLineWidth(0.5);
   pdf.setDrawColor(...COLORS.black);
   pdf.line(PDF_CONFIG.pageMargin + tableWidth, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
 
@@ -172,25 +202,27 @@ export const addTableRow = (
   // SERIAL NUMBER COLUMN - centered and clearly visible
   const serialNumber = index + 1;
   const serialText = serialNumber.toString();
-  pdf.setFont('helvetica', 'bold'); // Make serial number bold for visibility
+  pdf.setFont('helvetica', 'bold');
   const serialWidth = pdf.getTextWidth(serialText);
   const serialX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (serialWidth / 2);
   const textY = yPosition + Math.max(9, (requiredRowHeight / 2) + 1);
   pdf.text(serialText, serialX, textY);
-  pdf.setFont('helvetica', 'normal'); // Reset font
+  pdf.setFont('helvetica', 'normal');
   colIndex++;
 
-  // SERVICE/DESCRIPTION COLUMN - left aligned with controlled wrapping
+  // SERVICE NAME COLUMN - left aligned with controlled wrapping
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (limitedServiceLines.length * 5)) / 2 + 4);
+  pdf.setFont('helvetica', 'bold'); // Make service name bold
   limitedServiceLines.forEach((line, lineIndex) => {
     const cleanLine = line.trim();
     if (cleanLine) {
       pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, serviceStartY + (lineIndex * 5));
     }
   });
+  pdf.setFont('helvetica', 'normal'); // Reset font
   colIndex++;
 
-  // PART NUMBER COLUMN (if present) - left aligned with guaranteed no overflow
+  // PART NUMBER COLUMN (if present) - left aligned
   if (hasPartNumbers) {
     const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 5)) / 2 + 4);
     wrappedPartLines.forEach((line, lineIndex) => {
@@ -201,6 +233,18 @@ export const addTableRow = (
     });
     colIndex++;
   }
+
+  // DESCRIPTION COLUMN - left aligned with controlled wrapping
+  if (wrappedDescriptionLines.length > 0) {
+    const descStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedDescriptionLines.length * 5)) / 2 + 4);
+    wrappedDescriptionLines.forEach((line, lineIndex) => {
+      const cleanLine = line.trim();
+      if (cleanLine) {
+        pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, descStartY + (lineIndex * 5));
+      }
+    });
+  }
+  colIndex++;
 
   // QUANTITY COLUMN - centered
   const qtyText = String(Number(item.quantity) || 0);
@@ -239,7 +283,7 @@ export const addTableRow = (
   const totalText = currency === 'SAR' ? `${totalFormatted} SAR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
-  pdf.setFont('helvetica', 'bold'); // Make total bold
+  pdf.setFont('helvetica', 'bold');
   pdf.text(totalText, totalX, textY);
 
   return yPosition + requiredRowHeight;
