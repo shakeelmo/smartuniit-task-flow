@@ -12,6 +12,32 @@ export interface TableRowConfig {
   currency: 'SAR' | 'USD';
 }
 
+// Helper function to safely render text
+const safeText = (pdf: jsPDF, text: string, x: number, y: number) => {
+  // Validate text
+  if (!text || typeof text !== 'string' || text.trim() === '') {
+    return; // Skip rendering empty text
+  }
+  
+  // Validate coordinates
+  if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+    console.warn('Invalid coordinates for text:', { text, x, y });
+    return;
+  }
+  
+  // Clean and validate text one more time
+  const cleanText = String(text).trim();
+  if (cleanText.length === 0) {
+    return;
+  }
+  
+  try {
+    pdf.text(cleanText, x, y);
+  } catch (error) {
+    console.error('Error rendering text:', { text: cleanText, x, y, error });
+  }
+};
+
 export const addTableRow = (
   pdf: jsPDF,
   item: any,
@@ -201,12 +227,16 @@ export const addTableRow = (
 
   // SERIAL NUMBER COLUMN - centered and clearly visible
   const serialNumber = index + 1;
-  const serialText = serialNumber.toString();
+  const serialText = String(serialNumber);
   pdf.setFont('helvetica', 'bold');
   const serialWidth = pdf.getTextWidth(serialText);
   const serialX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (serialWidth / 2);
   const textY = yPosition + Math.max(9, (requiredRowHeight / 2) + 1);
-  pdf.text(serialText, serialX, textY);
+  
+  // Validate coordinates before rendering
+  if (!isNaN(serialX) && !isNaN(textY)) {
+    safeText(pdf, serialText, serialX, textY);
+  }
   pdf.setFont('helvetica', 'normal');
   colIndex++;
 
@@ -214,9 +244,13 @@ export const addTableRow = (
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (limitedServiceLines.length * 5)) / 2 + 4);
   pdf.setFont('helvetica', 'bold'); // Make service name bold
   limitedServiceLines.forEach((line, lineIndex) => {
-    const cleanLine = line.trim();
-    if (cleanLine) {
-      pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, serviceStartY + (lineIndex * 5));
+    const cleanLine = String(line || '').trim();
+    if (cleanLine && cleanLine.length > 0) {
+      const serviceX = columnPositions[colIndex] + cellPadding;
+      const serviceY = serviceStartY + (lineIndex * 5);
+      if (!isNaN(serviceX) && !isNaN(serviceY)) {
+        safeText(pdf, cleanLine, serviceX, serviceY);
+      }
     }
   });
   pdf.setFont('helvetica', 'normal'); // Reset font
@@ -226,9 +260,13 @@ export const addTableRow = (
   if (hasPartNumbers) {
     const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 5)) / 2 + 4);
     wrappedPartLines.forEach((line, lineIndex) => {
-      const cleanLine = line.trim();
-      if (cleanLine) {
-        pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
+      const cleanLine = String(line || '').trim();
+      if (cleanLine && cleanLine.length > 0) {
+        const partX = columnPositions[colIndex] + cellPadding;
+        const partY = partStartY + (lineIndex * 5);
+        if (!isNaN(partX) && !isNaN(partY)) {
+          safeText(pdf, cleanLine, partX, partY);
+        }
       }
     });
     colIndex++;
@@ -238,26 +276,35 @@ export const addTableRow = (
   if (wrappedDescriptionLines.length > 0) {
     const descStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedDescriptionLines.length * 5)) / 2 + 4);
     wrappedDescriptionLines.forEach((line, lineIndex) => {
-      const cleanLine = line.trim();
-      if (cleanLine) {
-        pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, descStartY + (lineIndex * 5));
+      const cleanLine = String(line || '').trim();
+      if (cleanLine && cleanLine.length > 0) {
+        const descX = columnPositions[colIndex] + cellPadding;
+        const descY = descStartY + (lineIndex * 5);
+        if (!isNaN(descX) && !isNaN(descY)) {
+          safeText(pdf, cleanLine, descX, descY);
+        }
       }
     });
   }
   colIndex++;
 
   // QUANTITY COLUMN - centered
-  const qtyText = String(Number(item.quantity) || 0);
+  const quantity = Number(item.quantity) || 0;
+  const qtyText = String(quantity);
   const qtyWidth = pdf.getTextWidth(qtyText);
   const qtyX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (qtyWidth / 2);
-  pdf.text(qtyText, qtyX, textY);
+  if (!isNaN(qtyX) && !isNaN(textY)) {
+    safeText(pdf, qtyText, qtyX, textY);
+  }
   colIndex++;
 
   // UNIT COLUMN (if present) - centered
   if (hasUnits) {
     const unitWidth = pdf.getTextWidth(unitText);
     const unitX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (unitWidth / 2);
-    pdf.text(unitText, unitX, textY);
+    if (!isNaN(unitX) && !isNaN(textY)) {
+      safeText(pdf, unitText, unitX, textY);
+    }
     colIndex++;
   }
 
@@ -270,7 +317,9 @@ export const addTableRow = (
   const unitPriceText = currency === 'SAR' ? `${unitPriceFormatted} SAR` : `$${unitPriceFormatted}`;
   const unitPriceWidth = pdf.getTextWidth(unitPriceText);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
-  pdf.text(unitPriceText, unitPriceX, textY);
+  if (!isNaN(unitPriceX) && !isNaN(textY)) {
+    safeText(pdf, unitPriceText, unitPriceX, textY);
+  }
   colIndex++;
 
   // TOTAL PRICE COLUMN - right aligned with currency
@@ -284,7 +333,9 @@ export const addTableRow = (
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
   pdf.setFont('helvetica', 'bold');
-  pdf.text(totalText, totalX, textY);
+  if (!isNaN(totalX) && !isNaN(textY)) {
+    safeText(pdf, totalText, totalX, textY);
+  }
 
   return yPosition + requiredRowHeight;
 };
