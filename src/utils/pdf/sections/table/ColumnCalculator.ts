@@ -21,46 +21,46 @@ export const calculateColumnConfig = (
   if (hasPartNumbers && hasUnits) {
     // All columns: S#, Service, Part#, Description, Qty, Unit, Unit Price, Total
     columnWidths = [
-      15,  // Serial number
-      35,  // Service name (increased)
-      25,  // Part number
-      30,  // Description
-      15,  // Quantity
-      15,  // Unit
-      25,  // Unit price
-      30   // Total
+      12,  // Serial number (reduced)
+      28,  // Service name (reduced)
+      20,  // Part number (reduced)
+      25,  // Description (reduced)
+      12,  // Quantity (reduced)
+      12,  // Unit (reduced)
+      35,  // Unit price (increased significantly)
+      40   // Total (increased significantly)
     ];
   } else if (hasPartNumbers && !hasUnits) {
     // S#, Service, Part#, Description, Qty, Unit Price, Total
     columnWidths = [
-      15,  // Serial number
-      40,  // Service name (increased)
-      25,  // Part number
-      35,  // Description (increased)
-      15,  // Quantity
-      30,  // Unit price (increased)
-      30   // Total
+      12,  // Serial number (reduced)
+      30,  // Service name (reduced)
+      20,  // Part number (reduced)
+      28,  // Description (reduced)
+      12,  // Quantity (reduced)
+      38,  // Unit price (increased significantly)
+      44   // Total (increased significantly)
     ];
   } else if (!hasPartNumbers && hasUnits) {
     // S#, Service, Description, Qty, Unit, Unit Price, Total
     columnWidths = [
-      15,  // Serial number
-      45,  // Service name (increased)
-      40,  // Description (increased)
-      15,  // Quantity
-      15,  // Unit
-      30,  // Unit price
-      30   // Total
+      12,  // Serial number (reduced)
+      35,  // Service name (reduced)
+      30,  // Description (reduced)
+      12,  // Quantity (reduced)
+      12,  // Unit (reduced)
+      38,  // Unit price (increased)
+      45   // Total (increased)
     ];
   } else {
     // Basic: S#, Service, Description, Qty, Unit Price, Total
     columnWidths = [
-      15,  // Serial number
-      50,  // Service name (increased significantly)
-      45,  // Description (increased)
-      15,  // Quantity
-      35,  // Unit price (increased)
-      30   // Total
+      12,  // Serial number (reduced)
+      40,  // Service name (reduced)
+      35,  // Description (reduced)
+      12,  // Quantity (reduced)
+      42,  // Unit price (increased significantly)
+      48   // Total (increased significantly)
     ];
   }
 

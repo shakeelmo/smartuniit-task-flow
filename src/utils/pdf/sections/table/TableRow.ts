@@ -12,7 +12,7 @@ export interface TableRowConfig {
   currency: 'SAR' | 'USD';
 }
 
-// Helper function to safely render text
+// Helper function to safely render text with better error handling
 const safeText = (pdf: jsPDF, text: string, x: number, y: number) => {
   // Validate text
   if (!text || typeof text !== 'string' || text.trim() === '') {
@@ -38,6 +38,38 @@ const safeText = (pdf: jsPDF, text: string, x: number, y: number) => {
   }
 };
 
+// Helper function to format currency with proper spacing
+const formatCurrency = (value: number, currency: 'SAR' | 'USD'): string => {
+  const formatted = value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  
+  if (currency === 'SAR') {
+    return `${formatted} SAR`;
+  } else {
+    return `$${formatted}`;
+  }
+};
+
+// Helper function to ensure text fits in column width
+const truncateTextToFit = (pdf: jsPDF, text: string, maxWidth: number): string => {
+  if (!text || maxWidth <= 0) return '';
+  
+  const textWidth = pdf.getTextWidth(text);
+  if (textWidth <= maxWidth) {
+    return text;
+  }
+  
+  // If text is too long, truncate and add ellipsis
+  let truncated = text;
+  while (pdf.getTextWidth(truncated + '...') > maxWidth && truncated.length > 1) {
+    truncated = truncated.slice(0, -1);
+  }
+  
+  return truncated + '...';
+};
+
 export const addTableRow = (
   pdf: jsPDF,
   item: any,
@@ -50,10 +82,8 @@ export const addTableRow = (
 
   console.log('Processing item for row:', { item, index });
 
-  // FIXED: Enhanced service text extraction with better field mapping
+  // Enhanced service text extraction with better field mapping
   let serviceText = '';
-  
-  // Check multiple possible field names for service
   const serviceFields = ['service', 'name', 'title', 'serviceName', 'itemName'];
   for (const field of serviceFields) {
     if (item[field] && typeof item[field] === 'string' && item[field].trim()) {
@@ -62,7 +92,6 @@ export const addTableRow = (
     }
   }
 
-  // If still no service text found, create a meaningful fallback
   if (!serviceText || serviceText.length < 1) {
     serviceText = `Service Item ${index + 1}`;
   }
@@ -72,11 +101,11 @@ export const addTableRow = (
   // Clean the service text thoroughly
   serviceText = String(serviceText)
     .trim()
-    .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '') // Keep printable characters
-    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 
-  // Enhanced description text handling - separate from service name
+  // Enhanced description text handling
   let descriptionText = '';
   const descriptionFields = ['description', 'desc', 'details'];
   for (const field of descriptionFields) {
@@ -108,14 +137,13 @@ export const addTableRow = (
     }
   }
   
-  // Provide default unit if still empty
   if (!unitText) {
     unitText = 'Each';
   }
 
-  // FIXED: Calculate text wrapping with proper column widths
-  const serviceColumnIndex = 1; // Service column
-  const maxServiceWidth = Math.max(columnWidths[serviceColumnIndex] - 6, 20); // Ensure minimum width
+  // Calculate text wrapping with improved column widths
+  const serviceColumnIndex = 1;
+  const maxServiceWidth = Math.max(columnWidths[serviceColumnIndex] - 4, 15);
   const wrappedServiceLines = wrapText(pdf, serviceText, maxServiceWidth);
   
   // Limit service name to maximum 2 lines
@@ -131,10 +159,10 @@ export const addTableRow = (
   // Handle description wrapping if we have description text
   let wrappedDescriptionLines: string[] = [];
   if (descriptionText) {
-    const descriptionColumnIndex = hasPartNumbers ? 3 : 2; // Description column position
-    const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - 6, 20);
+    const descriptionColumnIndex = hasPartNumbers ? 3 : 2;
+    const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - 4, 15);
     const rawDescriptionLines = wrapText(pdf, descriptionText, maxDescriptionWidth);
-    wrappedDescriptionLines = rawDescriptionLines.slice(0, 2); // Limit to 2 lines
+    wrappedDescriptionLines = rawDescriptionLines.slice(0, 2);
     
     if (rawDescriptionLines.length > 2) {
       let lastLine = wrappedDescriptionLines[1] || '';
@@ -149,8 +177,8 @@ export const addTableRow = (
   let wrappedPartLines: string[] = [];
   let partColumnIndex = -1;
   if (hasPartNumbers) {
-    partColumnIndex = 2; // Part number is the 3rd column (index 2)
-    const maxPartWidth = Math.max(columnWidths[partColumnIndex] - 6, 15);
+    partColumnIndex = 2;
+    const maxPartWidth = Math.max(columnWidths[partColumnIndex] - 4, 12);
     
     const partNumberWidth = pdf.getTextWidth(partNumberText);
     
@@ -222,7 +250,7 @@ export const addTableRow = (
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
   let colIndex = 0;
-  const cellPadding = 3;
+  const cellPadding = 2; // Reduced padding for better fit
 
   // SERIAL NUMBER COLUMN - centered and clearly visible
   const serialNumber = index + 1;
@@ -241,7 +269,7 @@ export const addTableRow = (
 
   // SERVICE NAME COLUMN - left aligned with controlled wrapping
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (limitedServiceLines.length * 5)) / 2 + 4);
-  pdf.setFont('helvetica', 'bold'); // Make service name bold
+  pdf.setFont('helvetica', 'bold');
   console.log('Rendering service lines:', { limitedServiceLines, serviceStartY });
   
   limitedServiceLines.forEach((line, lineIndex) => {
@@ -255,7 +283,7 @@ export const addTableRow = (
       }
     }
   });
-  pdf.setFont('helvetica', 'normal'); // Reset font
+  pdf.setFont('helvetica', 'normal');
   colIndex++;
 
   // PART NUMBER COLUMN (if present) - left aligned
@@ -302,42 +330,42 @@ export const addTableRow = (
 
   // UNIT COLUMN (if present) - centered
   if (hasUnits) {
-    const unitWidth = pdf.getTextWidth(unitText);
+    const truncatedUnit = truncateTextToFit(pdf, unitText, columnWidths[colIndex] - 4);
+    const unitWidth = pdf.getTextWidth(truncatedUnit);
     const unitX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (unitWidth / 2);
     if (!isNaN(unitX) && !isNaN(textY)) {
-      safeText(pdf, unitText, unitX, textY);
+      safeText(pdf, truncatedUnit, unitX, textY);
     }
     colIndex++;
   }
 
-  // UNIT PRICE COLUMN - right aligned with currency
+  // UNIT PRICE COLUMN - right aligned with currency, improved formatting
   const unitPriceValue = Number(item.unitPrice) || 0;
-  const unitPriceFormatted = unitPriceValue.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-  const unitPriceText = currency === 'SAR' ? `${unitPriceFormatted} SAR` : `$${unitPriceFormatted}`;
-  const unitPriceWidth = pdf.getTextWidth(unitPriceText);
+  const unitPriceText = formatCurrency(unitPriceValue, currency);
+  const maxUnitPriceWidth = columnWidths[colIndex] - (cellPadding * 2);
+  const truncatedUnitPrice = truncateTextToFit(pdf, unitPriceText, maxUnitPriceWidth);
+  const unitPriceWidth = pdf.getTextWidth(truncatedUnitPrice);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
+  
   if (!isNaN(unitPriceX) && !isNaN(textY)) {
-    safeText(pdf, unitPriceText, unitPriceX, textY);
+    safeText(pdf, truncatedUnitPrice, unitPriceX, textY);
   }
   colIndex++;
 
-  // TOTAL PRICE COLUMN - right aligned with currency
+  // TOTAL PRICE COLUMN - right aligned with currency, improved formatting
   const quantityValue = Number(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
-  const totalFormatted = totalValue.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-  const totalText = currency === 'SAR' ? `${totalFormatted} SAR` : `$${totalFormatted}`;
-  const totalWidth = pdf.getTextWidth(totalText);
+  const totalText = formatCurrency(totalValue, currency);
+  const maxTotalWidth = columnWidths[colIndex] - (cellPadding * 2);
+  const truncatedTotal = truncateTextToFit(pdf, totalText, maxTotalWidth);
+  const totalWidth = pdf.getTextWidth(truncatedTotal);
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
+  
   pdf.setFont('helvetica', 'bold');
   if (!isNaN(totalX) && !isNaN(textY)) {
-    safeText(pdf, totalText, totalX, textY);
+    safeText(pdf, truncatedTotal, totalX, textY);
   }
+  pdf.setFont('helvetica', 'normal');
 
   return yPosition + requiredRowHeight;
 };
