@@ -70,7 +70,7 @@ const renderSubtotalRow = (
   const currencyName = totalsData.currencyInfo.symbol === '﷼' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
   pdf.text(`Subtotal in ${currencyName}`, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with PROPER Saudi Riyal symbol formatting
+  // Value with CORRECT Saudi Riyal symbol ﷼
   const subtotalText = totalsData.currencyInfo.symbol === '﷼' ? 
     `﷼ ${totalsData.subtotal.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` :
     totalsData.subtotal.text;
@@ -107,7 +107,7 @@ const renderDiscountRow = (
   // Label
   pdf.text(totalsData.discount.label, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with PROPER Saudi Riyal symbol formatting
+  // Value with CORRECT Saudi Riyal symbol ﷼
   const discountText = totalsData.currencyInfo.symbol === '﷼' ? 
     `-﷼ ${totalsData.discount.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` :
     totalsData.discount.text;
@@ -142,7 +142,7 @@ const renderVATRow = (
   // Label
   pdf.text('VAT 15%', labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with PROPER Saudi Riyal symbol formatting
+  // Value with CORRECT Saudi Riyal symbol ﷼
   const vatText = totalsData.currencyInfo.symbol === '﷼' ? 
     `﷼ ${totalsData.vat.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` :
     totalsData.vat.text;
@@ -180,7 +180,7 @@ const renderTotalRow = (
   const currencyName = totalsData.currencyInfo.symbol === '﷼' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
   pdf.text(`Total Price in ${currencyName}`, labelStartX + CELL_PADDING, yPosition + 9);
 
-  // Value with PROPER Saudi Riyal symbol formatting
+  // Value with CORRECT Saudi Riyal symbol ﷼
   const totalText = totalsData.currencyInfo.symbol === '﷼' ? 
     `﷼ ${totalsData.total.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` :
     totalsData.total.text;
