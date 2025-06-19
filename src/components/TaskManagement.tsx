@@ -11,14 +11,19 @@ import {
   CheckSquare,
   Calendar,
   User,
-  Flag
+  Flag,
+  Edit
 } from 'lucide-react';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks, Task } from '@/hooks/useTasks';
+import CreateTaskDialog from '@/components/tasks/CreateTaskDialog';
+import EditTaskDialog from '@/components/tasks/EditTaskDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const TaskManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
-  const { tasks, loading } = useTasks();
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const { tasks, loading, refetch } = useTasks();
   
   const statusOptions = ['All', 'To Do', 'In Progress', 'Review', 'Done'];
 
@@ -65,6 +70,19 @@ const TaskManagement = () => {
     'Done': filteredTasks.filter(task => task.status === 'Done')
   };
 
+  const handleTaskCreated = () => {
+    refetch();
+  };
+
+  const handleTaskUpdated = () => {
+    refetch();
+    setEditingTask(null);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -80,10 +98,7 @@ const TaskManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
           <p className="text-gray-600">Manage and track individual tasks</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          New Task
-        </Button>
+        <CreateTaskDialog onTaskCreated={handleTaskCreated} />
       </div>
 
       {/* Search and Filters */}
@@ -135,9 +150,19 @@ const TaskManagement = () => {
                         <h4 className="font-medium text-gray-900 text-sm leading-tight">
                           {task.title}
                         </h4>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <MoreVertical className="h-3 w-3" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                              <MoreVertical className="h-3 w-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Task
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                       
                       <p className="text-xs text-gray-600 line-clamp-2">
@@ -157,18 +182,24 @@ const TaskManagement = () => {
                           <span className="font-medium">{task.project}</span>
                         </div>
                         
-                        <div className="flex items-center space-x-2">
-                          <User className="h-3 w-3 text-gray-400" />
-                          <span className="text-gray-600">{task.assignee}</span>
-                          <Badge className={getRoleColor(task.assigneeRole)} variant="secondary">
-                            {task.assigneeRole}
-                          </Badge>
-                        </div>
+                        {task.assignee && (
+                          <div className="flex items-center space-x-2">
+                            <User className="h-3 w-3 text-gray-400" />
+                            <span className="text-gray-600">{task.assignee}</span>
+                            {task.assigneeRole && (
+                              <Badge className={getRoleColor(task.assigneeRole)} variant="secondary">
+                                {task.assigneeRole}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-3 w-3 text-gray-400" />
-                          <span className="text-gray-600">Due: {task.dueDate}</span>
-                        </div>
+                        {task.dueDate && (
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-3 w-3 text-gray-400" />
+                            <span className="text-gray-600">Due: {task.dueDate}</span>
+                          </div>
+                        )}
                         
                         <div className="flex items-center justify-between pt-2 border-t">
                           <span className="text-gray-500">
@@ -192,6 +223,16 @@ const TaskManagement = () => {
           </div>
         ))}
       </div>
+
+      {/* Edit Task Dialog */}
+      {editingTask && (
+        <EditTaskDialog
+          task={editingTask}
+          open={!!editingTask}
+          onOpenChange={(open) => !open && setEditingTask(null)}
+          onTaskUpdated={handleTaskUpdated}
+        />
+      )}
     </div>
   );
 };

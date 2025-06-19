@@ -103,6 +103,44 @@ export const useTasks = () => {
     }
   };
 
+  const updateTask = async (taskData: Task) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          title: taskData.title,
+          description: taskData.description,
+          status: taskData.status,
+          priority: taskData.priority,
+          assignee: taskData.assignee,
+          assignee_role: taskData.assigneeRole,
+          due_date: taskData.dueDate || null,
+          estimated_hours: taskData.estimatedHours,
+          actual_hours: taskData.actualHours
+        })
+        .eq('id', taskData.id);
+
+      if (error) throw error;
+
+      await fetchTasks();
+      
+      toast({
+        title: "Success",
+        description: "Task updated successfully",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -111,6 +149,7 @@ export const useTasks = () => {
     tasks,
     loading,
     createTask,
+    updateTask,
     refetch: fetchTasks
   };
 };
