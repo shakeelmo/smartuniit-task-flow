@@ -65,7 +65,7 @@ export const CreateProposalDialog: React.FC<CreateProposalDialogProps> = ({
 
     setLoading(true);
     try {
-      const proposalDataToInsert = {
+      const proposalDataToInsert: any = {
         ...formData,
         user_id: user.id,
         submission_date: formData.submission_date || null
@@ -73,6 +73,7 @@ export const CreateProposalDialog: React.FC<CreateProposalDialogProps> = ({
 
       // Add quotation data if present
       if (quotationData && quotationData.items && quotationData.items.length > 0) {
+        // Store quotation data as JSONB in the database
         proposalDataToInsert.quotation_data = quotationData;
       }
 
