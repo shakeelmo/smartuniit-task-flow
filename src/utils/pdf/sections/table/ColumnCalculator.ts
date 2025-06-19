@@ -17,42 +17,42 @@ export const calculateColumnConfig = (
   let columnWidths: number[];
   
   if (hasPartNumbers && hasUnits) {
-    // Enhanced column distribution for better space utilization
+    // Optimized column distribution to prevent header overlap
     columnWidths = [
-      15,  // Serial Number - compact but visible
-      75,  // Description - larger for better readability
-      30,  // Part Number - adequate space
+      12,  // Serial Number - compact
+      70,  // Description - adequate space for content
+      25,  // Part Number - sufficient space
       12,  // Quantity - minimal needed space
-      18,  // Unit - compact
-      25,  // Unit Price - sufficient for currency display
-      30   // Total - emphasis on final amount
+      15,  // Unit - compact but readable
+      28,  // Unit Price - sufficient for currency display
+      33   // Total - emphasis on final amount
     ];
   } else if (hasPartNumbers && !hasUnits) {
     columnWidths = [
-      15,  // Serial Number
-      85,  // Description - more space when no units
-      35,  // Part Number
+      12,  // Serial Number
+      80,  // Description - more space when no units
+      30,  // Part Number
       15,  // Quantity
-      25,  // Unit Price
-      30   // Total
+      28,  // Unit Price
+      35   // Total
     ];
   } else if (!hasPartNumbers && hasUnits) {
     columnWidths = [
-      15,  // Serial Number
-      95,  // Description - maximum space utilization
+      12,  // Serial Number
+      90,  // Description - maximum space utilization
       15,  // Quantity
-      20,  // Unit
-      25,  // Unit Price
+      18,  // Unit
+      30,  // Unit Price
       35   // Total
     ];
   } else {
     // No part numbers, no units
     columnWidths = [
-      15,  // Serial Number
-      105, // Description - maximum available space
+      12,  // Serial Number
+      100, // Description - maximum available space
       18,  // Quantity
-      30,  // Unit Price
-      37   // Total
+      32,  // Unit Price
+      38   // Total
     ];
   }
 
