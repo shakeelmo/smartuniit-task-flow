@@ -31,12 +31,10 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [proposalData, setProposalData] = useState(proposal);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     console.log('EditProposalDialog received proposal:', proposal);
     setProposalData(proposal);
-    setHasUnsavedChanges(false);
   }, [proposal]);
 
   const handleUpdateProposal = async (data: any) => {
@@ -57,7 +55,6 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
       // Update local state with new data
       const updatedProposal = { ...proposalData, ...data };
       setProposalData(updatedProposal);
-      setHasUnsavedChanges(false);
       
       console.log('Proposal updated successfully:', updatedProposal);
       
@@ -66,8 +63,7 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
         description: "Proposal updated successfully",
       });
 
-      // Refresh parent component to reflect changes
-      onSuccess();
+      // Don't automatically refresh parent or close dialog - let user continue editing
     } catch (error) {
       console.error('Error updating proposal:', error);
       toast({
@@ -81,27 +77,12 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
   };
 
   const handleClose = () => {
-    if (hasUnsavedChanges) {
-      const confirmClose = window.confirm('You have unsaved changes. Are you sure you want to close?');
-      if (!confirmClose) {
-        return;
-      }
-    }
     onOpenChange(false);
   };
 
-  const handleSaveAndClose = async () => {
-    if (hasUnsavedChanges) {
-      // Let the forms save their data first
-      toast({
-        title: "Info",
-        description: "Please save your changes before closing",
-        variant: "default",
-      });
-      return;
-    }
-    
-    // Only close if no unsaved changes
+  const handleSaveAndClose = () => {
+    // Refresh parent component to reflect all changes made during editing session
+    onSuccess();
     onOpenChange(false);
   };
 
@@ -213,7 +194,7 @@ export const EditProposalDialog: React.FC<EditProposalDialogProps> = ({
             Cancel
           </Button>
           <Button onClick={handleSaveAndClose} disabled={loading}>
-            {hasUnsavedChanges ? 'Save Changes First' : 'Close'}
+            Save & Close
           </Button>
         </div>
       </DialogContent>
