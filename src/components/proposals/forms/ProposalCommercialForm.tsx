@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -140,7 +139,7 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
       const proposalData = {
         payment_terms: formData.payment_terms,
         project_duration_days: formData.project_duration_days ? parseInt(formData.project_duration_days) : null,
-        bank_details: formData.bank_details
+        bank_details: formData.bank_details as any // Cast to any to match Json type
       };
 
       if (onUpdate) {

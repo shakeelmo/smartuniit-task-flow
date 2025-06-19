@@ -90,12 +90,12 @@ export const ProposalDocumentControlForm: React.FC<ProposalDocumentControlFormPr
     try {
       const updateData = {
         version_number: formData.version_number,
-        document_reviewers: formData.document_reviewers,
+        document_reviewers: formData.document_reviewers as any, // Cast to any to match Json type
         confidentiality_included: formData.confidentiality_included,
         understanding_requirements: formData.understanding_requirements,
         customer_prerequisites: formData.customer_prerequisites,
         is_bilingual: formData.is_bilingual,
-        template_customization: formData.template_customization
+        template_customization: formData.template_customization as any // Cast to any to match Json type
       };
 
       if (onUpdate) {
