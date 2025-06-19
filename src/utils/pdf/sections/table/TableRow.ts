@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
 import { wrapText } from './TextWrapper';
@@ -38,7 +37,7 @@ const safeText = (pdf: jsPDF, text: string, x: number, y: number) => {
   }
 };
 
-// Enhanced function to format currency with proper spacing and truncation
+// Enhanced function to format currency with proper Saudi Riyal symbol
 const formatCurrency = (value: number, currency: 'SAR' | 'USD', maxWidth?: number, pdf?: jsPDF): string => {
   const formatted = value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -47,7 +46,7 @@ const formatCurrency = (value: number, currency: 'SAR' | 'USD', maxWidth?: numbe
   
   let currencyText: string;
   if (currency === 'SAR') {
-    currencyText = `${formatted} SAR`;
+    currencyText = `${formatted} ﷼`; // Use proper Saudi Riyal symbol
   } else {
     currencyText = `$${formatted}`;
   }
@@ -58,7 +57,7 @@ const formatCurrency = (value: number, currency: 'SAR' | 'USD', maxWidth?: numbe
     if (textWidth > maxWidth) {
       // Try shorter format first
       const shortFormatted = Number(value).toFixed(0);
-      const shortCurrencyText = currency === 'SAR' ? `${shortFormatted} SAR` : `$${shortFormatted}`;
+      const shortCurrencyText = currency === 'SAR' ? `${shortFormatted} ﷼` : `$${shortFormatted}`;
       
       if (pdf.getTextWidth(shortCurrencyText) <= maxWidth) {
         return shortCurrencyText;

@@ -18,8 +18,8 @@ const TotalsSummary: React.FC<TotalsSummaryProps> = ({
   calculateTotal,
   getCurrencySymbol,
 }) => {
-  // Use simple "SAR" text for UI display to match PDF output
-  const displaySymbol = getCurrencySymbol() === 'SAR' ? 'SAR' : getCurrencySymbol();
+  // Use proper Saudi Riyal symbol for UI display to match PDF output
+  const displaySymbol = getCurrencySymbol() === '﷼' ? '﷼' : getCurrencySymbol();
   
   return (
     <div className="bg-gray-50 p-4 rounded-lg">

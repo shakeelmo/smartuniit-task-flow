@@ -73,7 +73,7 @@ export const addTextWithWrapping = (pdf: jsPDF, text: string, x: number, y: numb
 
 export const getCurrencyInfo = (currency: 'SAR' | 'USD'): CurrencyInfo => {
   return {
-    symbol: currency === 'SAR' ? 'SAR' : '$', // Use simple "SAR" text instead of Unicode
+    symbol: currency === 'SAR' ? '﷼' : '$', // Use the proper Saudi Riyal symbol
     name: currency === 'SAR' ? 'Saudi Riyals' : 'US Dollars'
   };
 };
