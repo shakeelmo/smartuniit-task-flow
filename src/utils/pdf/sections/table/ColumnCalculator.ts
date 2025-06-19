@@ -9,81 +9,66 @@ export interface ColumnConfig {
 export const calculateColumnConfig = (
   hasPartNumbers: boolean,
   hasUnits: boolean,
-  startX: number
+  pageMargin: number
 ): ColumnConfig => {
   const pageWidth = 210; // A4 width in mm
-  const availableWidth = pageWidth - 2 * PDF_CONFIG.pageMargin; // Total available width for table
+  const tableWidth = pageWidth - 2 * pageMargin;
   
-  console.log('Calculating column config:', { hasPartNumbers, hasUnits, availableWidth });
-
-  let columnWidths: number[] = [];
+  let columnWidths: number[];
   
   if (hasPartNumbers && hasUnits) {
-    // All columns: S#, Description, Part#, Qty, Unit, Unit Price, Total
+    // Enhanced column distribution for better space utilization
     columnWidths = [
-      8,   // Serial number (smaller)
-      25,  // Description (increased)
-      18,  // Part number
-      8,   // Quantity (smaller)
-      12,  // Unit
-      40,  // Unit price (reduced)
-      47   // Total (increased)
+      15,  // Serial Number - compact but visible
+      75,  // Description - larger for better readability
+      30,  // Part Number - adequate space
+      12,  // Quantity - minimal needed space
+      18,  // Unit - compact
+      25,  // Unit Price - sufficient for currency display
+      30   // Total - emphasis on final amount
     ];
   } else if (hasPartNumbers && !hasUnits) {
-    // S#, Description, Part#, Qty, Unit Price, Total
     columnWidths = [
-      8,   // Serial number (smaller)
-      28,  // Description (increased)
-      20,  // Part number
-      8,   // Quantity (smaller)
-      44,  // Unit price
-      50   // Total (increased)
+      15,  // Serial Number
+      85,  // Description - more space when no units
+      35,  // Part Number
+      15,  // Quantity
+      25,  // Unit Price
+      30   // Total
     ];
   } else if (!hasPartNumbers && hasUnits) {
-    // S#, Description, Qty, Unit, Unit Price, Total
     columnWidths = [
-      8,   // Serial number (smaller)
-      32,  // Description (increased)
-      8,   // Quantity (smaller)
-      12,  // Unit
-      44,  // Unit price
-      54   // Total (increased)
+      15,  // Serial Number
+      95,  // Description - maximum space utilization
+      15,  // Quantity
+      20,  // Unit
+      25,  // Unit Price
+      35   // Total
     ];
   } else {
-    // Basic: S#, Description, Qty, Unit Price, Total
+    // No part numbers, no units
     columnWidths = [
-      8,   // Serial number (smaller)
-      36,  // Description (increased)
-      8,   // Quantity (smaller)
-      48,  // Unit price
-      58   // Total (increased)
+      15,  // Serial Number
+      105, // Description - maximum available space
+      18,  // Quantity
+      30,  // Unit Price
+      37   // Total
     ];
   }
 
-  // Verify total width doesn't exceed available space
-  const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
-  console.log('Total calculated width:', totalWidth, 'Available width:', availableWidth);
-  
-  // If total width exceeds available space, scale down proportionally
-  if (totalWidth > availableWidth) {
-    const scaleFactor = availableWidth / totalWidth;
-    columnWidths = columnWidths.map(width => width * scaleFactor);
-    console.log('Scaled column widths:', columnWidths);
-  }
+  // Ensure total width matches table width exactly
+  const totalCalculatedWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+  const scaleFactor = tableWidth / totalCalculatedWidth;
+  columnWidths = columnWidths.map(width => width * scaleFactor);
 
-  // Calculate column positions
+  // Calculate column positions based on optimized widths
   const columnPositions: number[] = [];
-  let currentPosition = startX;
+  let currentPosition = pageMargin;
   
-  columnWidths.forEach((width) => {
+  columnWidths.forEach(width => {
     columnPositions.push(currentPosition);
     currentPosition += width;
   });
 
-  console.log('Final column config:', { columnWidths, columnPositions });
-
-  return {
-    columnWidths,
-    columnPositions
-  };
+  return { columnWidths, columnPositions };
 };

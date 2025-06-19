@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
 import { wrapText } from './TextWrapper';
@@ -102,7 +101,7 @@ export const addTableRow = (
   config: TableRowConfig
 ): number => {
   const { hasPartNumbers, hasUnits, columnWidths, columnPositions, tableWidth, currency } = config;
-  const baseRowHeight = 14;
+  const baseRowHeight = 16; // Increased base height for professional appearance
 
   console.log('Processing item for row:', { item, index });
 
@@ -120,16 +119,7 @@ export const addTableRow = (
     serviceText = `Service Item ${index + 1}`;
   }
 
-  console.log('Extracted service text:', serviceText);
-
-  // Clean the service text thoroughly
-  serviceText = String(serviceText)
-    .trim()
-    .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  // Enhanced description text handling
+  // Enhanced description handling for professional presentation
   let descriptionText = '';
   const descriptionFields = ['description', 'desc', 'details'];
   for (const field of descriptionFields) {
@@ -165,133 +155,121 @@ export const addTableRow = (
     unitText = 'Each';
   }
 
-  // Calculate text wrapping with improved column widths and more conservative padding
-  const cellPadding = 1; // Reduced padding to maximize text space
+  // Enhanced text wrapping with optimized spacing
+  const cellPadding = 1.5; // Professional minimal padding
   
   // For description column (always index 1)
   const descriptionColumnIndex = 1;
-  const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - (cellPadding * 2), 10);
+  const maxDescriptionWidth = Math.max(columnWidths[descriptionColumnIndex] - (cellPadding * 2), 15);
   
-  // DISPLAY SERVICE INFO AS PRIMARY TEXT with description as secondary - REMOVE LINE LIMITATION
+  // Professional text combination - service as primary, description as detail
   const combinedText = descriptionText ? `${serviceText}\n${descriptionText}` : serviceText;
-  const wrappedDescriptionLines = wrapText(pdf, combinedText, maxDescriptionWidth);
-  
-  // REMOVED: No longer limit to maximum 2 lines - allow full text display
-  const limitedDescriptionLines = wrappedDescriptionLines; // Show all lines
+  const wrappedDescriptionLines = wrapText(pdf, combinedText, maxDescriptionWidth, PDF_CONFIG.fontSize.normal);
 
-  // Enhanced Part Number column handling
+  // Enhanced Part Number column handling with professional formatting
   let wrappedPartLines: string[] = [];
   let partColumnIndex = -1;
   if (hasPartNumbers) {
     partColumnIndex = 2;
-    const maxPartWidth = Math.max(columnWidths[partColumnIndex] - (cellPadding * 2), 8);
+    const maxPartWidth = Math.max(columnWidths[partColumnIndex] - (cellPadding * 2), 10);
     
-    const partNumberWidth = pdf.getTextWidth(partNumberText);
-    
-    if (partNumberWidth <= maxPartWidth) {
-      wrappedPartLines = [partNumberText];
-    } else {
-      const roughWrappedLines = wrapText(pdf, partNumberText, maxPartWidth);
-      wrappedPartLines = roughWrappedLines.slice(0, 1);
-      
-      if (roughWrappedLines.length > 1) {
-        let truncatedLine = wrappedPartLines[0];
-        while (pdf.getTextWidth(truncatedLine + '...') > maxPartWidth && truncatedLine.length > 1) {
-          truncatedLine = truncatedLine.slice(0, -1);
-        }
-        wrappedPartLines[0] = truncatedLine + '...';
-      }
+    let partNumberText = '';
+    if (item.partNumber && typeof item.partNumber === 'string' && item.partNumber.trim()) {
+      partNumberText = String(item.partNumber).replace(/[^\x20-\x7E]/g, '').trim();
     }
+    if (!partNumberText) {
+      partNumberText = '-';
+    }
+    
+    wrappedPartLines = wrapText(pdf, partNumberText, maxPartWidth, PDF_CONFIG.fontSize.small);
   }
   
-  // Calculate required row height based on the tallest column - increased minimum height
+  // Calculate professional row height based on content
   const maxLines = Math.max(
-    limitedDescriptionLines.length,
+    wrappedDescriptionLines.length,
     wrappedPartLines.length,
     1
   );
-  // Increased line spacing and minimum row height for better text display
-  const requiredRowHeight = Math.max(baseRowHeight, maxLines * 6 + 12);
+  // Enhanced spacing for professional appearance
+  const requiredRowHeight = Math.max(baseRowHeight, maxLines * 5.5 + 10);
 
-  // Alternating row colors
+  // Professional alternating row colors
   if (index % 2 === 0) {
-    pdf.setFillColor(255, 255, 255);
+    pdf.setFillColor(255, 255, 255); // Pure white
   } else {
-    pdf.setFillColor(248, 250, 252);
+    pdf.setFillColor(248, 250, 252); // Subtle gray
   }
   pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, requiredRowHeight, 'F');
 
-  // Enhanced border system - Draw complete grid with FIXED EXTRA LINE ISSUE
-  pdf.setDrawColor(200, 200, 200);
+  // Enhanced border system for professional grid appearance
+  pdf.setDrawColor(220, 220, 220); // Lighter professional gray
   pdf.setLineWidth(0.3);
   
-  // Draw horizontal borders
-  pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition);
+  // Top and bottom borders
   pdf.line(PDF_CONFIG.pageMargin, yPosition + requiredRowHeight, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
   
-  // Draw vertical borders with proper positioning - FIXED TO PREVENT EXTRA LINES
-  let currentXPosition = PDF_CONFIG.pageMargin;
-  
-  // Left border of table
-  pdf.setLineWidth(0.5);
-  pdf.setDrawColor(...COLORS.black);
-  pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
-  
-  // Internal column separators - AVOID DRAWING EXTRA LINE AFTER LAST COLUMN
-  columnWidths.forEach((width, colIndex) => {
-    currentXPosition += width;
-    // Only draw separator if it's not the last column
-    if (colIndex < columnWidths.length - 1) {
-      pdf.setLineWidth(0.3);
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(currentXPosition, yPosition, currentXPosition, yPosition + requiredRowHeight);
+  // Vertical separators with consistent spacing
+  columnPositions.forEach((position, colIndex) => {
+    if (colIndex > 0 && colIndex < columnPositions.length) {
+      pdf.setLineWidth(0.2);
+      pdf.setDrawColor(230, 230, 230);
+      pdf.line(position, yPosition, position, yPosition + requiredRowHeight);
     }
   });
   
-  // Right border of table
+  // Professional outer borders
   pdf.setLineWidth(0.5);
   pdf.setDrawColor(...COLORS.black);
+  pdf.line(PDF_CONFIG.pageMargin, yPosition, PDF_CONFIG.pageMargin, yPosition + requiredRowHeight);
   pdf.line(PDF_CONFIG.pageMargin + tableWidth, yPosition, PDF_CONFIG.pageMargin + tableWidth, yPosition + requiredRowHeight);
 
-  // Set text properties
+  // Enhanced text rendering with professional typography
   pdf.setTextColor(...COLORS.black);
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
   let colIndex = 0;
+  const textYCenter = yPosition + (requiredRowHeight / 2) + 1.5;
 
-  // SERIAL NUMBER COLUMN - centered and clearly visible
+  // SERIAL NUMBER - Professional centered display
   const serialNumber = index + 1;
   const serialText = String(serialNumber);
   pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(PDF_CONFIG.fontSize.medium);
   const serialWidth = pdf.getTextWidth(serialText);
   const serialX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (serialWidth / 2);
-  const textY = yPosition + Math.max(9, (requiredRowHeight / 2) + 1);
   
-  console.log('Rendering serial number:', { serialText, serialX, textY });
-  if (!isNaN(serialX) && !isNaN(textY)) {
-    safeText(pdf, serialText, serialX, textY);
+  if (!isNaN(serialX) && !isNaN(textYCenter)) {
+    safeText(pdf, serialText, serialX, textYCenter);
   }
   pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(PDF_CONFIG.fontSize.normal);
   colIndex++;
 
-  // DESCRIPTION COLUMN - left aligned with full text display (combines service + description)
-  const descStartY = yPosition + 8; // Start closer to top for better text display
-  pdf.setFont('helvetica', 'bold');
-  console.log('Rendering description lines:', { limitedDescriptionLines, descStartY });
-  
-  limitedDescriptionLines.forEach((line, lineIndex) => {
+  // DESCRIPTION - Professional multi-line display with optimal spacing
+  const descStartY = yPosition + 6;
+  wrappedDescriptionLines.forEach((line, lineIndex) => {
     const cleanLine = String(line || '').trim();
     if (cleanLine && cleanLine.length > 0) {
+      // First line (service) in bold, subsequent lines (description) in normal
+      if (lineIndex === 0) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(PDF_CONFIG.fontSize.normal);
+      } else {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(PDF_CONFIG.fontSize.small);
+      }
+      
       const descX = columnPositions[colIndex] + cellPadding;
-      const descY = descStartY + (lineIndex * 6); // Increased line spacing
-      console.log('Rendering description line:', { cleanLine, descX, descY });
+      const descY = descStartY + (lineIndex * 5.5);
+      
       if (!isNaN(descX) && !isNaN(descY)) {
         safeText(pdf, cleanLine, descX, descY);
       }
     }
   });
   pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(PDF_CONFIG.fontSize.normal);
   colIndex++;
 
   // PART NUMBER COLUMN (if present) - left aligned
@@ -315,8 +293,8 @@ export const addTableRow = (
   const qtyText = String(quantity);
   const qtyWidth = pdf.getTextWidth(qtyText);
   const qtyX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (qtyWidth / 2);
-  if (!isNaN(qtyX) && !isNaN(textY)) {
-    safeText(pdf, qtyText, qtyX, textY);
+  if (!isNaN(qtyX) && !isNaN(textYCenter)) {
+    safeText(pdf, qtyText, qtyX, textYCenter);
   }
   colIndex++;
 
@@ -326,8 +304,8 @@ export const addTableRow = (
     const truncatedUnit = truncateTextToFit(pdf, unitText, maxUnitWidth);
     const unitWidth = pdf.getTextWidth(truncatedUnit);
     const unitX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (unitWidth / 2);
-    if (!isNaN(unitX) && !isNaN(textY)) {
-      safeText(pdf, truncatedUnit, unitX, textY);
+    if (!isNaN(unitX) && !isNaN(textYCenter)) {
+      safeText(pdf, truncatedUnit, unitX, textYCenter);
     }
     colIndex++;
   }
@@ -339,8 +317,8 @@ export const addTableRow = (
   const unitPriceWidth = pdf.getTextWidth(unitPriceText);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
   
-  if (!isNaN(unitPriceX) && !isNaN(textY)) {
-    safeText(pdf, unitPriceText, unitPriceX, textY);
+  if (!isNaN(unitPriceX) && !isNaN(textYCenter)) {
+    safeText(pdf, unitPriceText, unitPriceX, textYCenter);
   }
   colIndex++;
 
@@ -353,10 +331,12 @@ export const addTableRow = (
   const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
   
   pdf.setFont('helvetica', 'bold');
-  if (!isNaN(totalX) && !isNaN(textY)) {
-    safeText(pdf, totalText, totalX, textY);
+  pdf.setFontSize(PDF_CONFIG.fontSize.medium);
+  if (!isNaN(totalX) && !isNaN(textYCenter)) {
+    safeText(pdf, totalText, totalX, textYCenter);
   }
   pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
   return yPosition + requiredRowHeight;
 };

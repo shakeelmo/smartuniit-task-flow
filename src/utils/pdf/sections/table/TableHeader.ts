@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../../constants';
 
@@ -10,99 +11,90 @@ export interface TableHeaderConfig {
   tableWidth: number;
 }
 
-// Helper function to truncate text to fit in column width
-const truncateHeaderText = (pdf: jsPDF, text: string, maxWidth: number): string => {
-  if (!text || maxWidth <= 0) return '';
-  
-  const textWidth = pdf.getTextWidth(text);
-  if (textWidth <= maxWidth) {
-    return text;
-  }
-  
-  // For price columns, try shortening the currency part first
-  if (text.includes('Unit Price')) {
-    const shortVersion = text.replace('Unit Price', 'Price');
-    if (pdf.getTextWidth(shortVersion) <= maxWidth) {
-      return shortVersion;
-    }
-  }
-  
-  if (text.includes('Total')) {
-    const shortVersion = text.replace('Total', 'Total');
-    if (pdf.getTextWidth(shortVersion) <= maxWidth) {
-      return shortVersion;
-    }
-  }
-  
-  // General truncation with ellipsis - properly declare and initialize truncated
-  let truncated = text;
-  while (pdf.getTextWidth(truncated + '...') > maxWidth && truncated.length > 3) {
-    truncated = truncated.slice(0, -1);
-  }
-  
-  return truncated.length < text.length ? truncated + '...' : truncated;
-};
-
 export const addTableHeader = (
   pdf: jsPDF,
   yPosition: number,
   config: TableHeaderConfig
 ): number => {
   const { hasPartNumbers, hasUnits, currency, columnWidths, columnPositions, tableWidth } = config;
-  const headerRowHeight = 20;
+  const headerHeight = 16; // Increased for better visual presence
 
-  // Enhanced header with professional blue background
-  pdf.setFillColor(83, 122, 166);
-  pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'F');
+  // Enhanced header background with gradient effect simulation
+  pdf.setFillColor(65, 105, 180); // Professional blue
+  pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerHeight, 'F');
 
-  // Draw complete header borders - fix extra line issue
-  pdf.setDrawColor(...COLORS.black);
-  pdf.setLineWidth(1.0);
+  // Add subtle border for definition
+  pdf.setDrawColor(45, 85, 160);
+  pdf.setLineWidth(0.8);
+  pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerHeight);
+
+  // Header text styling - enhanced for professionalism
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(10); // Slightly larger for better readability
+
+  let colIndex = 0;
+  const cellPadding = 2;
+  const textY = yPosition + headerHeight / 2 + 2; // Centered vertically
+
+  // Serial Number header - centered
+  const serialHeader = '#';
+  const serialWidth = pdf.getTextWidth(serialHeader);
+  const serialX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (serialWidth / 2);
+  pdf.text(serialHeader, serialX, textY);
+  colIndex++;
+
+  // Description header - left aligned with padding
+  pdf.text('Description / الوصف', columnPositions[colIndex] + cellPadding, textY);
+  colIndex++;
+
+  // Part Number header (if present) - centered
+  if (hasPartNumbers) {
+    const partHeader = 'Part No.';
+    const partWidth = pdf.getTextWidth(partHeader);
+    const partX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (partWidth / 2);
+    pdf.text(partHeader, partX, textY);
+    colIndex++;
+  }
+
+  // Quantity header - centered
+  const qtyHeader = 'Qty / الكمية';
+  const qtyWidth = pdf.getTextWidth(qtyHeader);
+  const qtyX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (qtyWidth / 2);
+  pdf.text(qtyHeader, qtyX, textY);
+  colIndex++;
+
+  // Unit header (if present) - centered
+  if (hasUnits) {
+    const unitHeader = 'Unit';
+    const unitWidth = pdf.getTextWidth(unitHeader);
+    const unitX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (unitWidth / 2);
+    pdf.text(unitHeader, unitX, textY);
+    colIndex++;
+  }
+
+  // Unit Price header - right aligned for currency alignment
+  const unitPriceHeader = currency === 'SAR' ? 'Unit Price (SAR)' : 'Unit Price ($)';
+  const unitPriceWidth = pdf.getTextWidth(unitPriceHeader);
+  const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
+  pdf.text(unitPriceHeader, unitPriceX, textY);
+  colIndex++;
+
+  // Total header - right aligned for emphasis
+  const totalHeader = currency === 'SAR' ? 'Total (SAR) / المجموع' : 'Total ($)';
+  const totalWidth = pdf.getTextWidth(totalHeader);
+  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
+  pdf.text(totalHeader, totalX, textY);
+
+  // Add vertical separators for column definition
+  pdf.setDrawColor(255, 255, 255);
+  pdf.setLineWidth(0.5);
   
-  // Draw outer border rectangle
-  pdf.rect(PDF_CONFIG.pageMargin, yPosition, tableWidth, headerRowHeight, 'S');
-  
-  // Draw vertical column separators - fix to avoid extra lines
-  columnWidths.forEach((width, index) => {
-    if (index > 0 && index < columnWidths.length) { // Don't draw line after last column
-      const xPosition = PDF_CONFIG.pageMargin + columnWidths.slice(0, index).reduce((sum, w) => sum + w, 0);
-      pdf.setLineWidth(0.8);
-      pdf.setDrawColor(...COLORS.white);
-      pdf.line(xPosition, yPosition, xPosition, yPosition + headerRowHeight);
+  columnPositions.forEach((position, index) => {
+    if (index > 0) { // Skip first position (table start)
+      pdf.line(position, yPosition, position, yPosition + headerHeight);
     }
   });
 
-  // Set header text properties
-  pdf.setTextColor(...COLORS.white);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(PDF_CONFIG.fontSize.normal);
-
-  // Define header text with proper structure
-  let headers: string[];
-  const currencyText = currency === 'SAR' ? 'SAR' : 'USD';
-  
-  if (hasPartNumbers && hasUnits) {
-    headers = ['S#', 'Description', 'Part No.', 'Qty', 'Unit', `Price (${currencyText})`, `Total (${currencyText})`];
-  } else if (hasPartNumbers) {
-    headers = ['S#', 'Description', 'Part No.', 'Qty', `Price (${currencyText})`, `Total (${currencyText})`];
-  } else if (hasUnits) {
-    headers = ['S#', 'Description', 'Qty', 'Unit', `Price (${currencyText})`, `Total (${currencyText})`];
-  } else {
-    headers = ['S#', 'Description', 'Qty', `Price (${currencyText})`, `Total (${currencyText})`];
-  }
-
-  // Render header text with CENTER ALIGNMENT for all headers
-  headers.forEach((header, index) => {
-    const cellPadding = 2;
-    const maxTextWidth = columnWidths[index] - (cellPadding * 2);
-    const truncatedHeader = truncateHeaderText(pdf, header, maxTextWidth);
-    const textY = yPosition + (headerRowHeight / 2) + 2;
-    
-    // CENTER ALIGN ALL HEADERS
-    const textWidth = pdf.getTextWidth(truncatedHeader);
-    const centeredX = columnPositions[index] + (columnWidths[index] / 2) - (textWidth / 2);
-    pdf.text(truncatedHeader, centeredX, textY);
-  });
-
-  return yPosition + headerRowHeight;
+  return yPosition + headerHeight;
 };

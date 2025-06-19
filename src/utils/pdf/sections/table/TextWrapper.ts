@@ -20,24 +20,25 @@ export const wrapText = (
 
   pdf.setFontSize(fontSize);
   
-  // Additional text cleaning to handle encoding issues
+  // Enhanced text cleaning for professional appearance
   const cleanText = String(text)
     .trim()
     .replace(/[^\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]/g, '') // Keep printable ASCII and Latin extended
     .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .replace(/[\r\n]+/g, '\n') // Normalize line breaks
     .trim();
   
   if (!cleanText || cleanText.length === 0) {
     return [''];
   }
 
-  // Handle explicit line breaks first
+  // Handle explicit line breaks first for better formatting
   const paragraphs = cleanText.split('\n');
   const allLines: string[] = [];
 
   paragraphs.forEach(paragraph => {
     if (!paragraph.trim()) {
-      allLines.push(''); // Preserve empty lines
+      allLines.push(''); // Preserve empty lines for formatting
       return;
     }
 
@@ -52,25 +53,38 @@ export const wrapText = (
         testWidth = pdf.getTextWidth(testLine);
       } catch (error) {
         console.warn('Error getting text width, using fallback:', error);
-        testWidth = testLine.length * 2.5; // Rough estimation
+        testWidth = testLine.length * 2.2; // More accurate estimation
       }
       
-      // Reduced margin to allow more text
-      if (testWidth <= maxWidth - (PDF_CONFIG.textWrapMargin / 2)) {
+      // Optimized margin for better space utilization
+      const effectiveMaxWidth = maxWidth - 1; // Minimal margin for professional tight spacing
+      
+      if (testWidth <= effectiveMaxWidth) {
         currentLine = testLine;
       } else {
         if (currentLine) {
           allLines.push(currentLine);
           currentLine = word;
         } else {
-          // Handle very long words that exceed cell width
-          const maxChars = Math.floor((maxWidth - (PDF_CONFIG.textWrapMargin / 2)) / 2.2); // Better character estimate
-          if (word.length > maxChars && maxChars > 5) {
-            // Split long words more intelligently
+          // Enhanced handling of very long words
+          const maxChars = Math.floor(effectiveMaxWidth / 2.2);
+          if (word.length > maxChars && maxChars > 8) {
+            // Smart word breaking at natural points
             let remainingWord = word;
             while (remainingWord.length > maxChars) {
-              allLines.push(remainingWord.substring(0, maxChars - 3) + '...');
-              remainingWord = remainingWord.substring(maxChars - 3);
+              // Try to break at natural points (hyphens, underscores)
+              let breakPoint = maxChars - 3;
+              const naturalBreaks = ['-', '_', '.'];
+              
+              for (let i = breakPoint; i > breakPoint - 10 && i > 5; i--) {
+                if (naturalBreaks.includes(remainingWord[i])) {
+                  breakPoint = i + 1;
+                  break;
+                }
+              }
+              
+              allLines.push(remainingWord.substring(0, breakPoint) + (breakPoint < remainingWord.length ? '-' : ''));
+              remainingWord = remainingWord.substring(breakPoint);
             }
             if (remainingWord) {
               currentLine = remainingWord;
