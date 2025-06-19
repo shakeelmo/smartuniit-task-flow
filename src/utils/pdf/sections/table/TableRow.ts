@@ -123,7 +123,7 @@ export const addTableRow = (
   pdf.text(serialText, serialX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Service/Description column
+  // Service/Description column - left aligned
   const serviceStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedServiceLines.length * 5)) / 2 + 4);
   wrappedServiceLines.forEach((line, lineIndex) => {
     const cleanLine = line.trim();
@@ -133,13 +133,16 @@ export const addTableRow = (
   });
   colIndex++;
 
-  // Part Number column (if present)
+  // Part Number column (if present) - left aligned and properly positioned
   if (hasPartNumbers) {
-    const maxPartWidth = columnWidths[colIndex] - 6;
+    const maxPartWidth = columnWidths[colIndex] - (cellPadding * 2);
     const wrappedPartLines = wrapText(pdf, partNumberText, maxPartWidth);
     const partStartY = yPosition + Math.max(9, (requiredRowHeight - (wrappedPartLines.length * 5)) / 2 + 4);
     wrappedPartLines.forEach((line, lineIndex) => {
-      pdf.text(line, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
+      const cleanLine = line.trim();
+      if (cleanLine) {
+        pdf.text(cleanLine, columnPositions[colIndex] + cellPadding, partStartY + (lineIndex * 5));
+      }
     });
     colIndex++;
   }
@@ -151,40 +154,38 @@ export const addTableRow = (
   pdf.text(qtyText, qtyX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Unit column (if present) - improved display
+  // Unit column (if present) - centered
   if (hasUnits) {
-    const maxUnitWidth = columnWidths[colIndex] - 6;
-    // Center the unit text in the column
     const unitWidth = pdf.getTextWidth(unitText);
     const unitX = columnPositions[colIndex] + (columnWidths[colIndex] / 2) - (unitWidth / 2);
     pdf.text(unitText, unitX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
     colIndex++;
   }
 
-  // Unit Price column - right aligned with proper Saudi Riyal symbol
+  // Unit Price column - right aligned with simple SAR display
   const unitPriceValue = parseFloat(item.unitPrice) || 0;
   const unitPriceFormatted = unitPriceValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  // Use proper Unicode character for Saudi Riyal
-  const unitPriceText = currency === 'SAR' ? `ر.س ${unitPriceFormatted}` : `$${unitPriceFormatted}`;
+  // Use simple "SAR" text instead of Unicode symbol to avoid encoding issues
+  const unitPriceText = currency === 'SAR' ? `${unitPriceFormatted} SAR` : `$${unitPriceFormatted}`;
   const unitPriceWidth = pdf.getTextWidth(unitPriceText);
   const unitPriceX = columnPositions[colIndex] + columnWidths[colIndex] - unitPriceWidth - cellPadding;
   pdf.text(unitPriceText, unitPriceX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
   colIndex++;
 
-  // Total Price column - right aligned with proper Saudi Riyal symbol
+  // Total Price column - right aligned with simple SAR display
   const quantityValue = parseFloat(item.quantity) || 0;
   const totalValue = quantityValue * unitPriceValue;
   const totalFormatted = totalValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  // Use proper Unicode character for Saudi Riyal
-  const totalText = currency === 'SAR' ? `ر.س ${totalFormatted}` : `$${totalFormatted}`;
+  // Use simple "SAR" text instead of Unicode symbol to avoid encoding issues
+  const totalText = currency === 'SAR' ? `${totalFormatted} SAR` : `$${totalFormatted}`;
   const totalWidth = pdf.getTextWidth(totalText);
-  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - (cellPadding + 2);
+  const totalX = columnPositions[colIndex] + columnWidths[colIndex] - totalWidth - cellPadding;
   pdf.text(totalText, totalX, yPosition + Math.max(9, (requiredRowHeight / 2) + 1));
 
   return yPosition + requiredRowHeight;

@@ -24,8 +24,8 @@ const DiscountSection: React.FC<DiscountSectionProps> = ({
   calculateDiscountAmount,
   getCurrencySymbol,
 }) => {
-  // Use the proper Unicode character for Saudi Riyal
-  const displaySymbol = currency === 'SAR' ? 'ر.س' : '$';
+  // Use simple text to match PDF output
+  const displaySymbol = currency === 'SAR' ? 'SAR' : '$';
   
   return (
     <div className="bg-yellow-50 p-4 rounded-lg">
@@ -63,7 +63,7 @@ const DiscountSection: React.FC<DiscountSectionProps> = ({
         </div>
         <div className="flex items-end">
           <div className="text-sm text-gray-600">
-            <div>Discount Amount: {displaySymbol} {calculateDiscountAmount().toLocaleString()}</div>
+            <div>Discount Amount: {calculateDiscountAmount().toLocaleString()} {displaySymbol}</div>
             <div>مبلغ الخصم</div>
           </div>
         </div>

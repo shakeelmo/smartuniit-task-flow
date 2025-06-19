@@ -47,9 +47,9 @@ export const addTableHeader = (
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.normal);
 
-  // Define header text based on configuration with proper Saudi Riyal symbol
+  // Define header text based on configuration - use simple "SAR" for currency display
   let headers: string[];
-  const currencyText = currency === 'SAR' ? 'ر.س' : 'USD';
+  const currencyText = currency === 'SAR' ? 'SAR' : 'USD';
   
   if (hasPartNumbers && hasUnits) {
     headers = ['S#', 'Item Description', 'Part Number', 'Qty', 'Unit', `Unit Price (${currencyText})`, `Total Price (${currencyText})`];
@@ -84,7 +84,7 @@ export const addTableHeader = (
       const rightAlignedX = columnPositions[index] + columnWidths[index] - textWidth - cellPadding;
       pdf.text(headerText, rightAlignedX, textY);
     }
-    // Left align other columns
+    // Left align other columns (Description, Part Number, Unit)
     else {
       pdf.text(headerText, columnPositions[index] + cellPadding, textY);
     }

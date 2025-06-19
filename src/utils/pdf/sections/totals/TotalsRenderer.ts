@@ -70,9 +70,9 @@ const renderSubtotalRow = (
   const currencyName = totalsData.currencyInfo.symbol === 'ر.س' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
   pdf.text(`Subtotal in ${currencyName}`, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with proper Saudi Riyal symbol
+  // Value with simple "SAR" text instead of Unicode symbol
   const subtotalText = totalsData.currencyInfo.symbol === 'ر.س' ? 
-    `ر.س ${totalsData.subtotal.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` :
+    `${totalsData.subtotal.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
     totalsData.subtotal.text;
   const subtotalWidth = pdf.getTextWidth(subtotalText);
   const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - CELL_PADDING;
@@ -107,9 +107,9 @@ const renderDiscountRow = (
   // Label
   pdf.text(totalsData.discount.label, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with proper Saudi Riyal symbol
+  // Value with simple "SAR" text instead of Unicode symbol
   const discountText = totalsData.currencyInfo.symbol === 'ر.س' ? 
-    `-ر.س ${totalsData.discount.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` :
+    `-${totalsData.discount.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
     totalsData.discount.text;
   const discountWidth = pdf.getTextWidth(discountText);
   const discountX = valueStartX + valueColumnWidth - discountWidth - CELL_PADDING;
@@ -142,9 +142,9 @@ const renderVATRow = (
   // Label
   pdf.text('VAT 15%', labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with proper Saudi Riyal symbol
+  // Value with simple "SAR" text instead of Unicode symbol
   const vatText = totalsData.currencyInfo.symbol === 'ر.س' ? 
-    `ر.س ${totalsData.vat.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` :
+    `${totalsData.vat.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
     totalsData.vat.text;
   const vatWidth = pdf.getTextWidth(vatText);
   const vatX = valueStartX + valueColumnWidth - vatWidth - CELL_PADDING;
@@ -180,9 +180,9 @@ const renderTotalRow = (
   const currencyName = totalsData.currencyInfo.symbol === 'ر.س' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
   pdf.text(`Total Price in ${currencyName}`, labelStartX + CELL_PADDING, yPosition + 9);
 
-  // Value with proper Saudi Riyal symbol
+  // Value with simple "SAR" text instead of Unicode symbol
   const totalText = totalsData.currencyInfo.symbol === 'ر.س' ? 
-    `ر.س ${totalsData.total.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` :
+    `${totalsData.total.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
     totalsData.total.text;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = valueStartX + valueColumnWidth - totalWidth - CELL_PADDING;
