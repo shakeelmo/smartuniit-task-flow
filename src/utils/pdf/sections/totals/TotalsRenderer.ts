@@ -6,6 +6,14 @@ import { TotalsData } from './TotalsCalculator';
 const ENHANCED_ROW_HEIGHT = 12;
 const CELL_PADDING = 6;
 
+// Helper function to format numbers with comma separators
+const formatNumberWithCommas = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export const renderTotalsSection = (
   pdf: jsPDF,
   totalsData: TotalsData,
@@ -70,10 +78,10 @@ const renderSubtotalRow = (
   const currencyName = totalsData.currencyInfo.symbol === 'SAR' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
   pdf.text(`Subtotal in ${currencyName}`, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with SAR text instead of symbol
+  // Value with SAR text instead of symbol and comma formatting
   const subtotalText = totalsData.currencyInfo.symbol === 'SAR' ? 
-    `${totalsData.subtotal.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
-    totalsData.subtotal.text;
+    `${formatNumberWithCommas(totalsData.subtotal.amount)} SAR` :
+    `$${formatNumberWithCommas(totalsData.subtotal.amount)}`;
   const subtotalWidth = pdf.getTextWidth(subtotalText);
   const subtotalX = valueStartX + valueColumnWidth - subtotalWidth - CELL_PADDING;
   pdf.text(subtotalText, subtotalX, yPosition + 8);
@@ -107,10 +115,10 @@ const renderDiscountRow = (
   // Label
   pdf.text(totalsData.discount.label, labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with SAR text instead of symbol
+  // Value with SAR text instead of symbol and comma formatting
   const discountText = totalsData.currencyInfo.symbol === 'SAR' ? 
-    `-${totalsData.discount.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
-    totalsData.discount.text;
+    `-${formatNumberWithCommas(totalsData.discount.amount)} SAR` :
+    `-$${formatNumberWithCommas(totalsData.discount.amount)}`;
   const discountWidth = pdf.getTextWidth(discountText);
   const discountX = valueStartX + valueColumnWidth - discountWidth - CELL_PADDING;
   pdf.text(discountText, discountX, yPosition + 8);
@@ -142,10 +150,10 @@ const renderVATRow = (
   // Label
   pdf.text('VAT 15%', labelStartX + CELL_PADDING, yPosition + 8);
 
-  // Value with SAR text instead of symbol
+  // Value with SAR text instead of symbol and comma formatting
   const vatText = totalsData.currencyInfo.symbol === 'SAR' ? 
-    `${totalsData.vat.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
-    totalsData.vat.text;
+    `${formatNumberWithCommas(totalsData.vat.amount)} SAR` :
+    `$${formatNumberWithCommas(totalsData.vat.amount)}`;
   const vatWidth = pdf.getTextWidth(vatText);
   const vatX = valueStartX + valueColumnWidth - vatWidth - CELL_PADDING;
   pdf.text(vatText, vatX, yPosition + 8);
@@ -180,10 +188,10 @@ const renderTotalRow = (
   const currencyName = totalsData.currencyInfo.symbol === 'SAR' ? 'Saudi Riyals' : totalsData.currencyInfo.name;
   pdf.text(`Total Price in ${currencyName}`, labelStartX + CELL_PADDING, yPosition + 9);
 
-  // Value with SAR text instead of symbol
+  // Value with SAR text instead of symbol and comma formatting
   const totalText = totalsData.currencyInfo.symbol === 'SAR' ? 
-    `${totalsData.total.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR` :
-    totalsData.total.text;
+    `${formatNumberWithCommas(totalsData.total.amount)} SAR` :
+    `$${formatNumberWithCommas(totalsData.total.amount)}`;
   const totalWidth = pdf.getTextWidth(totalText);
   const totalX = valueStartX + valueColumnWidth - totalWidth - CELL_PADDING;
   pdf.text(totalText, totalX, yPosition + 9);

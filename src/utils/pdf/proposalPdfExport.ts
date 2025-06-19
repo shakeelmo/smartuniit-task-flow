@@ -353,19 +353,21 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
     pdf.text((Number(item.quantity) || 0).toString(), currentX, yPosition + 7);
     currentX += columnWidths[1];
     
-    // Unit Price
-    pdf.text((Number(item.unitPrice) || 0).toFixed(2), currentX, yPosition + 7);
+    // Unit Price with comma formatting
+    const unitPrice = Number(item.unitPrice) || 0;
+    pdf.text(unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), currentX, yPosition + 7);
     currentX += columnWidths[2];
     
-    // Total
+    // Total with comma formatting
     pdf.setFont('helvetica', 'bold');
-    pdf.text((Number(item.total) || 0).toFixed(2), currentX, yPosition + 7);
+    const total = Number(item.total) || 0;
+    pdf.text(total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), currentX, yPosition + 7);
     pdf.setFont('helvetica', 'normal');
     
     yPosition += 20;
   });
 
-  // Enhanced Totals section with proper VAT calculation
+  // Enhanced Totals section with proper VAT calculation and comma formatting
   yPosition += 10;
   yPosition = checkPageBreak(pdf, yPosition, 100, proposalData, logoBase64, customerLogoBase64);
   
@@ -385,27 +387,30 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
   const vatAmount = afterDiscount * vatRate;
   const grandTotal = afterDiscount + vatAmount;
   
+  // Helper function for formatting numbers with commas
+  const formatAmount = (amount: number) => amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
   // Display calculations
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...COLORS.black);
   pdf.text('Subtotal:', totalsStartX, yPosition);
-  pdf.text(`${quotationData.currency} ${subtotal.toFixed(2)}`, totalsStartX + 50, yPosition);
+  pdf.text(`${quotationData.currency} ${formatAmount(subtotal)}`, totalsStartX + 50, yPosition);
   yPosition += 10;
   
   if (discountAmount > 0) {
     pdf.setTextColor(...COLORS.black);
     pdf.text('Discount:', totalsStartX, yPosition);
-    pdf.text(`-${quotationData.currency} ${discountAmount.toFixed(2)}`, totalsStartX + 50, yPosition);
+    pdf.text(`-${quotationData.currency} ${formatAmount(discountAmount)}`, totalsStartX + 50, yPosition);
     yPosition += 10;
     
     pdf.text('After Discount:', totalsStartX, yPosition);
-    pdf.text(`${quotationData.currency} ${afterDiscount.toFixed(2)}`, totalsStartX + 50, yPosition);
+    pdf.text(`${quotationData.currency} ${formatAmount(afterDiscount)}`, totalsStartX + 50, yPosition);
     yPosition += 10;
   }
   
   // VAT (always show, even if 0)
   pdf.text('VAT (15%):', totalsStartX, yPosition);
-  pdf.text(`${quotationData.currency} ${vatAmount.toFixed(2)}`, totalsStartX + 50, yPosition);
+  pdf.text(`${quotationData.currency} ${formatAmount(vatAmount)}`, totalsStartX + 50, yPosition);
   yPosition += 10;
   
   // Grand total
@@ -414,7 +419,7 @@ const addQuotationSection = (pdf: jsPDF, quotationData: any, yPosition: number, 
   pdf.setFontSize(PDF_CONFIG.fontSize.medium);
   pdf.setTextColor(...COLORS.headerBlue);
   pdf.text('Grand Total:', totalsStartX, yPosition);
-  pdf.text(`${quotationData.currency} ${grandTotal.toFixed(2)}`, totalsStartX + 50, yPosition);
+  pdf.text(`${quotationData.currency} ${formatAmount(grandTotal)}`, totalsStartX + 50, yPosition);
   
   // Terms and notes
   yPosition += 20;
