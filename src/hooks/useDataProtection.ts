@@ -83,13 +83,13 @@ export const useDataProtection = (type: 'quotation' | 'proposal') => {
 
   const recoverFromBackup = useCallback(async (backupId: string) => {
     try {
-      const recoveredData = await DataProtectionService.recoverData(backupId);
-      if (recoveredData) {
+      const recoveredBackup = await DataProtectionService.recoverData(backupId);
+      if (recoveredBackup && recoveredBackup.data) {
         toast({
           title: "Data Recovered",
           description: `Successfully recovered ${type} from backup`,
         });
-        return recoveredData.data;
+        return recoveredBackup.data;
       } else {
         toast({
           title: "Recovery Failed",

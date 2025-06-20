@@ -9,6 +9,75 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      data_backups: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          operation: string
+          timestamp: string
+          type: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          operation: string
+          timestamp?: string
+          type: string
+          user_id: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          operation?: string
+          timestamp?: string
+          type?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          error_message: string
+          error_type: string
+          id: string
+          resolved: boolean
+          stack_trace: string | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          error_message: string
+          error_type: string
+          id?: string
+          resolved?: boolean
+          stack_trace?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          error_message?: string
+          error_type?: string
+          id?: string
+          resolved?: boolean
+          stack_trace?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
