@@ -28,6 +28,8 @@ export const addTable = (
       if (currentY + 40 > PAGE_HEIGHT - BOTTOM_MARGIN) {
         pdf.addPage();
         currentY = addPageHeader(pdf, quotationData);
+        // Add footer to the new page immediately
+        addPageFooter(pdf);
       }
 
       // Add section header
@@ -63,6 +65,39 @@ const addPageHeader = (pdf: jsPDF, quotationData: QuotationData): number => {
   pdf.text(`Customer: ${quotationData.customer.companyName}`, PDF_CONFIG.pageMargin, yPosition);
   
   return yPosition + 15;
+};
+
+const addPageFooter = (pdf: jsPDF) => {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const totalPages = pdf.internal.pages.length - 1;
+  const currentPageNumber = pdf.getCurrentPageInfo().pageNumber;
+  
+  const footerY = pageHeight - 30; // Fixed position from bottom
+
+  // Blue triangular design in bottom-right corner
+  pdf.setFillColor(...COLORS.headerBlue);
+  pdf.triangle(pageWidth, pageHeight, pageWidth - 40, pageHeight, pageWidth, pageHeight - 25, 'F');
+
+  // Add horizontal line separator above footer
+  pdf.setDrawColor(...COLORS.headerBlue);
+  pdf.setLineWidth(0.3);
+  pdf.line(PDF_CONFIG.pageMargin, footerY - 15, pageWidth - PDF_CONFIG.pageMargin, footerY - 15);
+
+  // Contact information footer with proper spacing
+  pdf.setTextColor(...COLORS.black);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(PDF_CONFIG.fontSize.small);
+  const contactText = 'Office # 3 in, Al Dirah Dist, P.O Box 12633, Riyadh - 11461 KSA Tel: 011-4917295';
+  const contactWidth = pdf.getTextWidth(contactText);
+  pdf.text(contactText, (pageWidth - contactWidth) / 2, footerY - 8);
+
+  // Copyright and page number
+  pdf.setTextColor(...COLORS.orange);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(PDF_CONFIG.fontSize.small);
+  pdf.text('Copy Right© Smart Universe for Communication & IT', PDF_CONFIG.pageMargin, footerY);
+  pdf.text(`Page ${currentPageNumber} of ${totalPages}`, pageWidth - 30, footerY);
 };
 
 const renderSectionTable = (
@@ -116,6 +151,8 @@ const renderSectionTable = (
     if (currentY + estimatedRowHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
       pdf.addPage();
       currentY = addPageHeader(pdf, quotationData);
+      // Add footer to the new page immediately
+      addPageFooter(pdf);
       
       // Re-add section title if continuing on new page
       if (sectionTitle) {
@@ -132,6 +169,8 @@ const renderSectionTable = (
     if (currentY > PAGE_HEIGHT - BOTTOM_MARGIN) {
       pdf.addPage();
       currentY = addPageHeader(pdf, quotationData);
+      // Add footer to the new page immediately
+      addPageFooter(pdf);
       
       // Re-add section title if continuing on new page
       if (sectionTitle) {

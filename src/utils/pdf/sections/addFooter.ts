@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../constants';
 
 const PAGE_HEIGHT = 297; // A4 height in mm
-const BOTTOM_MARGIN = 50; // Increased space reserved for footer
+const BOTTOM_MARGIN = 50; // Space reserved for footer
 
 export const addFooter = (pdf: jsPDF, yPosition: number) => {
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -12,9 +12,9 @@ export const addFooter = (pdf: jsPDF, yPosition: number) => {
 
   // Calculate if we need more space for footer content
   const requiredFooterSpace = 45; // Space needed for footer content
-  const footerStartY = yPosition + 20; // Add more spacing before footer
+  const footerStartY = yPosition + 20; // Add spacing before footer
 
-  // Check if we need a new page for footer content - be more aggressive about page breaks
+  // Check if we need a new page for footer content
   if (footerStartY + requiredFooterSpace > PAGE_HEIGHT - BOTTOM_MARGIN) {
     pdf.addPage();
     yPosition = PDF_CONFIG.pageMargin;
@@ -37,13 +37,16 @@ export const addFooter = (pdf: jsPDF, yPosition: number) => {
   const endTextWidth = pdf.getTextWidth(endText);
   pdf.text(endText, (pageWidth - endTextWidth) / 2, endOfQuotationY);
 
-  // Add footer to all pages with improved positioning
-  for (let i = 1; i <= totalPages; i++) {
+  // Get updated total pages after potential page addition
+  const finalTotalPages = pdf.internal.pages.length - 1;
+
+  // Add footer to ALL pages including any newly created ones
+  for (let i = 1; i <= finalTotalPages; i++) {
     pdf.setPage(i);
     
     const footerY = pageHeight - 30; // Fixed position from bottom
 
-    // Blue triangular design in bottom-right
+    // Blue triangular design in bottom-right corner
     pdf.setFillColor(...COLORS.headerBlue);
     pdf.triangle(pageWidth, pageHeight, pageWidth - 40, pageHeight, pageWidth, pageHeight - 25, 'F');
 
@@ -65,9 +68,9 @@ export const addFooter = (pdf: jsPDF, yPosition: number) => {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(PDF_CONFIG.fontSize.small);
     pdf.text('Copy Right© Smart Universe for Communication & IT', PDF_CONFIG.pageMargin, footerY);
-    pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 30, footerY);
+    pdf.text(`Page ${i} of ${finalTotalPages}`, pageWidth - 30, footerY);
   }
 
   // Return to last page
-  pdf.setPage(totalPages);
+  pdf.setPage(finalTotalPages);
 };
