@@ -145,21 +145,37 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
 
   const addLineItem = () => {
     const newItem: LineItem = {
-      id: Date.now().toString(),
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       service: '',
       description: '',
       partNumber: '',
       quantity: 1,
       unitPrice: 0
     };
+    console.log('Adding new line item in edit mode:', newItem);
     setLineItems([...lineItems, newItem]);
     markUnsavedChanges();
+    
+    toast({
+      title: "Service Added",
+      description: "New service item has been added. You can now enter details like Civil Services, Power Infrastructure, etc.",
+    });
   };
 
   const removeLineItem = (id: string) => {
     if (lineItems.length > 1) {
       setLineItems(lineItems.filter(item => item.id !== id));
       markUnsavedChanges();
+      toast({
+        title: "Service Removed",
+        description: "Service item has been removed from the quotation.",
+      });
+    } else {
+      toast({
+        title: "Cannot Remove",
+        description: "At least one service item is required.",
+        variant: "destructive"
+      });
     }
   };
 

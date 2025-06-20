@@ -4,10 +4,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Plus, Percent } from 'lucide-react';
+import { Percent } from 'lucide-react';
 import CustomerForm from './CustomerForm';
-import LineItemsTable from './LineItemsTable';
+import EditLineItemsManager from './EditLineItemsManager';
 
 interface EditQuotationFormProps {
   customer: any;
@@ -98,19 +97,13 @@ const EditQuotationForm = ({
         </div>
       </div>
 
-      {/* Line Items */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Services / الخدمات</h3>
-          <Button onClick={addLineItem} variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
-        </div>
-        <LineItemsTable
+      {/* Enhanced Line Items with Add Service functionality */}
+      <div className="bg-white p-4 rounded-lg border">
+        <EditLineItemsManager
           lineItems={lineItems}
           updateLineItem={updateLineItem}
           removeLineItem={removeLineItem}
+          addLineItem={addLineItem}
           showUnitColumn={showUnitColumn}
           setShowUnitColumn={setShowUnitColumn}
         />
