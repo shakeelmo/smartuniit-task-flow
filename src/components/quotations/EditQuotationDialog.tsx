@@ -4,6 +4,7 @@ import { Dialog } from '@/components/ui/dialog';
 import EditQuotationDialogContent from './EditQuotationDialogContent';
 import { useEditQuotationState } from './useEditQuotationState';
 import { QuotationData } from '@/utils/pdfExport';
+import { AutoSaveIndicator } from '@/components/shared/AutoSaveIndicator';
 
 interface EditQuotationDialogProps {
   open: boolean;
@@ -34,7 +35,12 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
     addLineItem,
     removeLineItem,
     updateLineItem,
-    handleExportPDF
+    handleExportPDF,
+    // Data protection states
+    isAutoSaving,
+    lastAutoSave,
+    hasUnsavedChanges,
+    clearUnsavedChanges
   } = useEditQuotationState(quotationData, open);
 
   const handleSave = () => {
@@ -73,12 +79,20 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
     };
 
     onQuotationUpdated(updatedQuotationData);
+    clearUnsavedChanges(quotationData?.number);
   };
 
   const isEditMode = !!quotationData;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <div className="fixed top-4 right-4 z-50">
+        <AutoSaveIndicator
+          isAutoSaving={isAutoSaving}
+          lastAutoSave={lastAutoSave}
+          hasUnsavedChanges={hasUnsavedChanges}
+        />
+      </div>
       <EditQuotationDialogContent
         isEditMode={isEditMode}
         customer={customer}

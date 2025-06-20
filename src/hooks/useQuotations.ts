@@ -3,11 +3,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { QuotationData } from '@/utils/pdf/types';
+import { DataProtectionService } from '@/utils/dataProtection';
+import { useDataProtection } from '@/hooks/useDataProtection';
 
 export const useQuotations = () => {
   const [quotations, setQuotations] = useState<QuotationData[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { createBackup, logError } = useDataProtection('quotation');
 
   const fetchQuotations = async () => {
     try {
@@ -47,9 +50,10 @@ export const useQuotations = () => {
       setQuotations(formattedQuotations);
     } catch (error) {
       console.error('Error fetching quotations:', error);
+      await logError(error as Error, { operation: 'fetch_quotations' });
       toast({
         title: "Error",
-        description: "Failed to load quotations",
+        description: "Failed to load quotations. Please check your connection and try again.",
         variant: "destructive"
       });
     } finally {
@@ -59,8 +63,29 @@ export const useQuotations = () => {
 
   const saveQuotation = async (quotationData: QuotationData) => {
     try {
+      // Validate data before saving
+      const validation = DataProtectionService.validateQuotationData(quotationData);
+      if (!validation.isValid) {
+        toast({
+          title: "Validation Error",
+          description: `Please fix the following issues: ${validation.errors.join(', ')}`,
+          variant: "destructive"
+        });
+        return false;
+      }
+
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('Not authenticated');
+      if (!userData.user) {
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to save quotations",
+          variant: "destructive"
+        });
+        throw new Error('Not authenticated');
+      }
+
+      // Create backup before saving
+      await createBackup(quotationData, 'create');
 
       const quotationRecord = {
         user_id: userData.user.id,
@@ -93,12 +118,15 @@ export const useQuotations = () => {
 
       if (checkError) {
         console.error('Error checking existing quotation:', checkError);
+        await logError(checkError, { operation: 'check_existing', quotationNumber: quotationData.number });
         throw checkError;
       }
 
       let result;
       if (existingQuotation) {
-        // Update existing quotation
+        // Update existing quotation - create backup first
+        await createBackup(quotationData, 'update');
+        
         console.log('Updating existing quotation');
         const { data, error } = await supabase
           .from('quotations')
@@ -107,7 +135,10 @@ export const useQuotations = () => {
           .eq('user_id', userData.user.id)
           .select();
         
-        if (error) throw error;
+        if (error) {
+          await logError(error, { operation: 'update_quotation', quotationNumber: quotationData.number });
+          throw error;
+        }
         result = data;
       } else {
         // Insert new quotation
@@ -117,24 +148,31 @@ export const useQuotations = () => {
           .insert(quotationRecord)
           .select();
         
-        if (error) throw error;
+        if (error) {
+          await logError(error, { operation: 'insert_quotation', quotationNumber: quotationData.number });
+          throw error;
+        }
         result = data;
       }
 
       console.log('Quotation save result:', result);
       await fetchQuotations();
       
+      // Clear auto-save after successful save
+      DataProtectionService.clearAutoSave('quotation', quotationData.number);
+      
       toast({
         title: "Success",
-        description: "Quotation saved successfully",
+        description: "Quotation saved successfully with backup created",
       });
 
       return true;
     } catch (error) {
       console.error('Error saving quotation:', error);
+      await logError(error as Error, { operation: 'save_quotation', quotationData });
       toast({
         title: "Error",
-        description: "Failed to save quotation",
+        description: "Failed to save quotation. A backup has been created locally. Please try again or contact support.",
         variant: "destructive"
       });
       return false;
@@ -143,8 +181,29 @@ export const useQuotations = () => {
 
   const updateQuotation = async (quotationData: QuotationData) => {
     try {
+      // Validate data before updating
+      const validation = DataProtectionService.validateQuotationData(quotationData);
+      if (!validation.isValid) {
+        toast({
+          title: "Validation Error",
+          description: `Please fix the following issues: ${validation.errors.join(', ')}`,
+          variant: "destructive"
+        });
+        return false;
+      }
+
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('Not authenticated');
+      if (!userData.user) {
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to update quotations",
+          variant: "destructive"
+        });
+        throw new Error('Not authenticated');
+      }
+
+      // Create backup before updating
+      await createBackup(quotationData, 'update');
 
       const quotationRecord = {
         date: quotationData.date,
@@ -169,21 +228,28 @@ export const useQuotations = () => {
         .eq('number', quotationData.number)
         .eq('user_id', userData.user.id);
 
-      if (error) throw error;
+      if (error) {
+        await logError(error, { operation: 'update_quotation', quotationNumber: quotationData.number });
+        throw error;
+      }
 
       await fetchQuotations();
       
+      // Clear auto-save after successful update
+      DataProtectionService.clearAutoSave('quotation', quotationData.number);
+      
       toast({
         title: "Success",
-        description: "Quotation updated successfully",
+        description: "Quotation updated successfully with backup created",
       });
 
       return true;
     } catch (error) {
       console.error('Error updating quotation:', error);
+      await logError(error as Error, { operation: 'update_quotation', quotationData });
       toast({
         title: "Error",
-        description: "Failed to update quotation",
+        description: "Failed to update quotation. A backup has been created locally. Please try again or contact support.",
         variant: "destructive"
       });
       return false;

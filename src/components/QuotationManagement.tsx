@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter, FileSpreadsheet, Save } from 'lucide-react';
+import { Plus, Search, Filter, FileSpreadsheet, Save, Database } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import QuotationsList from './quotations/QuotationsList';
 import CreateQuotationDialog from './quotations/CreateQuotationDialog';
 import EditQuotationDialog from './quotations/EditQuotationDialog';
 import ExcelImportDialog from './quotations/ExcelImportDialog';
+import { DataRecoveryDialog } from './shared/DataRecoveryDialog';
 import { useToast } from '@/hooks/use-toast';
 import { QuotationData } from '@/utils/pdfExport';
 import { useQuotations } from '@/hooks/useQuotations';
@@ -15,6 +16,7 @@ const QuotationManagement = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState<QuotationData | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -30,6 +32,10 @@ const QuotationManagement = () => {
     setShowImportDialog(true);
   };
 
+  const handleDataRecovery = () => {
+    setShowRecoveryDialog(true);
+  };
+
   const handleEditQuotation = (quotation: QuotationData) => {
     setEditingQuotation(quotation);
     setShowEditDialog(true);
@@ -42,7 +48,7 @@ const QuotationManagement = () => {
       if (success) {
         toast({
           title: "Quotation Saved",
-          description: "New quotation has been saved successfully and is available for use in proposals.",
+          description: "New quotation has been saved successfully with automatic backup created.",
         });
       }
     } else {
@@ -59,7 +65,7 @@ const QuotationManagement = () => {
       if (success) {
         toast({
           title: "Quotation Updated",
-          description: "Quotation has been updated successfully and changes are reflected in proposals.",
+          description: "Quotation has been updated successfully with backup created.",
         });
       }
     }
@@ -76,14 +82,28 @@ const QuotationManagement = () => {
     refetch();
   };
 
+  const handleDataRecovered = (recoveredData: QuotationData) => {
+    // Set the recovered data as editing quotation and open edit dialog
+    setEditingQuotation(recoveredData);
+    setShowEditDialog(true);
+    toast({
+      title: "Data Recovered",
+      description: "Quotation data has been recovered successfully. You can now review and save it.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quotations</h1>
-          <p className="text-gray-600">إدارة العروض والأسعار - Manage quotes and pricing</p>
+          <p className="text-gray-600">إدارة العروض والأسعار - Manage quotes and pricing with enhanced data protection</p>
         </div>
         <div className="flex space-x-2">
+          <Button onClick={handleDataRecovery} variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+            <Database className="h-4 w-4 mr-2" />
+            Data Recovery
+          </Button>
           <Button onClick={handleImportExcel} variant="outline" className="bg-green-600 text-white hover:bg-green-700">
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Import Excel
@@ -125,14 +145,14 @@ const QuotationManagement = () => {
         </div>
       </div>
 
-      {/* Display quotations count */}
+      {/* Enhanced info section with data protection features */}
       {quotations.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center gap-2">
             <Save className="h-5 w-5 text-blue-600" />
             <p className="text-blue-800">
-              <strong>{quotations.length}</strong> quotation(s) saved in database. 
-              You can edit, export, or manage these quotations. These quotations are also available for import in the Proposal module.
+              <strong>{quotations.length}</strong> quotation(s) saved with enhanced data protection. 
+              Features include: automatic backups, data recovery, auto-save, and error logging.
             </p>
           </div>
         </div>
@@ -166,6 +186,13 @@ const QuotationManagement = () => {
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
         onQuotationsImported={handleQuotationsImported}
+      />
+
+      <DataRecoveryDialog
+        open={showRecoveryDialog}
+        onOpenChange={setShowRecoveryDialog}
+        type="quotation"
+        onDataRecovered={handleDataRecovered}
       />
     </div>
   );

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { generateQuotationPDF, QuotationData } from '@/utils/pdfExport';
+import { useDataProtection } from '@/hooks/useDataProtection';
 
 interface LineItem {
   id: string;
@@ -53,6 +54,16 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
+  // Data protection hooks
+  const { 
+    isAutoSaving, 
+    lastAutoSave, 
+    hasUnsavedChanges, 
+    performAutoSave, 
+    markUnsavedChanges, 
+    clearUnsavedChanges 
+  } = useDataProtection('quotation');
+
   // Load existing quotation data when dialog opens
   useEffect(() => {
     if (quotationData && open) {
@@ -71,8 +82,38 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
       setDiscount(quotationData.discount || 0);
       setDiscountType(quotationData.discountType || 'percentage');
       setCustomTerms(quotationData.customTerms);
+      clearUnsavedChanges(quotationData.number);
     }
   }, [quotationData, open]);
+
+  // Auto-save when data changes
+  useEffect(() => {
+    if (!quotationData || !open) return;
+
+    const currentData = {
+      ...quotationData,
+      customer,
+      lineItems,
+      notes,
+      validUntil,
+      currency,
+      discount,
+      discountType,
+      customTerms,
+      subtotal: calculateSubtotal(),
+      vat: calculateVAT(),
+      total: calculateTotal()
+    };
+
+    performAutoSave(currentData);
+  }, [customer, lineItems, notes, validUntil, currency, discount, discountType, customTerms]);
+
+  // Mark unsaved changes when any state changes
+  useEffect(() => {
+    if (quotationData && open) {
+      markUnsavedChanges();
+    }
+  }, [customer, lineItems, notes, validUntil, currency, discount, discountType, customTerms]);
 
   const calculateSubtotal = () => {
     return lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
@@ -112,11 +153,13 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
       unitPrice: 0
     };
     setLineItems([...lineItems, newItem]);
+    markUnsavedChanges();
   };
 
   const removeLineItem = (id: string) => {
     if (lineItems.length > 1) {
       setLineItems(lineItems.filter(item => item.id !== id));
+      markUnsavedChanges();
     }
   };
 
@@ -124,6 +167,7 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
     setLineItems(lineItems.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));
+    markUnsavedChanges();
   };
 
   const handleExportPDF = async () => {
@@ -190,6 +234,12 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
     addLineItem,
     removeLineItem,
     updateLineItem,
-    handleExportPDF
+    handleExportPDF,
+    // Data protection states
+    isAutoSaving,
+    lastAutoSave,
+    hasUnsavedChanges,
+    markUnsavedChanges,
+    clearUnsavedChanges
   };
 };
