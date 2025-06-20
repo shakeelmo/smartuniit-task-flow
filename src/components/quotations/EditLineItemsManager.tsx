@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ interface LineItem {
   description: string;
   partNumber?: string;
   quantity: number;
+  unit?: string;
   unitPrice: number;
 }
 
@@ -32,6 +33,73 @@ const EditLineItemsManager = ({
   showUnitColumn,
   setShowUnitColumn
 }: EditLineItemsManagerProps) => {
+  const [customServices, setCustomServices] = useState<string[]>([]);
+  const [newServiceInput, setNewServiceInput] = useState('');
+  const [showAddService, setShowAddService] = useState<string | null>(null);
+
+  // Comprehensive service options matching the create quotation functionality
+  const predefinedServices = [
+    // Infrastructure & Construction
+    'Civil Services / الخدمات المدنية',
+    'Power Infrastructure / البنية التحتية للطاقة',
+    'Electrical Installation / التركيبات الكهربائية',
+    'HVAC Systems / أنظمة التكييف',
+    'Plumbing Services / خدمات السباكة',
+    'Fire Safety Systems / أنظمة السلامة من الحرائق',
+    
+    // IT & Technology
+    'IT Solutions / حلول تقنية المعلومات',
+    'Network Services / خدمات الشبكات',
+    'Web Development / تطوير المواقع',
+    'Software Development / تطوير البرمجيات',
+    'Database Management / إدارة قواعد البيانات',
+    'Cloud Services / الخدمات السحابية',
+    'Cybersecurity / الأمن السيبراني',
+    
+    // Communication & Electronics
+    'Telecommunications / الاتصالات',
+    'Audio Visual Systems / الأنظمة السمعية والبصرية',
+    'Security Systems / أنظمة الأمان',
+    'Access Control / التحكم في الوصول',
+    'CCTV Installation / تركيب كاميرات المراقبة',
+    
+    // Consulting & Management
+    'Project Management / إدارة المشاريع',
+    'Technical Consulting / الاستشارات التقنية',
+    'System Integration / تكامل الأنظمة',
+    'Maintenance Services / خدمات الصيانة',
+    'Training Services / خدمات التدريب',
+    
+    // Specialized Services
+    'Data Center Setup / إعداد مراكز البيانات',
+    'Backup Solutions / حلول النسخ الاحتياطي',
+    'Disaster Recovery / استعادة الكوارث',
+    'Quality Assurance / ضمان الجودة',
+    'Technical Support / الدعم الفني'
+  ];
+
+  const allServices = [...predefinedServices, ...customServices];
+
+  const handleAddCustomService = (itemId: string) => {
+    if (newServiceInput.trim()) {
+      const newService = newServiceInput.trim();
+      if (!allServices.includes(newService)) {
+        setCustomServices(prev => [...prev, newService]);
+      }
+      updateLineItem(itemId, 'service', newService);
+      setNewServiceInput('');
+      setShowAddService(null);
+    }
+  };
+
+  const handleServiceChange = (itemId: string, value: string) => {
+    if (value === 'ADD_CUSTOM') {
+      setShowAddService(itemId);
+      return;
+    }
+    updateLineItem(itemId, 'service', value);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -66,17 +134,62 @@ const EditLineItemsManager = ({
                 <span className="text-sm font-medium text-gray-600">#{index + 1}</span>
               </div>
               
-              <div className="col-span-4">
+              <div className="col-span-3">
                 <Label className="text-xs font-medium">Service Name / اسم الخدمة</Label>
-                <Input
-                  value={item.service}
-                  onChange={(e) => updateLineItem(item.id, 'service', e.target.value)}
-                  placeholder="e.g., Civil Services, Power Infrastructure..."
-                  className="text-sm mt-1"
-                />
+                {showAddService === item.id ? (
+                  <div className="space-y-2">
+                    <Input
+                      value={newServiceInput}
+                      onChange={(e) => setNewServiceInput(e.target.value)}
+                      placeholder="Enter custom service name..."
+                      className="text-sm mt-1"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddCustomService(item.id);
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddCustomService(item.id)}
+                        className="bg-smart-orange hover:bg-smart-orange/90"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setShowAddService(null);
+                          setNewServiceInput('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <select
+                    value={item.service}
+                    onChange={(e) => handleServiceChange(item.id, e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-smart-orange focus:border-smart-orange mt-1"
+                  >
+                    <option value="">Select service...</option>
+                    {allServices.map((service) => (
+                      <option key={service} value={service}>
+                        {service}
+                      </option>
+                    ))}
+                    <option value="ADD_CUSTOM" className="font-semibold text-smart-orange">
+                      + Add Custom Service
+                    </option>
+                  </select>
+                )}
               </div>
 
-              <div className="col-span-4">
+              <div className="col-span-3">
                 <Label className="text-xs font-medium">Description / الوصف</Label>
                 <Textarea
                   value={item.description}
@@ -110,6 +223,41 @@ const EditLineItemsManager = ({
                   className="text-sm mt-1"
                 />
               </div>
+
+              {showUnitColumn && (
+                <div className="col-span-1">
+                  <Label className="text-xs font-medium">Unit / الوحدة</Label>
+                  <select
+                    value={item.unit || ''}
+                    onChange={(e) => updateLineItem(item.id, 'unit', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-smart-orange focus:border-smart-orange mt-1"
+                  >
+                    <option value="">Select unit...</option>
+                    <option value="Each">Each / كل</option>
+                    <option value="Hour">Hour / ساعة</option>
+                    <option value="Day">Day / يوم</option>
+                    <option value="Week">Week / أسبوع</option>
+                    <option value="Month">Month / شهر</option>
+                    <option value="Year">Year / سنة</option>
+                    <option value="Project">Project / مشروع</option>
+                    <option value="License">License / رخصة</option>
+                    <option value="User">User / مستخدم</option>
+                    <option value="Page">Page / صفحة</option>
+                    <option value="Design">Design / تصميم</option>
+                    <option value="Feature">Feature / ميزة</option>
+                    <option value="Aisles">Aisles / ممرات</option>
+                    <option value="m">m / متر</option>
+                    <option value="sqm">sqm / متر مربع</option>
+                    <option value="Units">Units / وحدات</option>
+                    <option value="Job">Job / وظيفة</option>
+                    <option value="Sets">Sets / مجموعات</option>
+                    <option value="Doors">Doors / أبواب</option>
+                    <option value="Cams">Cams / كاميرات</option>
+                    <option value="Sensors">Sensors / مجسات</option>
+                    <option value="Racks">Racks / رفوف</option>
+                  </select>
+                </div>
+              )}
 
               <div className={showUnitColumn ? "col-span-1" : "col-span-1"}>
                 <Label className="text-xs font-medium">Price / السعر</Label>
@@ -145,6 +293,24 @@ const EditLineItemsManager = ({
             <Plus className="h-4 w-4 mr-2" />
             Add Another Service
           </Button>
+        </div>
+      )}
+
+      {customServices.length > 0 && (
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <h4 className="text-sm font-semibold text-blue-800 mb-2">
+            Custom Services Added / الخدمات المخصصة المضافة:
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {customServices.map((service, index) => (
+              <span
+                key={index}
+                className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs"
+              >
+                {service}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>

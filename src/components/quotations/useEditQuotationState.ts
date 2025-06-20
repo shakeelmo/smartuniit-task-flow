@@ -10,6 +10,7 @@ interface LineItem {
   description: string;
   partNumber?: string;
   quantity: number;
+  unit?: string;
   unitPrice: number;
 }
 
@@ -35,10 +36,10 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
   });
 
   const [customerType, setCustomerType] = useState<'existing' | 'new'>('new');
-  const [showUnitColumn, setShowUnitColumn] = useState(false);
+  const [showUnitColumn, setShowUnitColumn] = useState(true); // Enable unit column by default
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: '1', service: '', description: '', partNumber: '', quantity: 1, unitPrice: 0 }
+    { id: '1', service: '', description: '', partNumber: '', quantity: 1, unit: 'Each', unitPrice: 0 }
   ]);
 
   const [notes, setNotes] = useState('');
@@ -74,8 +75,14 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
         description: item.description,
         partNumber: item.partNumber || '',
         quantity: item.quantity,
+        unit: item.unit || 'Each', // Ensure unit is included
         unitPrice: item.unitPrice
       })));
+      
+      // Enable unit column if any items have units
+      const hasUnits = quotationData.lineItems.some(item => item.unit && item.unit.trim());
+      setShowUnitColumn(hasUnits || true); // Default to true for better UX
+      
       setNotes(quotationData.notes);
       setValidUntil(quotationData.validUntil.split('T')[0]); // Convert to date format
       setCurrency(quotationData.currency);
@@ -150,6 +157,7 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
       description: '',
       partNumber: '',
       quantity: 1,
+      unit: 'Each', // Default unit
       unitPrice: 0
     };
     console.log('Adding new line item in edit mode:', newItem);
@@ -158,7 +166,7 @@ export const useEditQuotationState = (quotationData?: QuotationData | null, open
     
     toast({
       title: "Service Added",
-      description: "New service item has been added. You can now enter details like Civil Services, Power Infrastructure, etc.",
+      description: "New service item has been added. Select from predefined services like Civil Services, Power Infrastructure, etc.",
     });
   };
 

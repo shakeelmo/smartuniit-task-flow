@@ -8,7 +8,7 @@ import { addTableRow, TableRowConfig } from './table/TableRow';
 import { calculateColumnConfig } from './table/ColumnCalculator';
 
 const PAGE_HEIGHT = 297; // A4 height in mm
-const BOTTOM_MARGIN = 40; // Space reserved for footer/totals
+const BOTTOM_MARGIN = 60; // Increased space reserved for footer/totals to prevent overlap
 
 export const addTable = (
   pdf: jsPDF,
@@ -24,8 +24,8 @@ export const addTable = (
   if (hasSections) {
     // Render sections with headers as separate table blocks
     quotationData.sections!.forEach((section, sectionIndex) => {
-      // Check if we need a new page for section header
-      if (currentY + 30 > PAGE_HEIGHT - BOTTOM_MARGIN) {
+      // Check if we need a new page for section header with more conservative spacing
+      if (currentY + 40 > PAGE_HEIGHT - BOTTOM_MARGIN) {
         pdf.addPage();
         currentY = addPageHeader(pdf, quotationData);
       }
@@ -108,12 +108,12 @@ const renderSectionTable = (
   // Add table header for this section
   currentY = addTableHeader(pdf, currentY, headerConfig);
 
-  // Table rows with enhanced styling and pagination
+  // Table rows with enhanced styling and improved pagination
   lineItems.forEach((item, index) => {
-    const enhancedRowHeight = 12;
+    const estimatedRowHeight = 20; // Conservative estimate for row height
     
-    // Check if we need a new page
-    if (currentY + enhancedRowHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+    // Check if we need a new page - be more conservative to prevent overlap
+    if (currentY + estimatedRowHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
       pdf.addPage();
       currentY = addPageHeader(pdf, quotationData);
       
@@ -125,7 +125,23 @@ const renderSectionTable = (
       currentY = addTableHeader(pdf, currentY, headerConfig);
     }
 
+    const previousY = currentY;
     currentY = addTableRow(pdf, item, index, currentY, rowConfig);
+    
+    // Safety check: if row was too big and we're close to bottom, start new page
+    if (currentY > PAGE_HEIGHT - BOTTOM_MARGIN) {
+      pdf.addPage();
+      currentY = addPageHeader(pdf, quotationData);
+      
+      // Re-add section title if continuing on new page
+      if (sectionTitle) {
+        currentY = addSectionHeader(pdf, sectionTitle, currentY, true);
+      }
+      
+      currentY = addTableHeader(pdf, currentY, headerConfig);
+      // Re-render the row on the new page
+      currentY = addTableRow(pdf, item, index, currentY, rowConfig);
+    }
   });
 
   // Add final bottom border for the table

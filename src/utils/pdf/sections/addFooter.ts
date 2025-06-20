@@ -3,29 +3,33 @@ import jsPDF from 'jspdf';
 import { COLORS, PDF_CONFIG } from '../constants';
 
 const PAGE_HEIGHT = 297; // A4 height in mm
-const BOTTOM_MARGIN = 45; // Increased space reserved for footer
+const BOTTOM_MARGIN = 50; // Increased space reserved for footer
 
 export const addFooter = (pdf: jsPDF, yPosition: number) => {
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const totalPages = pdf.internal.pages.length - 1; // Subtract 1 because pages array includes a null first element
 
-  // Add extra spacing before footer content
-  const footerStartY = yPosition + 15;
+  // Calculate if we need more space for footer content
+  const requiredFooterSpace = 45; // Space needed for footer content
+  const footerStartY = yPosition + 20; // Add more spacing before footer
 
-  // Check if we need a new page for footer content
-  if (footerStartY + 35 > PAGE_HEIGHT - BOTTOM_MARGIN) {
+  // Check if we need a new page for footer content - be more aggressive about page breaks
+  if (footerStartY + requiredFooterSpace > PAGE_HEIGHT - BOTTOM_MARGIN) {
     pdf.addPage();
     yPosition = PDF_CONFIG.pageMargin;
   }
 
+  // Ensure we have enough space by using a safer Y position
+  const safeFooterY = Math.min(footerStartY, PAGE_HEIGHT - BOTTOM_MARGIN - requiredFooterSpace);
+
   // Add line separator before footer content
   pdf.setDrawColor(...COLORS.headerBlue);
   pdf.setLineWidth(0.5);
-  pdf.line(PDF_CONFIG.pageMargin, footerStartY, pageWidth - PDF_CONFIG.pageMargin, footerStartY);
+  pdf.line(PDF_CONFIG.pageMargin, safeFooterY, pageWidth - PDF_CONFIG.pageMargin, safeFooterY);
 
   // Add "End Of Quotation" text with proper spacing
-  const endOfQuotationY = footerStartY + 10;
+  const endOfQuotationY = safeFooterY + 12;
   pdf.setTextColor(...COLORS.headerBlue);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(PDF_CONFIG.fontSize.title);
@@ -33,11 +37,11 @@ export const addFooter = (pdf: jsPDF, yPosition: number) => {
   const endTextWidth = pdf.getTextWidth(endText);
   pdf.text(endText, (pageWidth - endTextWidth) / 2, endOfQuotationY);
 
-  // Add footer to all pages
+  // Add footer to all pages with improved positioning
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i);
     
-    const footerY = pageHeight - 25;
+    const footerY = pageHeight - 30; // Fixed position from bottom
 
     // Blue triangular design in bottom-right
     pdf.setFillColor(...COLORS.headerBlue);
