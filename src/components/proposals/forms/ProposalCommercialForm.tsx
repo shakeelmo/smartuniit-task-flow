@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, DollarSign, Calendar } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Calendar, Download, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { generateProposalPDF } from '@/utils/proposalPdfExport';
 
 interface CommercialItem {
   id: string;
@@ -103,6 +105,11 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
       total_price: 0
     };
     setItems([...items, newItem]);
+    
+    toast({
+      title: "Item Added",
+      description: "New commercial item has been added to the quotation.",
+    });
   };
 
   const updateItem = (id: string, field: keyof CommercialItem, value: string | number) => {
@@ -119,7 +126,19 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
   };
 
   const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
+    if (items.length > 1) {
+      setItems(items.filter(item => item.id !== id));
+      toast({
+        title: "Item Removed",
+        description: "Commercial item has been removed from the quotation.",
+      });
+    } else {
+      toast({
+        title: "Cannot Remove",
+        description: "At least one item is required in the commercial quotation.",
+        variant: "destructive"
+      });
+    }
   };
 
   const updateBankDetails = (field: keyof BankDetails, value: string) => {
@@ -168,13 +187,52 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
       customTerms: formData.payment_terms,
       notes: `Project Duration: ${formData.project_duration_days} days`,
       customer: {
-        companyName: 'Commercial Proposal Customer', // Default value for commercial proposals
-        contactPerson: '',
-        email: '',
-        phone: '',
+        companyName: proposal?.client_company_name || 'Commercial Proposal Customer',
+        contactPerson: proposal?.client_contact_person || '',
+        email: proposal?.client_email || '',
+        phone: proposal?.client_phone || '',
         address: ''
       }
     };
+  };
+
+  const handleExportPDF = async () => {
+    if (items.length === 0) {
+      toast({
+        title: "No Items",
+        description: "Please add at least one commercial item before exporting PDF",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const quotationData = createQuotationData();
+      
+      // Create proposal data for PDF export
+      const proposalDataForPDF = {
+        ...proposal,
+        quotation_data: quotationData,
+        commercial_items: items
+      };
+
+      await generateProposalPDF(proposalDataForPDF);
+      
+      toast({
+        title: "PDF Generated",
+        description: "Commercial proposal PDF has been generated successfully",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -255,9 +313,20 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <DollarSign className="h-6 w-6" />
-              Commercial Proposal
+              Commercial Proposal & Quotation
             </h2>
             <p className="text-gray-600">Detailed pricing, terms, and commercial information</p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleExportPDF}
+              disabled={loading || items.length === 0}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export PDF
+            </Button>
           </div>
         </div>
       </div>
@@ -266,11 +335,14 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="p-6 space-y-6">
-            {/* Commercial Items */}
+            {/* Commercial Items/Quotation Section */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Commercial Items ({items.length} items)</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Quotation Items ({items.length} items)
+                  </CardTitle>
                   <Button onClick={addItem}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Item
@@ -279,37 +351,45 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
               </CardHeader>
               <CardContent>
                 {items.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                    No commercial items added yet. Click "Add Item" to get started.
+                  <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No quotation items yet</h3>
+                    <p className="text-gray-600 mb-4">Add commercial items to create your quotation</p>
+                    <Button onClick={addItem}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Item
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="border rounded-lg">
+                    <div className="border rounded-lg overflow-hidden">
                       <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-16">S.No</TableHead>
-                            <TableHead className="min-w-[300px]">Description</TableHead>
-                            <TableHead className="w-20">Qty</TableHead>
-                            <TableHead className="w-24">Unit</TableHead>
-                            <TableHead className="w-32">Unit Price</TableHead>
-                            <TableHead className="w-32">Total</TableHead>
-                            <TableHead className="w-20">Action</TableHead>
+                          <TableRow className="bg-gray-50">
+                            <TableHead className="w-16 font-semibold">S.No</TableHead>
+                            <TableHead className="min-w-[300px] font-semibold">Description</TableHead>
+                            <TableHead className="w-20 font-semibold">Qty</TableHead>
+                            <TableHead className="w-24 font-semibold">Unit</TableHead>
+                            <TableHead className="w-32 font-semibold">Unit Price (SAR)</TableHead>
+                            <TableHead className="w-32 font-semibold">Total (SAR)</TableHead>
+                            <TableHead className="w-20 font-semibold">Action</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {items.map((item, index) => (
-                            <TableRow key={item.id}>
+                            <TableRow key={item.id} className="hover:bg-gray-50">
                               <TableCell>
-                                <Badge variant="outline">{index + 1}</Badge>
+                                <Badge variant="outline" className="font-medium">
+                                  {index + 1}
+                                </Badge>
                               </TableCell>
                               <TableCell>
                                 <Textarea
                                   value={item.description}
                                   onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                  placeholder="Item description..."
+                                  placeholder="Enter detailed item description..."
                                   rows={2}
-                                  className="text-sm min-w-[280px]"
+                                  className="text-sm min-w-[280px] border-gray-200"
                                 />
                               </TableCell>
                               <TableCell>
@@ -319,7 +399,7 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                                   onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                                   min="0"
                                   step="0.01"
-                                  className="text-sm w-16"
+                                  className="text-sm w-16 text-center"
                                 />
                               </TableCell>
                               <TableCell>
@@ -335,6 +415,8 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                                     <SelectItem value="Years">Years</SelectItem>
                                     <SelectItem value="Pieces">Pieces</SelectItem>
                                     <SelectItem value="Units">Units</SelectItem>
+                                    <SelectItem value="m²">m²</SelectItem>
+                                    <SelectItem value="kg">kg</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </TableCell>
@@ -345,14 +427,15 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                                   onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
                                   min="0"
                                   step="0.01"
-                                  className="text-sm w-28"
+                                  className="text-sm w-28 text-right"
+                                  placeholder="0.00"
                                 />
                               </TableCell>
                               <TableCell>
                                 <Input
-                                  value={item.total_price.toFixed(2)}
+                                  value={item.total_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   readOnly
-                                  className="bg-gray-50 text-sm font-medium w-28"
+                                  className="bg-gray-50 text-sm font-medium w-28 text-right border-gray-200"
                                 />
                               </TableCell>
                               <TableCell>
@@ -360,7 +443,7 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                                   variant="outline"
                                   size="sm"
                                   onClick={() => removeItem(item.id)}
-                                  className="text-red-600 hover:text-red-700"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -371,18 +454,21 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                       </Table>
                     </div>
 
-                    {/* Grand Total */}
-                    <div className="border-t pt-4">
+                    {/* Quotation Summary */}
+                    <div className="border-t-2 pt-6">
                       <div className="flex justify-end">
-                        <div className="text-right space-y-2">
-                          <div className="text-lg">
-                            Subtotal: SAR {grandTotal.toLocaleString()}
+                        <div className="text-right space-y-3 min-w-[300px]">
+                          <div className="flex justify-between text-lg">
+                            <span>Subtotal:</span>
+                            <span className="font-medium">SAR {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
-                          <div className="text-sm text-gray-600">
-                            VAT (15%): SAR {(grandTotal * 0.15).toLocaleString()}
+                          <div className="flex justify-between text-sm text-gray-600 border-b pb-2">
+                            <span>VAT (15%):</span>
+                            <span>SAR {(grandTotal * 0.15).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
-                          <div className="text-xl font-bold border-t pt-2">
-                            Grand Total: SAR {(grandTotal * 1.15).toLocaleString()}
+                          <div className="flex justify-between text-xl font-bold text-green-700 bg-green-50 p-3 rounded">
+                            <span>Grand Total:</span>
+                            <span>SAR {(grandTotal * 1.15).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                         </div>
                       </div>
@@ -420,8 +506,10 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                         id="payment_terms"
                         value={formData.payment_terms}
                         onChange={(e) => setFormData({...formData, payment_terms: e.target.value})}
-                        placeholder="Describe payment terms, milestones, etc..."
-                        rows={4}
+                        placeholder="• 30% advance payment upon contract signing
+• 50% payment upon project milestone completion
+• 20% final payment upon project delivery and acceptance"
+                        rows={5}
                       />
                     </div>
                   </div>
@@ -430,7 +518,7 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Bank Details</CardTitle>
+                  <CardTitle>Banking Information</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -439,7 +527,7 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                       <Input
                         value={formData.bank_details.bank_name}
                         onChange={(e) => updateBankDetails('bank_name', e.target.value)}
-                        placeholder="Bank name"
+                        placeholder="e.g., Saudi National Bank"
                       />
                     </div>
                     <div>
@@ -447,7 +535,7 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                       <Input
                         value={formData.bank_details.account_name}
                         onChange={(e) => updateBankDetails('account_name', e.target.value)}
-                        placeholder="Account holder name"
+                        placeholder="Company account holder name"
                       />
                     </div>
                     <div>
@@ -463,7 +551,7 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
                       <Input
                         value={formData.bank_details.iban}
                         onChange={(e) => updateBankDetails('iban', e.target.value)}
-                        placeholder="International Bank Account Number"
+                        placeholder="SA** **** **** **** ****"
                       />
                     </div>
                   </div>
@@ -476,7 +564,12 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
 
       {/* Save Button - Fixed at bottom */}
       <div className="flex-shrink-0 p-6 border-t bg-gray-50">
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            {items.length > 0 && (
+              <span>Total: SAR {(grandTotal * 1.15).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({items.length} items)</span>
+            )}
+          </div>
           <Button 
             onClick={handleSave}
             disabled={loading || externalLoading}
