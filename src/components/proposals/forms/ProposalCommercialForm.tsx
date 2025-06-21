@@ -2,17 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, DollarSign, Calendar, Download, FileText } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { DollarSign, Download, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateProposalPDF } from '@/utils/proposalPdfExport';
+import { CommercialItemsTable } from './CommercialItemsTable';
+import { QuotationSummary } from './QuotationSummary';
+import { PaymentTermsForm } from './PaymentTermsForm';
+import { BankDetailsForm } from './BankDetailsForm';
 
 interface CommercialItem {
   id: string;
@@ -91,53 +89,6 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
       setItems(data || []);
     } catch (error) {
       console.error('Error loading commercial items:', error);
-    }
-  };
-
-  const addItem = () => {
-    const newItem: CommercialItem = {
-      id: `temp_${Date.now()}`,
-      serial_number: items.length + 1,
-      description: '',
-      quantity: 1,
-      unit: 'Each',
-      unit_price: 0,
-      total_price: 0
-    };
-    setItems([...items, newItem]);
-    
-    toast({
-      title: "Item Added",
-      description: "New commercial item has been added to the quotation.",
-    });
-  };
-
-  const updateItem = (id: string, field: keyof CommercialItem, value: string | number) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        if (field === 'quantity' || field === 'unit_price') {
-          updatedItem.total_price = Number(updatedItem.quantity) * Number(updatedItem.unit_price);
-        }
-        return updatedItem;
-      }
-      return item;
-    }));
-  };
-
-  const removeItem = (id: string) => {
-    if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
-      toast({
-        title: "Item Removed",
-        description: "Commercial item has been removed from the quotation.",
-      });
-    } else {
-      toast({
-        title: "Cannot Remove",
-        description: "At least one item is required in the commercial quotation.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -338,225 +289,36 @@ export const ProposalCommercialForm: React.FC<ProposalCommercialFormProps> = ({
             {/* Commercial Items/Quotation Section */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Quotation Items ({items.length} items)
-                  </CardTitle>
-                  <Button onClick={addItem}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Item
-                  </Button>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Commercial Quotation
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {items.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No quotation items yet</h3>
-                    <p className="text-gray-600 mb-4">Add commercial items to create your quotation</p>
-                    <Button onClick={addItem}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add First Item
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-gray-50">
-                            <TableHead className="w-16 font-semibold">S.No</TableHead>
-                            <TableHead className="min-w-[300px] font-semibold">Description</TableHead>
-                            <TableHead className="w-20 font-semibold">Qty</TableHead>
-                            <TableHead className="w-24 font-semibold">Unit</TableHead>
-                            <TableHead className="w-32 font-semibold">Unit Price (SAR)</TableHead>
-                            <TableHead className="w-32 font-semibold">Total (SAR)</TableHead>
-                            <TableHead className="w-20 font-semibold">Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {items.map((item, index) => (
-                            <TableRow key={item.id} className="hover:bg-gray-50">
-                              <TableCell>
-                                <Badge variant="outline" className="font-medium">
-                                  {index + 1}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Textarea
-                                  value={item.description}
-                                  onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                  placeholder="Enter detailed item description..."
-                                  rows={2}
-                                  className="text-sm min-w-[280px] border-gray-200"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  value={item.quantity}
-                                  onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                                  min="0"
-                                  step="0.01"
-                                  className="text-sm w-16 text-center"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Select value={item.unit} onValueChange={(value) => updateItem(item.id, 'unit', value)}>
-                                  <SelectTrigger className="text-sm w-20">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-white border shadow-lg z-50">
-                                    <SelectItem value="Each">Each</SelectItem>
-                                    <SelectItem value="Hours">Hours</SelectItem>
-                                    <SelectItem value="Days">Days</SelectItem>
-                                    <SelectItem value="Months">Months</SelectItem>
-                                    <SelectItem value="Years">Years</SelectItem>
-                                    <SelectItem value="Pieces">Pieces</SelectItem>
-                                    <SelectItem value="Units">Units</SelectItem>
-                                    <SelectItem value="m²">m²</SelectItem>
-                                    <SelectItem value="kg">kg</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  value={item.unit_price}
-                                  onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
-                                  min="0"
-                                  step="0.01"
-                                  className="text-sm w-28 text-right"
-                                  placeholder="0.00"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  value={item.total_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  readOnly
-                                  className="bg-gray-50 text-sm font-medium w-28 text-right border-gray-200"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => removeItem(item.id)}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-
-                    {/* Quotation Summary */}
-                    <div className="border-t-2 pt-6">
-                      <div className="flex justify-end">
-                        <div className="text-right space-y-3 min-w-[300px]">
-                          <div className="flex justify-between text-lg">
-                            <span>Subtotal:</span>
-                            <span className="font-medium">SAR {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          </div>
-                          <div className="flex justify-between text-sm text-gray-600 border-b pb-2">
-                            <span>VAT (15%):</span>
-                            <span>SAR {(grandTotal * 0.15).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          </div>
-                          <div className="flex justify-between text-xl font-bold text-green-700 bg-green-50 p-3 rounded">
-                            <span>Grand Total:</span>
-                            <span>SAR {(grandTotal * 1.15).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <CommercialItemsTable 
+                  items={items}
+                  onItemsChange={setItems}
+                />
+                
+                {items.length > 0 && (
+                  <QuotationSummary grandTotal={grandTotal} />
                 )}
               </CardContent>
             </Card>
 
-            {/* Payment Terms & Project Duration */}
+            {/* Payment Terms & Bank Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calendar className="h-5 w-5 mr-2" />
-                    Terms & Duration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="project_duration_days">Project Duration (Days)</Label>
-                      <Input
-                        id="project_duration_days"
-                        type="number"
-                        value={formData.project_duration_days}
-                        onChange={(e) => setFormData({...formData, project_duration_days: e.target.value})}
-                        placeholder="e.g., 90"
-                        min="1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="payment_terms">Payment Terms</Label>
-                      <Textarea
-                        id="payment_terms"
-                        value={formData.payment_terms}
-                        onChange={(e) => setFormData({...formData, payment_terms: e.target.value})}
-                        placeholder="• 30% advance payment upon contract signing
-• 50% payment upon project milestone completion
-• 20% final payment upon project delivery and acceptance"
-                        rows={5}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <PaymentTermsForm
+                projectDurationDays={formData.project_duration_days}
+                paymentTerms={formData.payment_terms}
+                onProjectDurationChange={(value) => setFormData(prev => ({ ...prev, project_duration_days: value }))}
+                onPaymentTermsChange={(value) => setFormData(prev => ({ ...prev, payment_terms: value }))}
+              />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Banking Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Bank Name</Label>
-                      <Input
-                        value={formData.bank_details.bank_name}
-                        onChange={(e) => updateBankDetails('bank_name', e.target.value)}
-                        placeholder="e.g., Saudi National Bank"
-                      />
-                    </div>
-                    <div>
-                      <Label>Account Name</Label>
-                      <Input
-                        value={formData.bank_details.account_name}
-                        onChange={(e) => updateBankDetails('account_name', e.target.value)}
-                        placeholder="Company account holder name"
-                      />
-                    </div>
-                    <div>
-                      <Label>Account Number</Label>
-                      <Input
-                        value={formData.bank_details.account_number}
-                        onChange={(e) => updateBankDetails('account_number', e.target.value)}
-                        placeholder="Account number"
-                      />
-                    </div>
-                    <div>
-                      <Label>IBAN</Label>
-                      <Input
-                        value={formData.bank_details.iban}
-                        onChange={(e) => updateBankDetails('iban', e.target.value)}
-                        placeholder="SA** **** **** **** ****"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <BankDetailsForm
+                bankDetails={formData.bank_details}
+                onBankDetailsChange={updateBankDetails}
+              />
             </div>
           </div>
         </ScrollArea>
