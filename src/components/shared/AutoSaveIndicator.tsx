@@ -1,78 +1,76 @@
 
 import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Cloud, CloudOff, Loader2, CheckCircle } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface AutoSaveIndicatorProps {
   isAutoSaving: boolean;
-  lastAutoSave: Date | null;
-  hasUnsavedChanges: boolean;
+  lastSaved: Date | null;
+  hasError?: boolean;
 }
 
 export const AutoSaveIndicator: React.FC<AutoSaveIndicatorProps> = ({
   isAutoSaving,
-  lastAutoSave,
-  hasUnsavedChanges
+  lastSaved,
+  hasError = false
 }) => {
-  const getStatus = () => {
+  const getStatusContent = () => {
+    if (hasError) {
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          Save Failed
+        </Badge>
+      );
+    }
+
     if (isAutoSaving) {
-      return {
-        icon: <Loader2 className="h-3 w-3 animate-spin" />,
-        text: 'Auto-saving...',
-        variant: 'secondary' as const,
-        className: 'bg-blue-100 text-blue-800'
-      };
+      return (
+        <Badge variant="outline" className="flex items-center gap-1 border-blue-300 text-blue-700">
+          <Clock className="h-3 w-3 animate-spin" />
+          Saving...
+        </Badge>
+      );
     }
 
-    if (hasUnsavedChanges) {
-      return {
-        icon: <CloudOff className="h-3 w-3" />,
-        text: 'Unsaved changes',
-        variant: 'secondary' as const,
-        className: 'bg-orange-100 text-orange-800'
+    if (lastSaved) {
+      const timeAgo = Math.floor((Date.now() - lastSaved.getTime()) / 1000);
+      const getTimeString = () => {
+        if (timeAgo < 60) return 'Just now';
+        if (timeAgo < 3600) return `${Math.floor(timeAgo / 60)}m ago`;
+        return `${Math.floor(timeAgo / 3600)}h ago`;
       };
+
+      return (
+        <Badge variant="outline" className="flex items-center gap-1 border-green-300 text-green-700">
+          <CheckCircle className="h-3 w-3" />
+          Saved {getTimeString()}
+        </Badge>
+      );
     }
 
-    if (lastAutoSave) {
-      return {
-        icon: <CheckCircle className="h-3 w-3" />,
-        text: `Saved ${formatLastSave(lastAutoSave)}`,
-        variant: 'secondary' as const,
-        className: 'bg-green-100 text-green-800'
-      };
-    }
-
-    return {
-      icon: <Cloud className="h-3 w-3" />,
-      text: 'Ready to save',
-      variant: 'secondary' as const,
-      className: 'bg-gray-100 text-gray-800'
-    };
+    return (
+      <Badge variant="outline" className="flex items-center gap-1">
+        <Clock className="h-3 w-3" />
+        Not saved
+      </Badge>
+    );
   };
-
-  const formatLastSave = (date: Date) => {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {
-      return 'just now';
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes}m ago`;
-    } else {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-  };
-
-  const status = getStatus();
 
   return (
-    <Badge 
-      variant={status.variant}
-      className={`flex items-center gap-1 text-xs ${status.className}`}
-    >
-      {status.icon}
-      {status.text}
-    </Badge>
+    <Card className="bg-gray-50 border-gray-200">
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-600 font-medium">Status:</span>
+          {getStatusContent()}
+        </div>
+        {lastSaved && (
+          <div className="mt-1 text-xs text-gray-500">
+            Last saved: {lastSaved.toLocaleTimeString()}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

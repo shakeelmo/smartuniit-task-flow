@@ -1,444 +1,804 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Save, FileText, ChevronDown, ChevronRight } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomerLogoUpload } from '../CustomerLogoUpload';
+import { VisualReferencesSection } from './VisualReferencesSection';
+import { DocumentVersionTracker } from './DocumentVersionTracker';
+import { TableOfContents } from './TableOfContents';
+import { AutoSaveIndicator } from '@/components/shared/AutoSaveIndicator';
 import { toast } from '@/components/ui/use-toast';
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { FormattedContent } from '@/components/ui/formatted-content';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Save, CheckCircle } from 'lucide-react';
 
-interface ProposalBasicFormProps {
-  proposal?: any;
-  onUpdate?: (data: any) => void;
-  loading?: boolean;
+const proposalBasicSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  project_name: z.string().optional(),
+  client_company_name: z.string().optional(),
+  client_contact_person: z.string().optional(),
+  client_email: z.string().email().optional().or(z.literal('')),
+  client_phone: z.string().optional(),
+  client_address: z.string().optional(),
+  company_name: z.string().optional(),
+  company_contact_details: z.string().optional(),
+  reference_number: z.string().optional(),
+  submission_date: z.string().optional(),
+  executive_summary: z.string().optional(),
+  key_objectives: z.string().optional(),
+  why_choose_us: z.string().optional(),
+  problem_description: z.string().optional(),
+  background_context: z.string().optional(),
+  proposed_solution: z.string().optional(),
+  strategy_method: z.string().optional(),
+  company_bio: z.string().optional(),
+  terms_conditions: z.string().optional(),
+  call_to_action: z.string().optional(),
+  customer_logo_url: z.string().optional(),
+  visual_references: z.array(z.any()).optional(),
+  duration_of_project: z.string().optional(),
+});
+
+interface VersionEntry {
+  version: string;
+  date: string;
+  author: string;
+  changes: string;
 }
 
-export const EnhancedProposalBasicForm: React.FC<ProposalBasicFormProps> = ({
+interface VisualReference {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  imageFile?: File;
+}
+
+interface TOCSection {
+  id: string;
+  title: string;
+  subsections?: { id: string; title: string }[];
+}
+
+interface EnhancedProposalBasicFormProps {
+  proposal: any;
+  onUpdate: (data: any) => void;
+  loading: boolean;
+}
+
+export const EnhancedProposalBasicForm: React.FC<EnhancedProposalBasicFormProps> = ({
   proposal,
   onUpdate,
-  loading: externalLoading
+  loading
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [expandedSections, setExpandedSections] = useState({
-    basic: true,
-    executive: true,
-    objectives: false,
-    approach: false,
-    strategy: false,
-    terms: false
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [activeSection, setActiveSection] = useState<string>('basic-info');
+  const [visualReferences, setVisualReferences] = useState<VisualReference[]>([]);
+  const [versionHistory, setVersionHistory] = useState<VersionEntry[]>([
+    {
+      version: '1.0',
+      date: new Date().toLocaleDateString(),
+      author: 'Current User',
+      changes: 'Initial proposal creation'
+    }
+  ]);
+
+  const form = useForm<z.infer<typeof proposalBasicSchema>>({
+    resolver: zodResolver(proposalBasicSchema),
+    defaultValues: {
+      title: proposal?.title || '',
+      project_name: proposal?.project_name || '',
+      client_company_name: proposal?.client_company_name || '',
+      client_contact_person: proposal?.client_contact_person || '',
+      client_email: proposal?.client_email || '',
+      client_phone: proposal?.client_phone || '',
+      client_address: proposal?.client_address || '',
+      company_name: proposal?.company_name || '',
+      company_contact_details: proposal?.company_contact_details || '',
+      reference_number: proposal?.reference_number || '',
+      submission_date: proposal?.submission_date || '',
+      executive_summary: proposal?.executive_summary || '',
+      key_objectives: proposal?.key_objectives || '',
+      why_choose_us: proposal?.why_choose_us || '',
+      problem_description: proposal?.problem_description || '',
+      background_context: proposal?.background_context || '',
+      proposed_solution: proposal?.proposed_solution || '',
+      strategy_method: proposal?.strategy_method || '',
+      company_bio: proposal?.company_bio || '',
+      terms_conditions: proposal?.terms_conditions || '',
+      call_to_action: proposal?.call_to_action || '',
+      customer_logo_url: proposal?.customer_logo_url || '',
+      duration_of_project: proposal?.duration_of_project || '',
+    }
   });
 
-  const [formData, setFormData] = useState({
-    title: '',
-    client_company_name: '',
-    client_contact_person: '',
-    client_email: '',
-    client_phone: '',
-    status: 'draft',
-    executive_summary: '',
-    project_objectives: '',
-    proposed_approach: '',
-    strategy_details: '',
-    terms_conditions: ''
-  });
+  // Table of Contents sections
+  const tocSections: TOCSection[] = [
+    { id: 'basic-info', title: 'Basic Information' },
+    { id: 'client-details', title: 'Client Details' },
+    { id: 'company-info', title: 'Company Information' },
+    { id: 'executive-summary', title: 'Executive Summary' },
+    { id: 'problem-solution', title: 'Problem & Solution' },
+    { id: 'strategy', title: 'Strategy & Method' },
+    { id: 'duration', title: 'Project Duration' },
+    { id: 'visual-references', title: 'Visual References' },
+    { id: 'company-bio', title: 'Company Bio' },
+    { id: 'terms', title: 'Terms & Conditions' }
+  ];
 
+  // Auto-save functionality
+  const autoSave = useCallback(async (data: any, sectionName?: string) => {
+    if (isAutoSaving) return;
+    
+    setIsAutoSaving(true);
+    try {
+      const updateData = {
+        ...data,
+        visual_references: visualReferences,
+        updated_at: new Date().toISOString()
+      };
+      
+      await onUpdate(updateData);
+      setLastSaved(new Date());
+      
+      if (sectionName) {
+        toast({
+          title: "Section Saved",
+          description: `${sectionName} has been saved successfully`,
+          duration: 2000,
+        });
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+      toast({
+        title: "Auto-save Failed",
+        description: "Changes will be saved when you manually save",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setIsAutoSaving(false);
+    }
+  }, [onUpdate, visualReferences, isAutoSaving]);
+
+  // Section-specific save handlers
+  const saveSection = async (sectionName: string) => {
+    const currentData = form.getValues();
+    await autoSave(currentData, sectionName);
+  };
+
+  // Update form when proposal changes
   useEffect(() => {
     if (proposal) {
-      setFormData({
+      form.reset({
         title: proposal.title || '',
+        project_name: proposal.project_name || '',
         client_company_name: proposal.client_company_name || '',
         client_contact_person: proposal.client_contact_person || '',
         client_email: proposal.client_email || '',
         client_phone: proposal.client_phone || '',
-        status: proposal.status || 'draft',
+        client_address: proposal.client_address || '',
+        company_name: proposal.company_name || '',
+        company_contact_details: proposal.company_contact_details || '',
+        reference_number: proposal.reference_number || '',
+        submission_date: proposal.submission_date || '',
         executive_summary: proposal.executive_summary || '',
-        project_objectives: proposal.project_objectives || '',
-        proposed_approach: proposal.proposed_approach || '',
-        strategy_details: proposal.strategy_details || '',
-        terms_conditions: proposal.terms_conditions || ''
+        key_objectives: proposal.key_objectives || '',
+        why_choose_us: proposal.why_choose_us || '',
+        problem_description: proposal.problem_description || '',
+        background_context: proposal.background_context || '',
+        proposed_solution: proposal.proposed_solution || '',
+        strategy_method: proposal.strategy_method || '',
+        company_bio: proposal.company_bio || '',
+        terms_conditions: proposal.terms_conditions || '',
+        call_to_action: proposal.call_to_action || '',
+        customer_logo_url: proposal.customer_logo_url || '',
+        duration_of_project: proposal.duration_of_project || '',
       });
-      setHasUnsavedChanges(false);
-    }
-  }, [proposal]);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setHasUnsavedChanges(true);
-  };
-
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      if (onUpdate) {
-        await onUpdate(formData);
-      } else {
-        const { error } = await supabase
-          .from('proposals')
-          .update(formData)
-          .eq('id', proposal?.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Proposal basic information saved successfully",
-        });
+      if (proposal.visual_references) {
+        setVisualReferences(proposal.visual_references);
       }
-      
-      setHasUnsavedChanges(false);
-    } catch (error) {
-      console.error('Error saving proposal:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save proposal",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
+  }, [proposal, form]);
+
+  const onSubmit = async (data: z.infer<typeof proposalBasicSchema>) => {
+    const updateData = {
+      ...data,
+      visual_references: visualReferences,
+    };
+    await onUpdate(updateData);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'sent': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleLogoChange = async (logoUrl: string | null) => {
+    form.setValue('customer_logo_url', logoUrl || '');
+    const currentData = form.getValues();
+    await autoSave({ ...currentData, customer_logo_url: logoUrl || '' });
+  };
+
+  const handleVersionUpdate = (newVersion: string, changes: string) => {
+    const newEntry: VersionEntry = {
+      version: newVersion,
+      date: new Date().toLocaleDateString(),
+      author: 'Current User',
+      changes
+    };
+    setVersionHistory([newEntry, ...versionHistory]);
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    setActiveSection(sectionId);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Basic Information Section */}
-      <Collapsible
-        open={expandedSections.basic}
-        onOpenChange={() => toggleSection('basic')}
-      >
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Basic Information
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(formData.status)}>
-                    {formData.status}
-                  </Badge>
-                  {expandedSections.basic ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Proposal Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    placeholder="Enter proposal title"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border shadow-lg">
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="sent">Sent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="client_company_name">Client Company *</Label>
-                  <Input
-                    id="client_company_name"
-                    value={formData.client_company_name}
-                    onChange={(e) => handleInputChange('client_company_name', e.target.value)}
-                    placeholder="Client company name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="client_contact_person">Contact Person</Label>
-                  <Input
-                    id="client_contact_person"
-                    value={formData.client_contact_person}
-                    onChange={(e) => handleInputChange('client_contact_person', e.target.value)}
-                    placeholder="Primary contact person"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="client_email">Client Email</Label>
-                  <Input
-                    id="client_email"
-                    type="email"
-                    value={formData.client_email}
-                    onChange={(e) => handleInputChange('client_email', e.target.value)}
-                    placeholder="client@company.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="client_phone">Client Phone</Label>
-                  <Input
-                    id="client_phone"
-                    value={formData.client_phone}
-                    onChange={(e) => handleInputChange('client_phone', e.target.value)}
-                    placeholder="+1 (555) 000-0000"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      {/* Executive Summary Section */}
-      <Collapsible
-        open={expandedSections.executive}
-        onOpenChange={() => toggleSection('executive')}
-      >
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle>Executive Summary</CardTitle>
-                {expandedSections.executive ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              <div className="space-y-4">
-                <RichTextEditor
-                  value={formData.executive_summary}
-                  onChange={(value) => handleInputChange('executive_summary', value)}
-                  placeholder="• Provide a high-level overview of the proposal
-• Highlight key benefits and value proposition
-• Summarize main objectives and approach"
-                  rows={6}
-                />
-                {formData.executive_summary && (
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium mb-2">Preview:</h4>
-                    <FormattedContent content={formData.executive_summary} />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      {/* Project Objectives Section */}
-      <Collapsible
-        open={expandedSections.objectives}
-        onOpenChange={() => toggleSection('objectives')}
-      >
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle>Project Objectives</CardTitle>
-                {expandedSections.objectives ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              <div className="space-y-4">
-                <RichTextEditor
-                  value={formData.project_objectives}
-                  onChange={(value) => handleInputChange('project_objectives', value)}
-                  placeholder="• Define clear project goals and outcomes
-• Specify measurable success criteria
-• Outline expected deliverables"
-                  rows={5}
-                />
-                {formData.project_objectives && (
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium mb-2">Preview:</h4>
-                    <FormattedContent content={formData.project_objectives} />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      {/* Proposed Approach Section */}
-      <Collapsible
-        open={expandedSections.approach}
-        onOpenChange={() => toggleSection('approach')}
-      >
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle>Proposed Approach</CardTitle>
-                {expandedSections.approach ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              <div className="space-y-4">
-                <RichTextEditor
-                  value={formData.proposed_approach}
-                  onChange={(value) => handleInputChange('proposed_approach', value)}
-                  placeholder="• Describe methodology and approach
-• Outline key phases or milestones
-• Explain implementation strategy"
-                  rows={5}
-                />
-                {formData.proposed_approach && (
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium mb-2">Preview:</h4>
-                    <FormattedContent content={formData.proposed_approach} />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      {/* Strategy Details Section */}
-      <Collapsible
-        open={expandedSections.strategy}
-        onOpenChange={() => toggleSection('strategy')}
-      >
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle>Strategy & Implementation</CardTitle>
-                {expandedSections.strategy ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              <div className="space-y-4">
-                <RichTextEditor
-                  value={formData.strategy_details}
-                  onChange={(value) => handleInputChange('strategy_details', value)}
-                  placeholder="• Detail strategic considerations
-• Explain technical implementation
-• Address potential challenges and solutions"
-                  rows={5}
-                />
-                {formData.strategy_details && (
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium mb-2">Preview:</h4>
-                    <FormattedContent content={formData.strategy_details} />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      {/* Terms & Conditions Section */}
-      <Collapsible
-        open={expandedSections.terms}
-        onOpenChange={() => toggleSection('terms')}
-      >
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle>Terms & Conditions</CardTitle>
-                {expandedSections.terms ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              <div className="space-y-4">
-                <RichTextEditor
-                  value={formData.terms_conditions}
-                  onChange={(value) => handleInputChange('terms_conditions', value)}
-                  placeholder="• Payment terms and conditions
-• Project scope and limitations
-• Intellectual property considerations
-• Warranty and support terms"
-                  rows={6}
-                />
-                {formData.terms_conditions && (
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium mb-2">Preview:</h4>
-                    <FormattedContent content={formData.terms_conditions} />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button 
-          onClick={handleSave}
-          disabled={loading || externalLoading || !hasUnsavedChanges}
-          className="min-w-[150px]"
+    <div className="max-w-7xl mx-auto space-y-6 relative">
+      {/* Smart Universe Background Logo */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div 
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-100 opacity-5 select-none"
+          style={{
+            fontSize: '20rem',
+            fontWeight: 'bold',
+            transform: 'translate(-50%, -50%) rotate(-45deg)',
+            whiteSpace: 'nowrap'
+          }}
         >
-          <Save className="h-4 w-4 mr-2" />
-          {loading ? 'Saving...' : hasUnsavedChanges ? 'Save Changes' : 'Saved'}
-        </Button>
+          SMART UNIVERSE
+        </div>
+      </div>
+
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Table of Contents - Left Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-6">
+            <TableOfContents
+              sections={tocSections}
+              activeSection={activeSection}
+              onSectionClick={scrollToSection}
+            />
+            
+            <div className="mt-4">
+              <AutoSaveIndicator 
+                isAutoSaving={isAutoSaving}
+                lastSaved={lastSaved}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              
+              {/* Document Version Tracker */}
+              <DocumentVersionTracker
+                currentVersion={proposal?.version_number || '1.0'}
+                lastUpdated={proposal?.updated_at || new Date().toISOString()}
+                versionHistory={versionHistory}
+                onVersionUpdate={handleVersionUpdate}
+              />
+
+              {/* Customer Logo Upload Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Branding</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CustomerLogoUpload
+                    currentLogoUrl={form.watch('customer_logo_url')}
+                    onLogoChange={handleLogoChange}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Basic Information Section */}
+              <Card id="basic-info">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Basic Information</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Basic Information')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Proposal Title *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter proposal title" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="project_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter project name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="reference_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reference Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter reference number" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="submission_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Submission Date</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Client Details Section */}
+              <Card id="client-details">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Client Details</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Client Details')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="client_company_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Company Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter client company name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="client_contact_person"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Contact Person</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter client contact person" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="client_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter client email" type="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="client_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Phone</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter client phone" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="client_address"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Client Address</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter client address" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Company Information Section */}
+              <Card id="company-info">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Company Information</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Company Information')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="company_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Company Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter your company name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="company_contact_details"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company Contact Details</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter company contact details" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Executive Summary Section */}
+              <Card id="executive-summary">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Executive Summary</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Executive Summary')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="executive_summary"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Executive Summary</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter executive summary" rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="key_objectives"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Key Objectives</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter key objectives" rows={3} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="why_choose_us"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Why Choose Us</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter why choose us" rows={3} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Problem & Solution Section */}
+              <Card id="problem-solution">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Problem & Solution</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Problem & Solution')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="problem_description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Problem Description</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter problem description" rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="background_context"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Background Context</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter background context" rows={3} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="proposed_solution"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Proposed Solution</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter proposed solution" rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Strategy & Method Section */}
+              <Card id="strategy">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Strategy & Method</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Strategy & Method')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="strategy_method"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Strategy & Method</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter strategy & method" rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Project Duration Section */}
+              <Card id="duration">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Duration of Project</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Project Duration')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="duration_of_project"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Duration</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="e.g., This project of Excavation & laying of Fiber Optic Cable is expected to be completed within 25 days." 
+                            rows={3} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Visual References Section */}
+              <div id="visual-references">
+                <VisualReferencesSection
+                  references={visualReferences}
+                  onReferencesChange={setVisualReferences}
+                />
+              </div>
+
+              {/* Company Bio Section */}
+              <Card id="company-bio">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Company Bio</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Company Bio')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="company_bio"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company Bio</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter company bio" rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Terms & Conditions Section */}
+              <Card id="terms">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Terms & Conditions</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => saveSection('Terms & Conditions')}
+                    disabled={isAutoSaving}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save Section
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="terms_conditions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Terms & Conditions</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter terms & conditions" rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="call_to_action"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Call to Action</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter call to action" rows={2} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Final Save Button */}
+              <div className="flex justify-end pt-6">
+                <Button type="submit" disabled={loading || isAutoSaving} className="min-w-[150px]">
+                  {loading ? (
+                    'Saving...'
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Save All Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </div>
     </div>
   );
