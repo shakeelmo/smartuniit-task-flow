@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customers: {
+        Row: {
+          address: string | null
+          company_name: string | null
+          contact_person: string | null
+          created_at: string
+          customer_name: string
+          email: string | null
+          id: string
+          industry: string | null
+          notes: string | null
+          phone: string | null
+          project_interest: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          created_at?: string
+          customer_name: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          notes?: string | null
+          phone?: string | null
+          project_interest?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          created_at?: string
+          customer_name?: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          notes?: string | null
+          phone?: string | null
+          project_interest?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       data_backups: {
         Row: {
           created_at: string
@@ -78,6 +129,53 @@ export type Database = {
         }
         Relationships: []
       }
+      follow_ups: {
+        Row: {
+          completed_date: string | null
+          created_at: string
+          customer_id: string
+          follow_up_date: string
+          follow_up_type: string
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_date?: string | null
+          created_at?: string
+          customer_id: string
+          follow_up_date: string
+          follow_up_type?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_date?: string | null
+          created_at?: string
+          customer_id?: string
+          follow_up_date?: string
+          follow_up_type?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_ups_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -109,6 +207,7 @@ export type Database = {
         Row: {
           completed_tasks: number | null
           created_at: string
+          customer_id: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -125,6 +224,7 @@ export type Database = {
         Insert: {
           completed_tasks?: number | null
           created_at?: string
+          customer_id?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -141,6 +241,7 @@ export type Database = {
         Update: {
           completed_tasks?: number | null
           created_at?: string
+          customer_id?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -154,7 +255,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       proposal_budget_items: {
         Row: {
@@ -435,6 +544,7 @@ export type Database = {
           company_signature_data: string | null
           confidentiality_included: boolean | null
           created_at: string
+          customer_id: string | null
           customer_logo_url: string | null
           customer_prerequisites: string | null
           document_reviewers: Json | null
@@ -486,6 +596,7 @@ export type Database = {
           company_signature_data?: string | null
           confidentiality_included?: boolean | null
           created_at?: string
+          customer_id?: string | null
           customer_logo_url?: string | null
           customer_prerequisites?: string | null
           document_reviewers?: Json | null
@@ -537,6 +648,7 @@ export type Database = {
           company_signature_data?: string | null
           confidentiality_included?: boolean | null
           created_at?: string
+          customer_id?: string | null
           customer_logo_url?: string | null
           customer_prerequisites?: string | null
           document_reviewers?: Json | null
@@ -568,7 +680,15 @@ export type Database = {
           version_number?: string | null
           why_choose_us?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "proposals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quotations: {
         Row: {
@@ -576,6 +696,7 @@ export type Database = {
           currency: string
           custom_terms: string | null
           customer_data: Json
+          customer_id: string | null
           date: string
           discount: number
           discount_percent: number | null
@@ -598,6 +719,7 @@ export type Database = {
           currency?: string
           custom_terms?: string | null
           customer_data?: Json
+          customer_id?: string | null
           date?: string
           discount?: number
           discount_percent?: number | null
@@ -620,6 +742,7 @@ export type Database = {
           currency?: string
           custom_terms?: string | null
           customer_data?: Json
+          customer_id?: string | null
           date?: string
           discount?: number
           discount_percent?: number | null
@@ -637,7 +760,15 @@ export type Database = {
           valid_until?: string | null
           vat?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quotations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -645,6 +776,7 @@ export type Database = {
           assignee: string | null
           assignee_role: string | null
           created_at: string
+          customer_id: string | null
           description: string | null
           due_date: string | null
           estimated_hours: number | null
@@ -661,6 +793,7 @@ export type Database = {
           assignee?: string | null
           assignee_role?: string | null
           created_at?: string
+          customer_id?: string | null
           description?: string | null
           due_date?: string | null
           estimated_hours?: number | null
@@ -677,6 +810,7 @@ export type Database = {
           assignee?: string | null
           assignee_role?: string | null
           created_at?: string
+          customer_id?: string | null
           description?: string | null
           due_date?: string | null
           estimated_hours?: number | null
@@ -689,6 +823,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]

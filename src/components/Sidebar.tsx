@@ -1,179 +1,103 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
 import { 
-  Home, 
+  LayoutDashboard, 
   Users, 
-  Briefcase, 
+  FolderOpen, 
   CheckSquare, 
   FileText, 
-  Receipt, 
+  Receipt,
   Presentation,
-  Menu,
-  X,
-  LogOut,
-  User
+  Database,
+  Settings,
+  LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Dashboard from './Dashboard';
-import UserManagement from './UserManagement';
-import ProjectManagement from './ProjectManagement';
-import TaskManagement from './TaskManagement';
-import QuotationManagement from './QuotationManagement';
-import InvoiceManagement from './InvoiceManagement';
-import ProposalManagement from './ProposalManagement';
-import EditProfileDialog from './EditProfileDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
-  isCollapsed: boolean;
-  toggleSidebar: () => void;
+  activeModule: string;
+  onModuleChange: (module: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
-  const { user, signOut } = useAuth();
+export const Sidebar = ({ activeModule, onModuleChange }: SidebarProps) => {
+  const { signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [editProfileOpen, setEditProfileOpen] = useState(false);
-  const [profile, setProfile] = useState(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
-  const fetchProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
-      } else if (data) {
-        setProfile(data);
-      } else {
-        // Create profile if it doesn't exist
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            first_name: user.user_metadata?.first_name || null,
-            last_name: user.user_metadata?.last_name || null,
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating profile:', createError);
-        } else {
-          setProfile(newProfile);
-        }
-      }
-    } catch (error) {
-      console.error('Error in fetchProfile:', error);
-    }
-  };
-
-  const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/', component: Dashboard },
-    { icon: Users, label: 'User Management', path: '/users', component: UserManagement },
-    { icon: Briefcase, label: 'Project Management', path: '/projects', component: ProjectManagement },
-    { icon: CheckSquare, label: 'Task Management', path: '/tasks', component: TaskManagement },
-    { icon: FileText, label: 'Quotation Management', path: '/quotations', component: QuotationManagement },
-    { icon: Receipt, label: 'Invoice Management', path: '/invoices', component: InvoiceManagement },
-    { icon: Presentation, label: 'Proposal Management', path: '/proposals', component: ProposalManagement },
+  const modules = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { id: 'customers', label: 'Customer Database', icon: Database, path: '/customers' },
+    { id: 'users', label: 'User Management', icon: Users, path: '/users' },
+    { id: 'projects', label: 'Project Management', icon: FolderOpen, path: '/projects' },
+    { id: 'tasks', label: 'Task Management', icon: CheckSquare, path: '/tasks' },
+    { id: 'quotations', label: 'Quotations', icon: FileText, path: '/quotations' },
+    { id: 'invoices', label: 'Invoices', icon: Receipt, path: '/invoices' },
+    { id: 'proposals', label: 'Proposals', icon: Presentation, path: '/proposals' },
   ];
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
-    } else {
-      signOut();
-    }
-  };
-
-  const handleNavigation = (path: string) => {
+  const handleModuleClick = (moduleId: string, path: string) => {
+    onModuleChange(moduleId);
     navigate(path);
   };
 
-  return (
-    <div
-      className={`flex flex-col h-screen bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-64'
-      }`}
-    >
-      {/* Top Section: Logo and Collapse Button */}
-      <div className="flex items-center justify-between p-4">
-        {!isCollapsed && <span className="font-bold text-lg">Smart Universe</span>}
-        <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-          {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
-        </Button>
-      </div>
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
-      {/* Middle Section: Navigation Items */}
-      <nav className="flex-grow p-4">
-        <ul>
-          {menuItems.map((item) => (
-            <li key={item.label} className="mb-2">
-              <Button
-                variant="ghost"
-                className={`w-full justify-start gap-2 ${
-                  location.pathname === item.path ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
-                }`}
-                onClick={() => handleNavigation(item.path)}
-              >
-                <item.icon className="h-4 w-4" />
-                {!isCollapsed && <span>{item.label}</span>}
-              </Button>
-            </li>
-          ))}
-        </ul>
+  return (
+    <div className="w-64 bg-white shadow-lg flex flex-col h-screen">
+      <div className="p-6 border-b">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-smart-orange rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">SM</span>
+          </div>
+          <span className="text-xl font-bold text-gray-800">Smart Management</span>
+        </div>
+      </div>
+      
+      <nav className="flex-1 p-4 space-y-2">
+        {modules.map((module) => {
+          const Icon = module.icon;
+          const isActive = activeModule === module.id;
+          
+          return (
+            <Button
+              key={module.id}
+              variant={isActive ? "default" : "ghost"}
+              className={`w-full justify-start h-12 ${
+                isActive 
+                  ? "bg-smart-orange text-white hover:bg-smart-orange/90" 
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+              onClick={() => handleModuleClick(module.id, module.path)}
+            >
+              <Icon className="h-5 w-5 mr-3" />
+              {module.label}
+            </Button>
+          );
+        })}
       </nav>
 
-      {/* Bottom Section: User Profile and Logout */}
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Avatar>
-              <AvatarImage src={user?.user_metadata?.avatar_url} />
-              <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
-            </Avatar>
-            {!isCollapsed && <div>
-              <div className="font-medium">{profile?.first_name} {profile?.last_name}</div>
-              <div className="text-sm text-muted-foreground">{user?.email}</div>
-            </div>}
-          </div>
-          {!isCollapsed && <Button variant="ghost" size="icon" onClick={() => setEditProfileOpen(true)}>
-            <User className="h-4 w-4" />
-          </Button>}
-        </div>
-        <Button variant="outline" className="w-full" onClick={handleSignOut}>
-          {isCollapsed ? <LogOut className="h-4 w-4" /> : 'Logout'}
+      <div className="p-4 border-t space-y-2">
+        <Button
+          variant="ghost"
+          className="w-full justify-start h-12 text-gray-700 hover:bg-gray-100"
+          onClick={() => {}}
+        >
+          <Settings className="h-5 w-5 mr-3" />
+          Settings
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start h-12 text-red-600 hover:bg-red-50"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-5 w-5 mr-3" />
+          Logout
         </Button>
       </div>
-
-      {profile && (
-        <EditProfileDialog 
-          open={editProfileOpen} 
-          onOpenChange={setEditProfileOpen}
-          profile={profile}
-          onProfileUpdated={fetchProfile}
-        />
-      )}
     </div>
   );
 };
-
-export default Sidebar;
