@@ -89,8 +89,8 @@ const EditQuotationDialog = ({ open, onOpenChange, onQuotationUpdated, quotation
       <div className="fixed top-4 right-4 z-50">
         <AutoSaveIndicator
           isAutoSaving={isAutoSaving}
-          lastAutoSave={lastAutoSave}
-          hasUnsavedChanges={hasUnsavedChanges}
+          lastSaved={lastAutoSave}
+          hasError={false}
         />
       </div>
       <EditQuotationDialogContent
