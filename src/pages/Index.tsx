@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/Sidebar";
 import Dashboard from "@/components/Dashboard";
 import UserManagement from "@/components/UserManagement";
