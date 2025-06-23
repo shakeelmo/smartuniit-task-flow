@@ -46,10 +46,16 @@ export const CreateFollowUpDialog: React.FC<CreateFollowUpDialogProps> = ({
   });
 
   const onSubmit = async (data: z.infer<typeof followUpSchema>) => {
-    const success = await saveFollowUp({
-      ...data,
-      status: 'pending'
-    });
+    // Ensure we have all required fields with proper types
+    const followUpData = {
+      customer_id: data.customer_id,
+      follow_up_date: data.follow_up_date,
+      follow_up_type: data.follow_up_type,
+      status: 'pending' as const,
+      notes: data.notes
+    };
+
+    const success = await saveFollowUp(followUpData);
 
     if (success) {
       onFollowUpCreated();

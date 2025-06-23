@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Customer } from '@/types/customer';
+import { Customer, CreateCustomerData } from '@/types/customer';
 
 export const useCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -18,7 +18,14 @@ export const useCustomers = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCustomers(data || []);
+      
+      // Type assertion to ensure proper types from database
+      const typedCustomers = (data || []).map(customer => ({
+        ...customer,
+        status: customer.status as 'active' | 'inactive' | 'prospect' | 'client'
+      })) as Customer[];
+      
+      setCustomers(typedCustomers);
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast({
@@ -31,7 +38,7 @@ export const useCustomers = () => {
     }
   };
 
-  const saveCustomer = async (customerData: Omit<Customer, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const saveCustomer = async (customerData: CreateCustomerData) => {
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {

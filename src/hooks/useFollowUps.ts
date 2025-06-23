@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { FollowUp } from '@/types/customer';
+import { FollowUp, CreateFollowUpData } from '@/types/customer';
 
 export const useFollowUps = () => {
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
@@ -21,7 +21,15 @@ export const useFollowUps = () => {
         .order('follow_up_date', { ascending: true });
 
       if (error) throw error;
-      setFollowUps(data || []);
+      
+      // Type assertion to ensure proper types from database
+      const typedFollowUps = (data || []).map(followUp => ({
+        ...followUp,
+        follow_up_type: followUp.follow_up_type as 'daily' | 'weekly' | 'monthly' | 'custom',
+        status: followUp.status as 'pending' | 'completed' | 'overdue'
+      })) as FollowUp[];
+      
+      setFollowUps(typedFollowUps);
     } catch (error) {
       console.error('Error fetching follow-ups:', error);
       toast({
@@ -34,7 +42,7 @@ export const useFollowUps = () => {
     }
   };
 
-  const saveFollowUp = async (followUpData: Omit<FollowUp, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'customer'>) => {
+  const saveFollowUp = async (followUpData: CreateFollowUpData) => {
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {

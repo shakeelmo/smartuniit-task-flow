@@ -55,7 +55,20 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ customer, onSuccess 
     if (isEdit) {
       success = await updateCustomer(customer.id, data);
     } else {
-      success = await saveCustomer(data);
+      // Ensure we have all required fields for creating a customer
+      const customerData = {
+        customer_name: data.customer_name,
+        company_name: data.company_name,
+        contact_person: data.contact_person,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        industry: data.industry,
+        project_interest: data.project_interest,
+        status: data.status,
+        notes: data.notes,
+      };
+      success = await saveCustomer(customerData);
     }
 
     if (success) {
