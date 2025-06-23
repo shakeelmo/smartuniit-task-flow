@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -125,7 +126,13 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     });
   };
 
-  const addItem = () => {
+  const addItem = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent default form submission behavior
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     const newItem: QuotationItem = {
       id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       description: '',
@@ -139,7 +146,13 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
     console.log('Total items after addition:', updatedItems.length);
   };
 
-  const removeItem = (id: string) => {
+  const removeItem = (id: string, e?: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent default form submission behavior
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     console.log('Removing item with id:', id);
     const updatedItems = items.filter(item => item.id !== id);
     setItems(updatedItems);
@@ -357,6 +370,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                   variant="outline"
                   className="flex items-center gap-2"
                   disabled={savedQuotations.length === 0}
+                  type="button"
                 >
                   <FileText className="h-4 w-4" />
                   Select Existing Quotation ({savedQuotations.length} available)
@@ -424,10 +438,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
               <div className="flex items-center justify-between">
                 <CardTitle>Services / الخدمات ({items.length} items)</CardTitle>
                 <Button 
-                  onClick={() => {
-                    console.log('Add Service button clicked, current items:', items.length);
-                    addItem();
-                  }} 
+                  onClick={addItem}
                   type="button"
                   className="bg-smart-orange hover:bg-smart-orange/90"
                 >
@@ -495,10 +506,7 @@ export const ProposalQuotationForm: React.FC<ProposalQuotationFormProps> = ({
                           variant="outline"
                           size="sm"
                           type="button"
-                          onClick={() => {
-                            console.log('Remove button clicked for item:', item.id);
-                            removeItem(item.id);
-                          }}
+                          onClick={(e) => removeItem(item.id, e)}
                           className="text-red-600 hover:text-red-700 w-full"
                         >
                           <Trash2 className="h-4 w-4" />

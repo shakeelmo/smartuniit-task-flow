@@ -47,6 +47,6 @@ export interface CreateFollowUpData {
   customer_id: string;
   follow_up_date: string;
   follow_up_type: 'daily' | 'weekly' | 'monthly' | 'custom';
-  status: 'pending' | 'completed' | 'overdue';
+  status?: 'pending' | 'completed' | 'overdue';
   notes?: string;
 }
