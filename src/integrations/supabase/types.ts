@@ -548,6 +548,7 @@ export type Database = {
           customer_logo_url: string | null
           customer_prerequisites: string | null
           document_reviewers: Json | null
+          duration_of_project: number | null
           executive_summary: string | null
           glossary: string | null
           id: string
@@ -600,6 +601,7 @@ export type Database = {
           customer_logo_url?: string | null
           customer_prerequisites?: string | null
           document_reviewers?: Json | null
+          duration_of_project?: number | null
           executive_summary?: string | null
           glossary?: string | null
           id?: string
@@ -652,6 +654,7 @@ export type Database = {
           customer_logo_url?: string | null
           customer_prerequisites?: string | null
           document_reviewers?: Json | null
+          duration_of_project?: number | null
           executive_summary?: string | null
           glossary?: string | null
           id?: string

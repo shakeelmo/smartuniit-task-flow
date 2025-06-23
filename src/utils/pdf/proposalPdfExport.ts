@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import { fetchImageBase64, fireToast } from './helpers';
 import { COLORS, PDF_CONFIG } from './constants';
 import { addTextWithWrapping } from './helpers';
+import { addTableOfContents, generateTOCEntries } from './tableOfContents';
 
 interface ProposalData {
   title: string;
@@ -27,6 +28,7 @@ interface ProposalData {
   call_to_action?: string;
   quotation_data?: any;
   customer_logo_url?: string;
+  table_of_contents?: boolean;
 }
 
 // Helper function to sanitize text for PDF export
@@ -500,9 +502,16 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
     // Cover page
     addCoverPage(pdf, proposal, customerLogoBase64);
 
+    // Add Table of Contents if enabled
+    if (proposal.table_of_contents) {
+      const tocEntries = generateTOCEntries(proposal);
+      addTableOfContents(pdf, tocEntries);
+    }
+
     // Start content on new page
     pdf.addPage();
-    yPosition = addProposalHeader(pdf, proposal, logoBase64, customerLogoBase64, 2);
+    const contentPageNumber = proposal.table_of_contents ? 3 : 2;
+    yPosition = addProposalHeader(pdf, proposal, logoBase64, customerLogoBase64, contentPageNumber);
 
     // Executive Summary
     if (proposal.executive_summary) {
@@ -673,7 +682,7 @@ export const generateEnhancedProposalPDF = async (proposal: ProposalData) => {
     const fileName = `${sanitizedTitle.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}.pdf`;
     pdf.save(fileName);
     
-    fireToast('Success', 'Professional proposal PDF generated successfully with logos and VAT included');
+    fireToast('Success', 'Professional proposal PDF generated successfully with logos and table of contents');
     
   } catch (error) {
     console.error('Error generating proposal PDF:', error);
