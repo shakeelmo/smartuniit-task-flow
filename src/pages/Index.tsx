@@ -14,45 +14,69 @@ import InvoiceManagement from "@/components/InvoiceManagement";
 import ProposalManagement from "@/components/ProposalManagement";
 import CustomerManagement from "@/components/CustomerManagement";
 import { RBACDebugPanel } from "@/components/rbac/RBACDebugPanel";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const Index = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [activeModule, setActiveModule] = useState("dashboard");
+  const [moduleError, setModuleError] = useState<string | null>(null);
   
   // Show debug panel if debug=true in URL
   const showDebug = searchParams.get('debug') === 'true';
 
   useEffect(() => {
     const path = location.pathname.slice(1);
+    console.log('Current path:', path);
+    
     if (path) {
       setActiveModule(path);
     } else {
       setActiveModule("dashboard");
     }
+    
+    // Clear any previous errors when navigating
+    setModuleError(null);
   }, [location]);
 
   const renderActiveModule = () => {
-    switch (activeModule) {
-      case "users":
-        return <UserManagement />;
-      case "roles":
-        return <RoleManagement />;
-      case "projects":
-        return <ProjectManagement />;
-      case "tasks":
-        return <TaskManagement />;
-      case "quotations":
-        return <QuotationManagement />;
-      case "invoices":
-        return <InvoiceManagement />;
-      case "proposals":
-        return <ProposalManagement />;
-      case "customers":
-        return <CustomerManagement />;
-      default:
-        return <Dashboard />;
+    try {
+      console.log('Rendering module:', activeModule);
+      
+      switch (activeModule) {
+        case "users":
+          return <UserManagement />;
+        case "roles":
+          return <RoleManagement />;
+        case "projects":
+          return <ProjectManagement />;
+        case "tasks":
+          return <TaskManagement />;
+        case "quotations":
+          return <QuotationManagement />;
+        case "invoices":
+          return <InvoiceManagement />;
+        case "proposals":
+          return <ProposalManagement />;
+        case "customers":
+          return <CustomerManagement />;
+        case "dashboard":
+        default:
+          return <Dashboard />;
+      }
+    } catch (error) {
+      console.error('Error rendering module:', activeModule, error);
+      setModuleError(`Failed to load ${activeModule} module: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {moduleError}
+          </AlertDescription>
+        </Alert>
+      );
     }
   };
 
@@ -66,6 +90,18 @@ const Index = () => {
             {showDebug && (
               <div className="mb-6">
                 <RBACDebugPanel />
+              </div>
+            )}
+            
+            {/* Module Error Display */}
+            {moduleError && (
+              <div className="mb-6">
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    {moduleError}
+                  </AlertDescription>
+                </Alert>
               </div>
             )}
             
