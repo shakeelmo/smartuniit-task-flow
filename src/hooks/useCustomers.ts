@@ -4,28 +4,66 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Customer, CreateCustomerData } from '@/types/customer';
 
-export const useCustomers = () => {
+export const useCustomers = (page: number = 1, pageSize: number = 20, searchTerm: string = '', statusFilter: string = 'all') => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const { toast } = useToast();
 
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Calculate offset for pagination
+      const offset = (page - 1) * pageSize;
+      
+      // Build query with specific field selection (no select('*'))
+      let query = supabase
         .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select(`
+          id,
+          customer_name,
+          company_name,
+          contact_person,
+          email,
+          phone,
+          address,
+          industry,
+          project_interest,
+          status,
+          created_at
+        `, { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + pageSize - 1);
+
+      // Apply search filter at database level
+      if (searchTerm) {
+        query = query.or(`customer_name.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+      }
+
+      // Apply status filter at database level
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
       
       // Type assertion to ensure proper types from database
       const typedCustomers = (data || []).map(customer => ({
         ...customer,
-        status: customer.status as 'active' | 'inactive' | 'prospect' | 'client'
+        status: customer.status as 'active' | 'inactive' | 'prospect' | 'client',
+        // Add placeholder values for fields not fetched
+        notes: '',
+        updated_at: customer.created_at,
+        user_id: ''
       })) as Customer[];
       
       setCustomers(typedCustomers);
+      setTotalCount(count || 0);
+      setHasMore((count || 0) > offset + pageSize);
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast({
@@ -130,13 +168,16 @@ export const useCustomers = () => {
     }
   };
 
+  // Fetch customers when dependencies change
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [page, pageSize, searchTerm, statusFilter]);
 
   return {
     customers,
     loading,
+    totalCount,
+    hasMore,
     saveCustomer,
     updateCustomer,
     deleteCustomer,

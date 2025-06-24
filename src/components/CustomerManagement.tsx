@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, Filter, Users, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -11,17 +11,76 @@ import { CreateFollowUpDialog } from './customers/CreateFollowUpDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useFollowUps } from '@/hooks/useFollowUps';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const CustomerManagement = () => {
   const { user } = useAuth();
-  const { customers, refetch: refetchCustomers } = useCustomers();
-  const { followUps, refetch: refetchFollowUps } = useFollowUps();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showFollowUpDialog, setShowFollowUpDialog] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('customers');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+
+  // Use optimized hook with pagination and filtering
+  const { 
+    customers, 
+    loading, 
+    totalCount, 
+    hasMore, 
+    refetch: refetchCustomers 
+  } = useCustomers(currentPage, pageSize, searchTerm, statusFilter);
+
+  const { followUps, refetch: refetchFollowUps } = useFollowUps();
+
+  // Cache customer statistics with React Query to reduce API calls
+  const { data: customerStats } = useQuery({
+    queryKey: ['customer-stats', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('customers')
+        .select('status', { count: 'exact' })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      const total = data?.length || 0;
+      const active = data?.filter(c => c.status === 'active').length || 0;
+      const prospects = data?.filter(c => c.status === 'prospect').length || 0;
+      const clients = data?.filter(c => c.status === 'client').length || 0;
+      
+      return { total, active, prospects, clients };
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: !!user
+  });
+
+  // Cache follow-up statistics
+  const { data: followUpStats } = useQuery({
+    queryKey: ['followup-stats', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('follow_ups')
+        .select('status', { count: 'exact' })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      const pending = data?.filter(f => f.status === 'pending').length || 0;
+      const overdue = data?.filter(f => f.status === 'overdue').length || 0;
+      
+      return { pending, overdue };
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: !!user
+  });
 
   const handleCreateCustomer = () => {
     setShowCreateDialog(true);
@@ -43,13 +102,21 @@ const CustomerManagement = () => {
     setSelectedCustomerId('');
   };
 
-  // Calculate statistics
-  const totalCustomers = customers.length;
-  const activeCustomers = customers.filter(c => c.status === 'active').length;
-  const prospects = customers.filter(c => c.status === 'prospect').length;
-  const clients = customers.filter(c => c.status === 'client').length;
-  const pendingFollowUps = followUps.filter(f => f.status === 'pending').length;
-  const overdueFollowUps = followUps.filter(f => f.status === 'overdue').length;
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  // Memoize statistics to prevent unnecessary re-renders
+  const statistics = useMemo(() => {
+    return {
+      totalCustomers: customerStats?.total || 0,
+      activeCustomers: customerStats?.active || 0,
+      prospects: customerStats?.prospects || 0,
+      clients: customerStats?.clients || 0,
+      pendingFollowUps: followUpStats?.pending || 0,
+      overdueFollowUps: followUpStats?.overdue || 0
+    };
+  }, [customerStats, followUpStats]);
 
   if (!user) {
     return (
@@ -81,27 +148,27 @@ const CustomerManagement = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <div className="bg-white p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-blue-600">{totalCustomers}</div>
+          <div className="text-2xl font-bold text-blue-600">{statistics.totalCustomers}</div>
           <div className="text-sm text-gray-600">Total Customers</div>
         </div>
         <div className="bg-white p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-green-600">{activeCustomers}</div>
+          <div className="text-2xl font-bold text-green-600">{statistics.activeCustomers}</div>
           <div className="text-sm text-gray-600">Active</div>
         </div>
         <div className="bg-white p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-yellow-600">{prospects}</div>
+          <div className="text-2xl font-bold text-yellow-600">{statistics.prospects}</div>
           <div className="text-sm text-gray-600">Prospects</div>
         </div>
         <div className="bg-white p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-purple-600">{clients}</div>
+          <div className="text-2xl font-bold text-purple-600">{statistics.clients}</div>
           <div className="text-sm text-gray-600">Clients</div>
         </div>
         <div className="bg-white p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-orange-600">{pendingFollowUps}</div>
+          <div className="text-2xl font-bold text-orange-600">{statistics.pendingFollowUps}</div>
           <div className="text-sm text-gray-600">Pending Follow-ups</div>
         </div>
         <div className="bg-white p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-red-600">{overdueFollowUps}</div>
+          <div className="text-2xl font-bold text-red-600">{statistics.overdueFollowUps}</div>
           <div className="text-sm text-gray-600">Overdue</div>
         </div>
       </div>
@@ -126,14 +193,20 @@ const CustomerManagement = () => {
               <Input
                 placeholder="Search customers..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
                 className="pl-10"
               />
             </div>
             <div className="flex gap-2">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1); // Reset to first page when filtering
+                }}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value="all">All Status</option>
@@ -150,9 +223,14 @@ const CustomerManagement = () => {
           </div>
 
           <CustomersList 
-            searchTerm={searchTerm} 
-            statusFilter={statusFilter}
+            customers={customers}
+            loading={loading}
             onCreateFollowUp={handleCreateFollowUp}
+            currentPage={currentPage}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            hasMore={hasMore}
+            onPageChange={handlePageChange}
           />
         </TabsContent>
 

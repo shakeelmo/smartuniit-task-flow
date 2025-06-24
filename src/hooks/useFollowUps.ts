@@ -12,24 +12,30 @@ export const useFollowUps = () => {
   const fetchFollowUps = async () => {
     try {
       setLoading(true);
+      
+      // Optimized query - only fetch essential follow-up data and minimal customer info
       const { data, error } = await supabase
         .from('follow_ups')
         .select(`
-          *,
-          customer:customers(*)
+          id,
+          customer_id,
+          follow_up_date,
+          follow_up_type,
+          status,
+          notes,
+          completed_date,
+          created_at,
+          customer:customers(
+            customer_name,
+            company_name,
+            status
+          )
         `)
         .order('follow_up_date', { ascending: true });
 
       if (error) throw error;
       
-      // Type assertion to ensure proper types from database
-      const typedFollowUps = (data || []).map(followUp => ({
-        ...followUp,
-        follow_up_type: followUp.follow_up_type as 'daily' | 'weekly' | 'monthly' | 'custom',
-        status: followUp.status as 'pending' | 'completed' | 'overdue'
-      })) as FollowUp[];
-      
-      setFollowUps(typedFollowUps);
+      setFollowUps(data || []);
     } catch (error) {
       console.error('Error fetching follow-ups:', error);
       toast({

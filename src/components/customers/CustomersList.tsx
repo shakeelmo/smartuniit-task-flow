@@ -3,39 +3,47 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Edit, Trash2, Mail, Phone, MapPin, Search, Plus } from 'lucide-react';
+import { Edit, Trash2, Mail, Phone, MapPin, Search, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCustomers } from '@/hooks/useCustomers';
 import { Customer } from '@/types/customer';
 import { EditCustomerDialog } from './EditCustomerDialog';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
 
 interface CustomersListProps {
-  searchTerm: string;
-  statusFilter: string;
+  customers: Customer[];
+  loading: boolean;
   onEditCustomer?: (customer: Customer) => void;
   onCreateFollowUp?: (customerId: string) => void;
+  currentPage: number;
+  totalCount: number;
+  pageSize: number;
+  hasMore: boolean;
+  onPageChange: (page: number) => void;
 }
 
 export const CustomersList: React.FC<CustomersListProps> = ({
-  searchTerm,
-  statusFilter,
+  customers,
+  loading,
   onEditCustomer,
-  onCreateFollowUp
+  onCreateFollowUp,
+  currentPage,
+  totalCount,
+  pageSize,
+  hasMore,
+  onPageChange
 }) => {
-  const { customers, loading, deleteCustomer } = useCustomers();
+  const { deleteCustomer } = useCustomers(1, 1, '', 'all'); // Only for delete function
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
-  const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = searchTerm === '' || 
-      customer.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleEdit = (customer: Customer) => {
     setEditingCustomer(customer);
@@ -63,26 +71,28 @@ export const CustomersList: React.FC<CustomersListProps> = ({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (filteredCustomers.length === 0) {
+  if (customers.length === 0) {
     return (
       <Card className="text-center py-12">
         <CardContent>
@@ -90,13 +100,10 @@ export const CustomersList: React.FC<CustomersListProps> = ({
             <Search className="h-12 w-12 mx-auto" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {searchTerm || statusFilter !== 'all' ? 'No customers found' : 'No customers yet'}
+            No customers found
           </h3>
           <p className="text-gray-600">
-            {searchTerm || statusFilter !== 'all' 
-              ? 'Try adjusting your search or filter criteria'
-              : 'Get started by adding your first customer'
-            }
+            Try adjusting your search or filter criteria, or add your first customer
           </p>
         </CardContent>
       </Card>
@@ -104,9 +111,10 @@ export const CustomersList: React.FC<CustomersListProps> = ({
   }
 
   return (
-    <>
+    <div className="space-y-6">
+      {/* Customer Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCustomers.map((customer) => (
+        {customers.map((customer) => (
           <Card key={customer.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -198,6 +206,59 @@ export const CustomersList: React.FC<CustomersListProps> = ({
         ))}
       </div>
 
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} customers
+          </div>
+          
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
+                  className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNumber;
+                if (totalPages <= 5) {
+                  pageNumber = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNumber = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNumber = totalPages - 4 + i;
+                } else {
+                  pageNumber = currentPage - 2 + i;
+                }
+                
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      onClick={() => onPageChange(pageNumber)}
+                      isActive={currentPage === pageNumber}
+                      className="cursor-pointer"
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
+                  className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
       {editingCustomer && (
         <EditCustomerDialog
           open={showEditDialog}
@@ -209,6 +270,6 @@ export const CustomersList: React.FC<CustomersListProps> = ({
           }}
         />
       )}
-    </>
+    </div>
   );
 };
