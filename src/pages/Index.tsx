@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Sidebar } from "@/components/Sidebar";
@@ -13,11 +13,16 @@ import QuotationManagement from "@/components/QuotationManagement";
 import InvoiceManagement from "@/components/InvoiceManagement";
 import ProposalManagement from "@/components/ProposalManagement";
 import CustomerManagement from "@/components/CustomerManagement";
+import { RBACDebugPanel } from "@/components/rbac/RBACDebugPanel";
 
 const Index = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [activeModule, setActiveModule] = useState("dashboard");
+  
+  // Show debug panel if debug=true in URL
+  const showDebug = searchParams.get('debug') === 'true';
 
   useEffect(() => {
     const path = location.pathname.slice(1);
@@ -57,6 +62,13 @@ const Index = () => {
         <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
         <div className="flex-1 lg:ml-0 ml-0 p-4 lg:p-6 overflow-auto">
           <div className="pt-16 lg:pt-0">
+            {/* Debug Panel */}
+            {showDebug && (
+              <div className="mb-6">
+                <RBACDebugPanel />
+              </div>
+            )}
+            
             {renderActiveModule()}
           </div>
         </div>

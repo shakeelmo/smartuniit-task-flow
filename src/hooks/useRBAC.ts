@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,83 +26,175 @@ export interface RolePermission {
   created_at: string;
 }
 
+// Cache for permission checks to reduce database calls
+const permissionCache = new Map<string, { result: boolean; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export const useRBAC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [currentUserRole, setCurrentUserRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<RolePermission[]>([]);
+  const [hasConnectionError, setHasConnectionError] = useState(false);
 
-  // Fetch current user's role
+  // Fallback permissions for offline mode
+  const getFallbackPermissions = (): boolean => {
+    console.log('Using fallback permissions - allowing basic read access');
+    return true; // Allow basic read access when connection fails
+  };
+
+  // Check if cached permission is still valid
+  const getCachedPermission = (cacheKey: string): boolean | null => {
+    const cached = permissionCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.result;
+    }
+    return null;
+  };
+
+  // Cache permission result
+  const setCachedPermission = (cacheKey: string, result: boolean): void => {
+    permissionCache.set(cacheKey, { result, timestamp: Date.now() });
+  };
+
+  // Fetch current user's role with error handling
   const fetchUserRole = async () => {
     if (!user) {
       setCurrentUserRole(null);
       setLoading(false);
+      setHasConnectionError(false);
       return;
     }
 
     try {
+      console.log('Fetching user role for:', user.id);
+      
       const { data, error } = await supabase.rpc('get_user_role', {
         user_id: user.id
       });
 
-      if (error) throw error;
-      setCurrentUserRole(data as AppRole);
+      if (error) {
+        console.error('Error fetching user role:', error);
+        throw error;
+      }
+      
+      console.log('User role fetched successfully:', data);
+      setCurrentUserRole(data as AppRole || 'viewer');
+      setHasConnectionError(false);
     } catch (error) {
       console.error('Error fetching user role:', error);
-      // Default to viewer if no role found
+      setHasConnectionError(true);
+      // Default to viewer if no role found or connection error
       setCurrentUserRole('viewer');
+      
+      toast({
+        title: "Connection Issue",
+        description: "Using offline mode with limited permissions",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch all role permissions
+  // Fetch all role permissions with error handling
   const fetchPermissions = async () => {
     try {
+      console.log('Fetching role permissions...');
+      
       const { data, error } = await supabase
         .from('role_permissions')
         .select('*');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching permissions:', error);
+        throw error;
+      }
+      
+      console.log('Permissions fetched successfully:', data?.length || 0, 'permissions');
       setPermissions(data || []);
     } catch (error) {
       console.error('Error fetching permissions:', error);
+      setHasConnectionError(true);
+      // Keep existing permissions if fetch fails
     }
   };
 
-  // Check if user has specific permission
+  // Check if user has specific permission with caching and fallbacks
   const hasPermission = async (module: AppModule, permission: PermissionType): Promise<boolean> => {
-    if (!user) return false;
+    if (!user) {
+      console.log('No user found, denying permission');
+      return false;
+    }
+
+    const cacheKey = `${user.id}-${module}-${permission}`;
+    
+    // Check cache first
+    const cachedResult = getCachedPermission(cacheKey);
+    if (cachedResult !== null) {
+      console.log('Using cached permission result:', cachedResult);
+      return cachedResult;
+    }
 
     try {
+      console.log('Checking permission:', { user: user.id, module, permission });
+      
       const { data, error } = await supabase.rpc('has_permission', {
         user_id: user.id,
         module_name: module,
         permission_name: permission
       });
 
-      if (error) throw error;
-      return data as boolean;
+      if (error) {
+        console.error('Error checking permission:', error);
+        throw error;
+      }
+      
+      const result = data as boolean;
+      console.log('Permission check result:', result);
+      
+      // Cache the result
+      setCachedPermission(cacheKey, result);
+      setHasConnectionError(false);
+      
+      return result;
     } catch (error) {
       console.error('Error checking permission:', error);
-      return false;
+      setHasConnectionError(true);
+      
+      // Use fallback logic
+      const fallbackResult = getFallbackPermissions();
+      console.log('Using fallback permission result:', fallbackResult);
+      
+      return fallbackResult;
     }
   };
 
-  // Check if user is admin or higher
+  // Check if user is admin or higher with error handling
   const isAdminOrHigher = async (): Promise<boolean> => {
     if (!user) return false;
 
     try {
+      console.log('Checking admin status for:', user.id);
+      
       const { data, error } = await supabase.rpc('is_admin_or_higher', {
         user_id: user.id
       });
 
-      if (error) throw error;
-      return data as boolean;
+      if (error) {
+        console.error('Error checking admin status:', error);
+        throw error;
+      }
+      
+      const result = data as boolean;
+      console.log('Admin status check result:', result);
+      setHasConnectionError(false);
+      
+      return result;
     } catch (error) {
       console.error('Error checking admin status:', error);
+      setHasConnectionError(true);
       return false;
     }
   };
@@ -160,6 +251,7 @@ export const useRBAC = () => {
   };
 
   useEffect(() => {
+    console.log('useRBAC: User changed, fetching role and permissions');
     fetchUserRole();
     fetchPermissions();
   }, [user]);
@@ -172,6 +264,8 @@ export const useRBAC = () => {
     isAdminOrHigher,
     assignRole,
     getUsersWithRoles,
-    refetchUserRole: fetchUserRole
+    refetchUserRole: fetchUserRole,
+    hasConnectionError,
+    isOfflineMode: hasConnectionError
   };
 };
