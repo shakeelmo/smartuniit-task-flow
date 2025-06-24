@@ -38,12 +38,6 @@ export const useRBAC = () => {
   const [permissions, setPermissions] = useState<RolePermission[]>([]);
   const [hasConnectionError, setHasConnectionError] = useState(false);
 
-  // Fallback permissions for offline mode
-  const getFallbackPermissions = (): boolean => {
-    console.log('Using fallback permissions - allowing basic read access');
-    return true; // Allow basic read access when connection fails
-  };
-
   // Check if cached permission is still valid
   const getCachedPermission = (cacheKey: string): boolean | null => {
     const cached = permissionCache.get(cacheKey);
@@ -58,7 +52,7 @@ export const useRBAC = () => {
     permissionCache.set(cacheKey, { result, timestamp: Date.now() });
   };
 
-  // Fetch current user's role with error handling
+  // Fetch current user's role with fallback
   const fetchUserRole = async () => {
     if (!user) {
       setCurrentUserRole(null);
@@ -70,7 +64,7 @@ export const useRBAC = () => {
     try {
       console.log('Fetching user role for:', user.id);
       
-      const { data, error } = await supabase.rpc('get_user_role', {
+      const { data, error } = await supabase.rpc('get_user_role_with_fallback', {
         user_id: user.id
       });
 
@@ -80,12 +74,12 @@ export const useRBAC = () => {
       }
       
       console.log('User role fetched successfully:', data);
-      setCurrentUserRole(data as AppRole || 'viewer');
+      setCurrentUserRole(data as AppRole);
       setHasConnectionError(false);
     } catch (error) {
       console.error('Error fetching user role:', error);
       setHasConnectionError(true);
-      // Default to viewer if no role found or connection error
+      // Default to viewer if connection error
       setCurrentUserRole('viewer');
       
       toast({
@@ -140,7 +134,7 @@ export const useRBAC = () => {
     try {
       console.log('Checking permission:', { user: user.id, module, permission });
       
-      const { data, error } = await supabase.rpc('has_permission', {
+      const { data, error } = await supabase.rpc('has_permission_with_fallback', {
         user_id: user.id,
         module_name: module,
         permission_name: permission
@@ -163,11 +157,13 @@ export const useRBAC = () => {
       console.error('Error checking permission:', error);
       setHasConnectionError(true);
       
-      // Use fallback logic
-      const fallbackResult = getFallbackPermissions();
-      console.log('Using fallback permission result:', fallbackResult);
+      // Emergency fallback: allow basic read access to essential modules
+      if (permission === 'read' && ['dashboard', 'customers', 'projects', 'tasks'].includes(module)) {
+        console.log('Using emergency fallback: allowing read access to', module);
+        return true;
+      }
       
-      return fallbackResult;
+      return false;
     }
   };
 

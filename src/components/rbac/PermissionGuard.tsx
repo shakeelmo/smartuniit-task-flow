@@ -43,10 +43,10 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
         console.error('PermissionGuard: Error checking permission:', error);
         setPermissionError(error instanceof Error ? error.message : 'Permission check failed');
         
-        // In case of error, allow access to prevent app breaking
-        if (isOfflineMode) {
+        // Use emergency fallback for essential read operations
+        if (permission === 'read' && ['dashboard', 'customers', 'projects', 'tasks'].includes(module)) {
+          console.log('PermissionGuard: Using emergency fallback for basic access');
           setHasAccess(true);
-          console.log('PermissionGuard: Allowing access due to offline mode');
         } else {
           setHasAccess(false);
         }
@@ -56,7 +56,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     };
 
     checkAccess();
-  }, [module, permission, hasPermission, loading, isOfflineMode]);
+  }, [module, permission, hasPermission, loading]);
 
   // Show loading state
   if (loading || checkingPermission) {
@@ -74,18 +74,6 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
           {isOfflineMode ? 'Offline mode - limited functionality' : permissionError}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Show offline indicator for critical modules
-  if (isOfflineMode && (module === 'users' || module === 'settings')) {
-    return (
-      <Alert className="mb-4">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Limited access in offline mode
         </AlertDescription>
       </Alert>
     );

@@ -908,7 +908,19 @@ export type Database = {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_role_with_fallback: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       has_permission: {
+        Args: {
+          user_id: string
+          module_name: Database["public"]["Enums"]["app_module"]
+          permission_name: Database["public"]["Enums"]["permission_type"]
+        }
+        Returns: boolean
+      }
+      has_permission_with_fallback: {
         Args: {
           user_id: string
           module_name: Database["public"]["Enums"]["app_module"]
