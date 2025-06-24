@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -89,7 +88,7 @@ export const Sidebar = ({ activeModule, onModuleChange }: SidebarProps) => {
             </div>
             <span className="text-xl font-bold text-gray-800">Smart Management</span>
             {isOfflineMode && (
-              <WifiOff className="h-4 w-4 text-gray-500" title="Offline mode" />
+              <WifiOff className="h-4 w-4 text-gray-500" />
             )}
           </div>
         </div>
