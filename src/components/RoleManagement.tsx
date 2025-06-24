@@ -10,7 +10,7 @@ const RoleManagement = () => {
   return (
     <ErrorBoundary>
       <div className="space-y-4">
-        {rbac.isLoading && (
+        {rbac.loading && (
           <div className="text-center py-4">
             <div className="text-sm text-gray-500">Loading permissions...</div>
           </div>

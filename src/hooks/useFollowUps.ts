@@ -18,6 +18,7 @@ export const useFollowUps = () => {
         .from('follow_ups')
         .select(`
           id,
+          user_id,
           customer_id,
           follow_up_date,
           follow_up_type,
@@ -25,6 +26,7 @@ export const useFollowUps = () => {
           notes,
           completed_date,
           created_at,
+          updated_at,
           customer:customers(
             customer_name,
             company_name,
@@ -35,7 +37,22 @@ export const useFollowUps = () => {
 
       if (error) throw error;
       
-      setFollowUps(data || []);
+      // Type the data properly to match FollowUp interface
+      const typedFollowUps = (data || []).map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        customer_id: item.customer_id,
+        follow_up_date: item.follow_up_date,
+        follow_up_type: item.follow_up_type as 'daily' | 'weekly' | 'monthly' | 'custom',
+        status: item.status as 'pending' | 'completed' | 'overdue',
+        notes: item.notes || '',
+        completed_date: item.completed_date,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        customer: item.customer
+      })) as FollowUp[];
+      
+      setFollowUps(typedFollowUps);
     } catch (error) {
       console.error('Error fetching follow-ups:', error);
       toast({
