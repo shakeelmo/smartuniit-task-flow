@@ -944,6 +944,7 @@ export type Database = {
         | "proposals"
         | "dashboard"
         | "settings"
+        | "vendors"
       app_role: "super_admin" | "admin" | "manager" | "employee" | "viewer"
       permission_type: "create" | "read" | "update" | "delete" | "manage"
     }
@@ -1071,6 +1072,7 @@ export const Constants = {
         "proposals",
         "dashboard",
         "settings",
+        "vendors",
       ],
       app_role: ["super_admin", "admin", "manager", "employee", "viewer"],
       permission_type: ["create", "read", "update", "delete", "manage"],
