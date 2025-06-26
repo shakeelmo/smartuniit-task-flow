@@ -13,7 +13,8 @@ import {
   Shield,
   Menu,
   X,
-  WifiOff
+  WifiOff,
+  Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,6 +37,7 @@ export const Sidebar = ({ activeModule, onModuleChange }: SidebarProps) => {
   const modules = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/', module: 'dashboard' as const, permission: 'read' as const },
     { id: 'customers', label: 'Customer Database', icon: Database, path: '/customers', module: 'customers' as const, permission: 'read' as const },
+    { id: 'vendors', label: 'Vendor Management', icon: Building2, path: '/vendors', module: 'vendors' as const, permission: 'read' as const },
     { id: 'users', label: 'User Management', icon: Users, path: '/users', module: 'users' as const, permission: 'read' as const },
     { id: 'roles', label: 'Role Management', icon: Shield, path: '/roles', module: 'users' as const, permission: 'manage' as const },
     { id: 'projects', label: 'Project Management', icon: FolderOpen, path: '/projects', module: 'projects' as const, permission: 'read' as const },

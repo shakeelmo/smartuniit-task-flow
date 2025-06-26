@@ -13,6 +13,7 @@ import QuotationManagement from "@/components/QuotationManagement";
 import InvoiceManagement from "@/components/InvoiceManagement";
 import ProposalManagement from "@/components/ProposalManagement";
 import CustomerManagement from "@/components/CustomerManagement";
+import VendorManagement from "@/components/VendorManagement";
 import { RBACDebugPanel } from "@/components/rbac/RBACDebugPanel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
@@ -62,6 +63,8 @@ const Index = () => {
           return <ProposalManagement />;
         case "customers":
           return <CustomerManagement />;
+        case "vendors":
+          return <VendorManagement />;
         case "dashboard":
         default:
           return <Dashboard />;
