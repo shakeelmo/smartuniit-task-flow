@@ -16,7 +16,7 @@ export const useVendors = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('vendors')
         .select('*')
         .eq('user_id', user.id)
@@ -40,7 +40,7 @@ export const useVendors = () => {
     if (!user) return false;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('vendors')
         .insert([{ ...vendorData, user_id: user.id }]);
 
@@ -66,7 +66,7 @@ export const useVendors = () => {
 
   const updateVendor = async (id: string, vendorData: UpdateVendorData): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('vendors')
         .update(vendorData)
         .eq('id', id)
@@ -94,7 +94,7 @@ export const useVendors = () => {
 
   const deleteVendor = async (id: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('vendors')
         .delete()
         .eq('id', id)

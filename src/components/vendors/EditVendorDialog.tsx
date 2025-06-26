@@ -35,6 +35,10 @@ export const EditVendorDialog: React.FC<EditVendorDialogProps> = ({
     notes: vendor.notes,
   });
 
+  const handleFormDataChange = (data: UpdateVendorData | Partial<UpdateVendorData>) => {
+    setFormData(prev => ({ ...prev, ...data }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.vendor_name?.trim()) return;
@@ -54,7 +58,7 @@ export const EditVendorDialog: React.FC<EditVendorDialogProps> = ({
           <DialogTitle>Edit Vendor</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <VendorForm data={formData} onChange={setFormData} />
+          <VendorForm data={formData} onChange={handleFormDataChange} />
           <div className="flex justify-end space-x-2">
             <Button
               type="button"

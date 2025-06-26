@@ -22,6 +22,10 @@ export const CreateVendorDialog: React.FC<CreateVendorDialogProps> = ({
     status: 'active',
   });
 
+  const handleFormDataChange = (data: CreateVendorData | Partial<CreateVendorData>) => {
+    setFormData(prev => ({ ...prev, ...data }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.vendor_name.trim()) return;
@@ -42,7 +46,7 @@ export const CreateVendorDialog: React.FC<CreateVendorDialogProps> = ({
           <DialogTitle>Create New Vendor</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <VendorForm data={formData} onChange={setFormData} />
+          <VendorForm data={formData} onChange={handleFormDataChange} />
           <div className="flex justify-end space-x-2">
             <Button
               type="button"
