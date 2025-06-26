@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export type AppRole = 'super_admin' | 'admin' | 'manager' | 'employee' | 'viewer';
 export type PermissionType = 'create' | 'read' | 'update' | 'delete' | 'manage';
-export type AppModule = 'users' | 'customers' | 'projects' | 'tasks' | 'quotations' | 'invoices' | 'proposals' | 'dashboard' | 'settings';
+export type AppModule = 'users' | 'customers' | 'projects' | 'tasks' | 'quotations' | 'invoices' | 'proposals' | 'dashboard' | 'settings' | 'vendors';
 
 export interface UserRole {
   id: string;
